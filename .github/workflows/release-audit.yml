@@ -15,3 +15,7 @@ jobs:
         run: python3 tools/release_audit.py --tree .
       - name: Check version, source pins, ignore boundary, and source syntax
         run: python3 tools/check_release_contract.py
+      - name: Test GUI safety and every supported ROM container/byte order
+        run: |
+          python3 tools/test_normalize_rom.py
+          python3 app/test_marios_mask_builder.py

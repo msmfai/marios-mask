@@ -1,0 +1,163 @@
+name: native-builder-packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  posix-packages:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            asset: MariosMaskBuilder-linux-x86_64.tar.xz
+          - runner: macos-15
+            asset: MariosMaskBuilder-macos-apple-silicon.zip
+          - runner: macos-15-intel
+            asset: MariosMaskBuilder-macos-intel.zip
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: packaging/environment-posix.yml
+          cache-environment: true
+          cache-downloads: true
+          init-shell: bash
+      - name: Test source-only GUI and ROM normalization
+        shell: micromamba-shell {0}
+        run: |
+          python tools/test_normalize_rom.py
+          python app/test_marios_mask_builder.py
+          bash -n tools/build_from_roms.sh
+      - name: Build native GUI
+        shell: micromamba-shell {0}
+        run: python packaging/build_gui.py --dist "$RUNNER_TEMP/gui" --work "$RUNNER_TEMP/pyinstaller"
+      - name: Pack relocatable build runtime
+        shell: micromamba-shell {0}
+        run: conda-pack -n marios-mask-builder -o "$RUNNER_TEMP/runtime.tar.gz"
+      - name: Assemble and audit download
+        shell: bash
+        env:
+          ASSET: ${{ matrix.asset }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release"
+          git archive --format=tar HEAD -o "$RUNNER_TEMP/project.tar"
+          if [ "$(uname -s)" = Darwin ]; then
+            app="$RUNNER_TEMP/gui/MariosMaskBuilder.app"
+            resources="$app/Contents/Resources"
+            mkdir -p "$resources/payload/project" "$resources/runtime"
+            tar -xf "$RUNNER_TEMP/project.tar" -C "$resources/payload/project"
+            tar -xzf "$RUNNER_TEMP/runtime.tar.gz" -C "$resources/runtime"
+            codesign --force --deep --sign - "$app"
+            python3 packaging/audit_binary_package.py "$app"
+            ditto -c -k --sequesterRsrc --keepParent "$app" "$RUNNER_TEMP/release/$ASSET"
+          else
+            package="$RUNNER_TEMP/package/MariosMaskBuilder"
+            mkdir -p "$package/payload/project" "$package/runtime"
+            cp "$RUNNER_TEMP/gui/MariosMaskBuilder" "$package/"
+            tar -xf "$RUNNER_TEMP/project.tar" -C "$package/payload/project"
+            tar -xzf "$RUNNER_TEMP/runtime.tar.gz" -C "$package/runtime"
+            python3 packaging/audit_binary_package.py "$package"
+            tar -C "$RUNNER_TEMP/package" -cJf "$RUNNER_TEMP/release/$ASSET" MariosMaskBuilder
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ runner.temp }}/release/${{ matrix.asset }}
+          if-no-files-found: error
+
+  windows-package:
+    runs-on: windows-2025
+    steps:
+      - run: git config --global core.autocrlf input
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build native GUI
+        shell: pwsh
+        run: |
+          python -m pip install pyinstaller==6.20.0
+          python packaging/build_gui.py --dist "$env:RUNNER_TEMP\gui" --work "$env:RUNNER_TEMP\pyinstaller"
+      - uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: packaging/environment-windows-python.yml
+          init-shell: powershell
+      - name: Pack relocatable Windows Python
+        shell: pwsh
+        run: micromamba run -n marios-mask-windows-python conda-pack -n marios-mask-windows-python -o "$env:RUNNER_TEMP\python-runtime.tar.gz"
+      - uses: msys2/setup-msys2@v2
+        id: msys2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            base-devel
+            git
+            curl
+            rsync
+            make
+            tar
+            patch
+            unzip
+            zip
+          pacboy: >-
+            toolchain:p
+            cmake:p
+            ninja:p
+            python:p
+            libxml2:p
+            libpng:p
+            ffmpeg:p
+      - name: Test source under native Windows shell
+        shell: msys2 {0}
+        run: |
+          python3 tools/test_normalize_rom.py
+          python3 app/test_marios_mask_builder.py
+          bash -n tools/build_from_roms.sh
+          pacman --noconfirm -Scc
+      - name: Assemble and audit download
+        shell: pwsh
+        env:
+          MSYS2_ROOT: ${{ steps.msys2.outputs.msys2-location }}
+        run: |
+          $package = "$env:RUNNER_TEMP\package\MariosMaskBuilder"
+          New-Item -ItemType Directory -Force "$package\payload\project", "$package\runtime\conda" | Out-Null
+          Copy-Item "$env:RUNNER_TEMP\gui\MariosMaskBuilder.exe" "$package\MariosMaskBuilder.exe"
+          git archive --format=tar HEAD -o "$env:RUNNER_TEMP\project.tar"
+          tar -xf "$env:RUNNER_TEMP\project.tar" -C "$package\payload\project"
+          tar -xzf "$env:RUNNER_TEMP\python-runtime.tar.gz" -C "$package\runtime\conda"
+          robocopy "$env:MSYS2_ROOT" "$package\runtime\msys64" /E /XD home /NFL /NDL /NJH /NJS
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
+          python packaging/audit_binary_package.py "$package"
+          Compress-Archive -Path "$package" -DestinationPath "$env:RUNNER_TEMP\MariosMaskBuilder-windows-x86_64.zip" -CompressionLevel Optimal
+      - uses: actions/upload-artifact@v7
+        with:
+          name: MariosMaskBuilder-windows-x86_64.zip
+          path: ${{ runner.temp }}/MariosMaskBuilder-windows-x86_64.zip
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [posix-packages, windows-package]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publish all native downloads together
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --prerelease --title "Mario's Mask $GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber

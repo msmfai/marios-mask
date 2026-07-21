@@ -8,6 +8,12 @@ VERSION := n64-us
 OUT     ?= out
 TOOLCHAIN ?= $(CURDIR)/.work/toolchain
 
+ifeq ($(OS),Windows_NT)
+MM_PYTHON ?= $(MM)/.venv/Scripts/python.exe
+else
+MM_PYTHON ?= $(MM)/.venv/bin/python
+endif
+
 # Keep every helper on the same dependency trees when callers override MM/SM64 (the
 # standalone two-ROM wrapper does this with private, pinned clones under .work/).
 export DSCE_MM_TREE := $(abspath $(MM))
@@ -19,7 +25,7 @@ export DSCE_TOOLCHAIN := $(abspath $(TOOLCHAIN))
 #  - ICONV: must be GNU iconv (BSD iconv rejects some source bytes, e.g. PreRender.c);
 #    pinned from the nix store into toolchain/bin/gnu-iconv
 #  - MIPS_BINUTILS_PREFIX: our o32-capable binutils (make toolchain)
-MM_ARGS := RUN_CC_CHECK=0 ICONV=$(TOOLCHAIN)/bin/gnu-iconv \
+MM_ARGS := RUN_CC_CHECK=0 ICONV=$(TOOLCHAIN)/bin/gnu-iconv PYTHON=$(MM_PYTHON) \
            MIPS_BINUTILS_PREFIX=$(TOOLCHAIN)/bin/mips-linux-gnu-
 JOBS ?= 10
 TESTBOOT ?= 0
@@ -159,7 +165,7 @@ mod: check-toolchain
 	    --debug-legacy $(DBG_LEGACY_EFFECTIVE) \
 	    --debug-firehose $(DBG_FIREHOSE_EFFECTIVE) \
 	    --debug-audio $(DBG_AUDIO_EFFECTIVE) || { $(RESTORE_MM); exit 1; }
-	$(MM)/.venv/bin/python -m ipl3checksum check --cic 6105 \
+	$(MM_PYTHON) -m ipl3checksum check --cic 6105 \
 	    $(MM)/build/$(VERSION)/mm-$(VERSION).z64 || \
 	    { $(RESTORE_MM); exit 1; }
 	@mkdir -p $(OUT)

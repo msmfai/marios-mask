@@ -40,10 +40,10 @@ def main() -> int:
     for marker in ("GNU GENERAL PUBLIC LICENSE", "Version 3, 29 June 2007"):
         if marker not in license_text:
             failures.append(f"LICENSE is not the expected GPL-3.0 text: missing {marker!r}")
-    for name in ("README.md", "PROVENANCE.md"):
+    for name in ("PROVENANCE.md",):
         if "GPL-3.0-only" not in documents[name]:
             failures.append(f"{name} does not declare GPL-3.0-only")
-    for name in ("README.md", "RELEASE_V0.1_ALPHA.md"):
+    for name in ("RELEASE_V0.1_ALPHA.md",):
         if version not in documents[name]:
             failures.append(f"{name} does not identify version {version}")
     for name in ("RELEASE_V0.1_ALPHA.md", "GITHUB_RELEASE.md"):
@@ -66,12 +66,12 @@ def main() -> int:
         pinned = {}
 
     expected_docs = {
-        "SM64_SHA1": ("README.md",),
-        "MM_MD5": ("README.md",),
+        "SM64_SHA1": ("PROVENANCE.md",),
+        "MM_MD5": ("PROVENANCE.md",),
         "SM64_COMMIT": ("PROVENANCE.md",),
         "MM_COMMIT": ("PROVENANCE.md",),
-        "BINUTILS_VER": ("README.md", "PROVENANCE.md"),
-        "ICONV_VER": ("README.md", "PROVENANCE.md"),
+        "BINUTILS_VER": ("PROVENANCE.md",),
+        "ICONV_VER": ("PROVENANCE.md",),
     }
     for key, value in pinned.items():
         for name in expected_docs[key]:
@@ -87,6 +87,33 @@ def main() -> int:
     for required in ("fetch-depth: 0", "tools/release_audit.py", "tools/check_release_contract.py"):
         if required not in workflow:
             failures.append(f"release workflow is missing {required!r}")
+
+    binary_workflow = read(".github/workflows/binary-release.yml")
+    for required in (
+        "windows-2025",
+        "macos-15-intel",
+        "macos-15",
+        "ubuntu-24.04",
+        "packaging/audit_binary_package.py",
+    ):
+        if required not in binary_workflow:
+            failures.append(f"binary workflow is missing {required!r}")
+
+    for relative in (
+        "app/marios_mask_builder.py",
+        "packaging/environment-posix.yml",
+        "packaging/environment-windows-python.yml",
+        "packaging/patches/mm-tools-windows.patch",
+    ):
+        if not (ROOT / relative).is_file():
+            failures.append(f"native GUI release dependency is missing: {relative}")
+
+    readme = documents["README.md"]
+    for required in (
+        "Releases", ".z64", ".v64", ".n64", ".zip", ".gz", "compressed", "decompressed"
+    ):
+        if required not in readme:
+            failures.append(f"short README is missing user-facing promise {required!r}")
 
     makefile = read("Makefile")
     for required in ("MM      ?= .work/mm", "SM64    ?= .work/sm64", "TOOLCHAIN ?= $(CURDIR)/.work/toolchain"):

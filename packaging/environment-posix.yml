@@ -1,0 +1,23 @@
+name: marios-mask-builder
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - tk
+  - pyinstaller=6.20.0
+  - conda-pack
+  - micromamba
+  - git
+  - make
+  - curl
+  - rsync
+  - ffmpeg
+  - pkg-config
+  - libxml2
+  - libpng
+  - zlib
+  - bzip2
+  - xz
+  - c-compiler
+  - cxx-compiler

@@ -1,33 +1,24 @@
-# v0.1.0-alpha.1 release gate
+# v0.1.0-alpha.2 release gate
 
-This repository is an **alpha, source-only ROM builder**. It is not a ROM release.
-Users provide the two supported NTSC-US ROMs locally; generated ROMs and extracted game
-data must remain local and must not be uploaded or redistributed through this project.
+Version: `0.1.0-alpha.2`
 
-The release is ready to tag when every automated gate in `GITHUB_RELEASE.md` passes
-from the clean, independent repository. A GitHub prerelease for this
-version may contain GitHub's generated source archives only—no manually attached game
-ROM, binary patch containing game assets, save, capture, audio, MIDI, or emulator bundle.
+Tag: `v0.1.0-alpha.2`
 
-Version: `0.1.0-alpha.1`  
-Proposed tag: `v0.1.0-alpha.1`  
-Status: authorized for public alpha release
+Status: native GUI release candidate
 
-## Candidate checklist
+This release builds a local Mario's Mask ROM from user-supplied NTSC-US Super Mario
+64 and Majora's Mask ROMs. The public repository and downloads contain no ROMs or
+extracted game assets.
 
-- [x] Clean export passes `python3 tools/release_audit.py --tree .`.
-- [x] Audit still passes after repository initialization, the candidate commit, and a full-history scan.
-- [x] `release-manifest.sha256` verifies and exactly covers the candidate files.
-- [x] Incorrect ROM revisions are rejected; both documented revisions are accepted.
-- [x] Two builds are byte-identical and pass invariant/checksum gates.
-- [x] Focused mask, acquisition, ocarina, collision, and audio-sequence tests pass.
-- [x] README dependencies, supported hosts, alpha limitations, and reporting route are accurate.
-- [x] GPL-3.0-only and third-party provenance notices are included.
-- [x] Owner explicitly authorized the public repository and copyleft release.
+The tag is ready only when:
 
-Validated release-ROM SHA-256 for the documented macOS build environment:
-`6a3c66b66ee31f0bf271c1c17001b46c0e18bcf9e697f1d605acba91c96349db`.
+- the source/history game-data audit passes;
+- ROM normalization tests pass for `.z64`, `.v64`, `.n64`, compressed MM, and
+  decompressed MM;
+- Windows x86-64, Linux x86-64, Mac Apple Silicon, and Mac Intel packages all build;
+- every assembled package passes the game-data audit; and
+- an end-to-end build still produces the validated release-ROM SHA-256
+  `6a3c66b66ee31f0bf271c1c17001b46c0e18bcf9e697f1d605acba91c96349db`.
 
-See `GITHUB_RELEASE.md`, `PROVENANCE.md`, and `README.md` for the detailed public
-boundary, provenance, host requirements, and known limitations. Behavioral harness
-source is included; generated ROMs, compiled plugins, and run evidence remain local.
+The platform packages are builder tools, not game releases. Generated ROMs remain
+local and are ignored by Git.

@@ -1,0 +1,6 @@
+diff --git a/tools/Makefile b/tools/Makefile
+--- a/tools/Makefile
++++ b/tools/Makefile
+@@ -9,0 +10,2 @@ else ifeq ($(UNAME_S),Darwin)
++else ifneq ($(filter MINGW% MSYS% CYGWIN%,$(UNAME_S)),)
++  DETECTED_OS=windows
