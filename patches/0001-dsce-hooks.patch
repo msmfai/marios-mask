@@ -1,0 +1,1931 @@
+diff --git a/Makefile b/Makefile
+index 54c007f..98372f1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -918,3 +918,14 @@ $(BUILD_DIR)/assets/audio/sequence_sizes.h: $(SEQUENCE_O_FILES)
+ 
+ # Print target for debugging
+ print-% : ; $(info $* is a $(flavor $*) variable set to [$($*)]) @true
++
++# [DSCE] vendored SM64 kernel TUs get SM64's include tree + defines (NOT MM's)
++$(BUILD_DIR)/src/dsce/dsce_peach_model.o: IINC += -Isrc/dsce/sm64_assets
++$(BUILD_DIR)/src/dsce/dsce_mario_model.o: IINC += -Isrc/dsce/sm64_assets
++$(BUILD_DIR)/src/dsce/dsce_mario_anims.o: IINC += -Isrc/dsce/sm64_assets
++$(BUILD_DIR)/src/dsce/sm64/%.o: IINC := -Isrc/dsce/sm64/include -Isrc/dsce/sm64 -Isrc/dsce/sm64/include/libc
++$(BUILD_DIR)/src/dsce/sm64/%.o: C_DEFINES := -DVERSION_US=1 -DF3D_OLD=1 -D_LANGUAGE_C -DTARGET_N64
++$(BUILD_DIR)/src/dsce/%.o: IINC += -Isrc/dsce
++$(BUILD_DIR)/src/dsce/%_reloc.o: $(BUILD_DIR)/spec
++	$(FADO) $$(tools/buildtools/reloc_prereq $< $(*F)) -n $(*F) -o $(@:.o=.s) -M $(@:.o=.d)
++	$(AS) $(ASFLAGS) $(ENDIAN) $(IINC) $(@:.o=.s) -o $@
+diff --git a/include/tables/actor_table.h b/include/tables/actor_table.h
+index 38adcf6..dd6c6bd 100644
+--- a/include/tables/actor_table.h
++++ b/include/tables/actor_table.h
+@@ -31,7 +31,7 @@
+ /* 0x010 */ DEFINE_ACTOR(En_Elf, ACTOR_EN_ELF, ALLOCTYPE_NORMAL, "En_Elf")
+ /* 0x011 */ DEFINE_ACTOR(En_Niw, ACTOR_EN_NIW, ALLOCTYPE_NORMAL, "En_Niw")
+ /* 0x012 */ DEFINE_ACTOR(En_Tite, ACTOR_EN_TITE, ALLOCTYPE_NORMAL, "En_Tite")
+-/* 0x013 */ DEFINE_ACTOR_UNSET(ACTOR_UNSET_13)
++/* 0x013 */ DEFINE_ACTOR_INTERNAL(Dsce_Mario, ACTOR_DSCE_MARIO, ALLOCTYPE_NORMAL, "Dsce_Mario")
+ /* 0x014 */ DEFINE_ACTOR(En_Peehat, ACTOR_EN_PEEHAT, ALLOCTYPE_NORMAL, "En_Peehat")
+ /* 0x015 */ DEFINE_ACTOR(En_Butte, ACTOR_EN_BUTTE, ALLOCTYPE_NORMAL, "En_Butte")
+ /* 0x016 */ DEFINE_ACTOR(En_Insect, ACTOR_EN_INSECT, ALLOCTYPE_NORMAL, "En_Insect")
+diff --git a/include/z64actor.h b/include/z64actor.h
+index abe5ee1..997f44d 100644
+--- a/include/z64actor.h
++++ b/include/z64actor.h
+@@ -438,7 +438,7 @@ typedef struct ActorContext {
+     /* 0x20C */ ActorSharedMemoryEntry actorSharedMemory[8];
+     /* 0x24C */ UNK_TYPE1 unk_24C[0x4];
+     /* 0x250 */ void* absoluteSpace; // Space used to allocate actor overlays of alloc type ALLOCTYPE_ABSOLUTE
+-    /* 0x254 */ struct EnTorch2* elegyShells[5]; // PLAYER_FORM_MAX
++    /* 0x254 */ struct EnTorch2* elegyShells[6]; // [DSCE] was [5]==PLAYER_FORM_MAX; now 6 for PLAYER_FORM_MARIO (header can't see the enum)
+     /* 0x268 */ u8 isOverrideInputOn;
+     /* 0x269 */ UNK_TYPE1 pad269[0x3];
+     /* 0x26C */ Input overrideInput;
+diff --git a/include/z64player.h b/include/z64player.h
+index d0bd2b8..c47a55d 100644
+--- a/include/z64player.h
++++ b/include/z64player.h
+@@ -72,7 +72,8 @@ typedef enum PlayerTransformation {
+     /* 2 */ PLAYER_FORM_ZORA,
+     /* 3 */ PLAYER_FORM_DEKU,
+     /* 4 */ PLAYER_FORM_HUMAN,
+-    /* 5 */ PLAYER_FORM_MAX
++    /* 5 */ PLAYER_FORM_MARIO, // [DSCE] Brother's Mask transformation form; every [PLAYER_FORM_MAX] table gets a [5] = copy of HUMAN ([4]).
++    /* 6 */ PLAYER_FORM_MAX
+ } PlayerTransformation;
+ 
+ typedef enum {
+diff --git a/include/z64save.h b/include/z64save.h
+index e13af81..e3e154d 100644
+--- a/include/z64save.h
++++ b/include/z64save.h
+@@ -533,7 +533,15 @@ typedef enum {
+ #define INV_CONTENT(item) gSaveContext.save.saveInfo.inventory.items[SLOT(item)]
+ #define GET_INV_CONTENT(item) ((void)0, gSaveContext.save.saveInfo.inventory.items)[SLOT(item)]
+ 
+-#define CUR_FORM ((gSaveContext.save.playerForm == PLAYER_FORM_HUMAN) ? 0 : gSaveContext.save.playerForm)
++// [DSCE] PLAYER_FORM_MARIO (5) maps to row 0 (human) like PLAYER_FORM_HUMAN does: the per-form
++// equip rows (buttonItems[4][4] / cButtonSlots[4][4]) only exist for the four transformed vanilla
++// forms; indexing row 5 read out of bounds (B button became garbage -> "punch opened the ocarina",
++// attack gating broke). Mario is human-like: he shares human's B/C rows, and the takeover actor
++// overrides his combat anyway.
++#define CUR_FORM (((gSaveContext.save.playerForm == PLAYER_FORM_HUMAN) || \
++                   (gSaveContext.save.playerForm == PLAYER_FORM_MARIO))  \
++                      ? 0                                                \
++                      : gSaveContext.save.playerForm)
+ 
+ #define GET_SAVE_EQUIPS_EQUIPMENT ((void)0, gSaveContext.save.saveInfo.equips.equipment)
+ #define GET_SAVE_INVENTORY_UPGRADES ((void)0, gSaveContext.save.saveInfo.inventory.upgrades)
+diff --git a/spec/spec b/spec/spec
+index ae3dbc3..861f26f 100644
+--- a/spec/spec
++++ b/spec/spec
+@@ -710,6 +710,24 @@ beginseg
+     include "$(BUILD_DIR)/src/code/z_fbdemo_circle.o"
+     include "$(BUILD_DIR)/src/code/z_overlay.o"
+     include "$(BUILD_DIR)/src/code/z_play.o"
++    include "$(BUILD_DIR)/src/dsce/dsce_hook.o"
++    include "$(BUILD_DIR)/src/dsce/ovl_Dsce_Mario/z_dsce_mario.o"
++    include "$(BUILD_DIR)/src/dsce/dsce_adapters.o"
++    include "$(BUILD_DIR)/src/dsce/dsce_mario_dialogue.o"
++    include "$(BUILD_DIR)/src/dsce/dsce_mario_model.o"
++    include "$(BUILD_DIR)/src/dsce/dsce_peach_model.o"
++    include "$(BUILD_DIR)/src/dsce/dsce_mario_anims.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/mario.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/mario_step.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/mario_actions_stationary.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/mario_actions_moving.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/mario_actions_airborne.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/mario_actions_automatic.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/mario_actions_submerged.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/mario_actions_object.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/dsce_mario_sandbox.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/game/dsce_sm64_support.o"
++    include "$(BUILD_DIR)/src/dsce/sm64/engine/math_util.o"
+     include "$(BUILD_DIR)/src/code/z_play_hireso.o"
+     include "$(BUILD_DIR)/src/code/PreRender.o"
+     include "$(BUILD_DIR)/src/code/TwoHeadGfxArena.o"
+@@ -875,7 +893,6 @@ beginseg
+     include "$(BUILD_DIR)/src/overlays/actors/ovl_En_Test/z_en_test.o"
+     include "$(BUILD_DIR)/src/overlays/actors/ovl_En_Test/ovl_En_Test_reloc.o"
+ endseg
+-
+ beginseg
+     name "ovl_En_GirlA"
+     compress
+diff --git a/src/audio/code_8019AF00.c b/src/audio/code_8019AF00.c
+index 97d6d2d..c2ab5aa 100644
+--- a/src/audio/code_8019AF00.c
++++ b/src/audio/code_8019AF00.c
+@@ -2565,6 +2565,23 @@ void AudioOcarina_PlayControllerInput(u8 isOcarinaSfxSuppressedWhenCancelled) {
+ 
+         // Processes new and valid notes
+         if ((sCurOcarinaPitch != OCARINA_PITCH_NONE) && (sPrevOcarinaPitch != sCurOcarinaPitch)) {
++            /* [DSCE] Mario SINGS the ocarina (inherited from the PC, monophonic): each note plays
++             * his voice clip PITCHED to the note (freqScale = 2^((semitone-base)/12), base A4=9 so
++             * one real note is the genuine unpitched sample) instead of the ocarina tone. The clip
++             * is Punch Hoo: the longest upbeat punch donor, on a generated fixed-pitch voice channel.
++             * Song recognition is untouched -- it runs off sCurOcarinaPitch, not the audio. */
++            extern int gDsceSpikeAlive;
++            extern f32 Dsce_SingRatio(s32 semitone);
++            extern f32 gDsceSingFreq;
++            extern f32 gDsceSingVolume;
++            extern u32 gDsceSingNoteCount;
++            extern u16 gDsceSingSfxId;
++            if (gDsceSpikeAlive && (gSaveContext.save.playerForm == PLAYER_FORM_MARIO)) {
++                gDsceSingNoteCount++;
++                gDsceSingFreq = Dsce_SingRatio(sCurOcarinaPitch);
++                AudioSfx_PlaySfx(gDsceSingSfxId, &gSfxDefaultPos, 4, &gDsceSingFreq, &gDsceSingVolume,
++                                 &gSfxDefaultReverb);
++            } else {
+             // Sets ocarina instrument Id to io port 7, which is used
+             // as an index in seq 0 to get the true instrument Id
+             AUDIOCMD_CHANNEL_SET_IO(SEQ_PLAYER_SFX, SFX_CHANNEL_OCARINA, 7, sOcarinaInstrumentId - 1);
+@@ -2572,6 +2589,7 @@ void AudioOcarina_PlayControllerInput(u8 isOcarinaSfxSuppressedWhenCancelled) {
+             AUDIOCMD_CHANNEL_SET_IO(SEQ_PLAYER_SFX, SFX_CHANNEL_OCARINA, 5, sCurOcarinaPitch);
+             AudioSfx_PlaySfx(NA_SE_OC_OCARINA, &gSfxDefaultPos, 4, &sCurOcarinaBendFreq, &sDefaultOcarinaVolume,
+                              &gSfxDefaultReverb);
++            }
+         } else if ((sPrevOcarinaPitch != OCARINA_PITCH_NONE) && (sCurOcarinaPitch == OCARINA_PITCH_NONE) &&
+                    !isOcarinaSfxSuppressedWhenCancelled) {
+             // Stops ocarina sound when transitioning from playing to not playing a note
+@@ -2659,6 +2677,16 @@ void AudioOcarina_SetInstrument(u8 ocarinaInstrumentId) {
+             AudioOcarina_ReadControllerInput();
+             sOcarinaInputButtonStart = sOcarinaInputButtonCur;
+             // lowers volume of all sfx channels except system & ocarina banks
+             Audio_SetSfxVolumeExceptSystemAndOcarinaBanks(0x40);
++            /* [DSCE] The PC singing mixer bypasses MM's ocarina duck. Our N64
++             * notes live in BANK_VOICE, so restore its two sequence channels or
++             * SingVolume 0.6 is silently halved to about 0.30. */
++            {
++                extern int gDsceSpikeAlive;
++                if (gDsceSpikeAlive && (gSaveContext.save.playerForm == PLAYER_FORM_MARIO)) {
++                    SEQCMD_SET_CHANNEL_VOLUME(SEQ_PLAYER_SFX, SFX_CHANNEL_VOICE0, 0, 0x7F);
++                    SEQCMD_SET_CHANNEL_VOLUME(SEQ_PLAYER_SFX, SFX_CHANNEL_VOICE1, 0, 0x7F);
++                }
++            }
+             // lowers volume of bgm players while playing ocarina
+             AudioSfx_LowerBgmVolume(SFX_CHANNEL_OCARINA);
+diff --git a/src/audio/lib/aisetnextbuf.c b/src/audio/lib/aisetnextbuf.c
+index ece1bdd..b87312a 100644
+--- a/src/audio/lib/aisetnextbuf.c
++++ b/src/audio/lib/aisetnextbuf.c
+@@ -1,4 +1,5 @@
+ #include "global.h"
++#include "dsce/dsce_config.h"
+ 
+ //! Note that this is not the same as the original libultra
+ //! osAiSetNextBuffer, see comments in the function
+@@ -20,12 +21,24 @@ s32 osAiSetNextBuffer(void* buf, u32 size) {
+     // Originally a call to __osAiDeviceBusy
+     status = IO_READ(AI_STATUS_REG);
+     if (status & AI_STATUS_FIFO_FULL) {
++#if DSCE_DBG_AUDIO
++        {
++            extern void Dsce_AiSubmitTrace(void*, u32, s32, u32);
++            Dsce_AiSubmitTrace(buf, size, -1, (u32)status);
++        }
++#endif
+         return -1;
+     }
+ 
+     // OS_K0_TO_PHYSICAL replaces osVirtualToPhysical, this replacement
+     // assumes that only KSEG0 addresses are given
+     IO_WRITE(AI_DRAM_ADDR_REG, OS_K0_TO_PHYSICAL(bufAdjusted));
+     IO_WRITE(AI_LEN_REG, size);
++#if DSCE_DBG_AUDIO
++    {
++        extern void Dsce_AiSubmitTrace(void*, u32, s32, u32);
++        Dsce_AiSubmitTrace(buf, size, 0, (u32)status);
++    }
++#endif
+     return 0;
+ }
+diff --git a/src/audio/lib/load.c b/src/audio/lib/load.c
+index 795258f..1a42862 100644
+--- a/src/audio/lib/load.c
++++ b/src/audio/lib/load.c
+@@ -13,6 +13,7 @@
+ #include "global.h"
+ #include "audio/load.h"
+ #include "buffers.h"
++#include "dsce/dsce_config.h"
+ #include "attributes.h"
+ 
+ /**
+@@ -1061,6 +1062,10 @@ s32 AudioLoad_Dma(OSIoMesg* mesg, u32 priority, s32 direction, uintptr_t devAddr
+     mesg->devAddr = devAddr;
+     mesg->size = size;
+     handle->transferInfo.cmdType = 2;
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioDmaSubmitTrace(uintptr_t, void*, size_t, OSMesgQueue*);
++      Dsce_AudioDmaSubmitTrace(devAddr, ramAddr, size, reqQueue); }
++#endif
+     sDmaHandler(handle, mesg, direction);
+     return 0;
+ }
+diff --git a/src/audio/lib/thread.c b/src/audio/lib/thread.c
+index 2e604e0..58e5975 100644
+--- a/src/audio/lib/thread.c
++++ b/src/audio/lib/thread.c
+@@ -5,6 +5,7 @@
+  */
+ #include "global.h"
+ #include "audio/effects.h"
++#include "dsce/dsce_config.h"
+ 
+ AudioTask* AudioThread_UpdateImpl(void);
+ void AudioThread_SetFadeOutTimer(s32 seqPlayerIndex, s32 fadeTimer);
+@@ -34,6 +35,9 @@ AudioTask* AudioThread_UpdateImpl(void) {
+     s32 i;
+ 
+     gAudioCtx.totalTaskCount++;
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioUpdatePhaseTrace(s32, s32, s32); Dsce_AudioUpdatePhaseTrace(0, 0, 0); }
++#endif
+     if ((gAudioCtx.totalTaskCount % gAudioCtx.audioBufferParameters.specUnk4) != 0) {
+         if (gAudioCustomUpdateFunction != NULL) {
+             gAudioCustomUpdateFunction();
+@@ -68,6 +72,9 @@ AudioTask* AudioThread_UpdateImpl(void) {
+         gAudioCustomUpdateFunction();
+     }
+ 
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioUpdatePhaseTrace(s32, s32, s32); Dsce_AudioUpdatePhaseTrace(1, gAudioCtx.curAudioFrameDmaCount, gAudioCtx.curAudioFrameDmaQueue.validCount); }
++#endif
+     dmaCount = gAudioCtx.curAudioFrameDmaCount;
+     for (i = 0; i < gAudioCtx.curAudioFrameDmaCount; i++) {
+         if (osRecvMesg(&gAudioCtx.curAudioFrameDmaQueue, NULL, OS_MESG_NOBLOCK) == 0) {
+@@ -89,9 +96,18 @@ AudioTask* AudioThread_UpdateImpl(void) {
+     }
+ 
+     gAudioCtx.curAudioFrameDmaCount = 0;
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioUpdatePhaseTrace(s32, s32, s32); Dsce_AudioUpdatePhaseTrace(2, dmaCount, gAudioCtx.curAudioFrameDmaQueue.validCount); }
++#endif
+     AudioLoad_DecreaseSampleDmaTtls();
+     AudioLoad_ProcessLoads(gAudioCtx.resetStatus);
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioUpdatePhaseTrace(s32, s32, s32); Dsce_AudioUpdatePhaseTrace(3, gAudioCtx.resetStatus, 0); }
++#endif
+     AudioLoad_ProcessScriptLoads();
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioUpdatePhaseTrace(s32, s32, s32); Dsce_AudioUpdatePhaseTrace(4, 0, 0); }
++#endif
+ 
+     if (gAudioCtx.resetStatus != 0) {
+         if (AudioHeap_ResetStep() == 0) {
+@@ -145,12 +161,18 @@ AudioTask* AudioThread_UpdateImpl(void) {
+         }
+     }
+ 
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioUpdatePhaseTrace(s32, s32, s32); Dsce_AudioUpdatePhaseTrace(5, gAudioCtx.numSamplesPerFrame[index], index); }
++#endif
+     if (gAudioSPDataPtr == (u64*)gAudioCtx.curAbiCmdBuf) {
+         return (void*)-1;
+     }
+ 
+     gAudioCtx.curAbiCmdBuf =
+         AudioSynth_Update(gAudioCtx.curAbiCmdBuf, &numAbiCmds, curAiBuffer, gAudioCtx.numSamplesPerFrame[index]);
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioUpdatePhaseTrace(s32, s32, s32); Dsce_AudioUpdatePhaseTrace(6, numAbiCmds, 0); }
++#endif
+ 
+     // Update audioRandom to the next random number
+     gAudioCtx.audioRandom = (gAudioCtx.audioRandom + gAudioCtx.totalTaskCount) * osGetCount();
+@@ -187,6 +209,9 @@ AudioTask* AudioThread_UpdateImpl(void) {
+     if (gAudioCtx.numAbiCmdsMax < numAbiCmds) {
+         gAudioCtx.numAbiCmdsMax = numAbiCmds;
+     }
++#if DSCE_DBG_AUDIO
++    { extern void Dsce_AudioUpdatePhaseTrace(s32, s32, s32); Dsce_AudioUpdatePhaseTrace(7, gAudioCtx.curTask->task.t.data_size, gAudioCtx.audioBufferParameters.specUnk4); }
++#endif
+ 
+     if (gAudioCtx.audioBufferParameters.specUnk4 == 1) {
+         return gAudioCtx.curTask;
+diff --git a/src/code/audio_thread_manager.c b/src/code/audio_thread_manager.c
+index 598cb1b..544eeef 100644
+--- a/src/code/audio_thread_manager.c
++++ b/src/code/audio_thread_manager.c
+@@ -1,5 +1,6 @@
+ #include "global.h"
+ #include "audiomgr.h"
++#include "dsce/dsce_config.h"
+ 
+ void AudioMgr_NotifyTaskDone(AudioMgr* audioMgr) {
+     AudioTask* task = audioMgr->rspTask;
+@@ -54,14 +55,23 @@ void AudioMgr_HandleRetrace(AudioMgr* audioMgr) {
+             if (msg == timerMsgVal) {
++#if DSCE_DBG_AUDIO
++                { extern void Dsce_AudioMgrTimeoutTrace(s32); Dsce_AudioMgrTimeoutTrace(1); }
++#endif
+                 osSyncPrintf("AUDIO SP TIMEOUT %08x %08x\n", audioMgr->rspTask, audioMgr->rspTask->task);
+                 if (sRetryCount >= 0) {
+                     sRetryCount--;
+                     Sched_SendAudioCancelMsg(audioMgr->sched);
+                 } else {
++#if DSCE_DBG_AUDIO
++                    { extern void Dsce_AudioMgrTimeoutTrace(s32); Dsce_AudioMgrTimeoutTrace(-1); }
++#endif
+                     osSyncPrintf(T("audioMgr.c:もうダメ！死ぬ！\n", "audioMgr.c: I can't go on! I'm dying!\n"));
+                     osDestroyThread(NULL);
+                     break;
+                 }
+             } else {
++#if DSCE_DBG_AUDIO
++                { extern void Dsce_AudioMgrTimeoutTrace(s32); Dsce_AudioMgrTimeoutTrace(0); }
++#endif
+                 break;
+             }
+         }
+diff --git a/src/boot/z_std_dma.c b/src/boot/z_std_dma.c
+index 6b121ce..858a032 100644
+--- a/src/boot/z_std_dma.c
++++ b/src/boot/z_std_dma.c
+@@ -170,6 +170,11 @@ void DmaMgr_ProcessRequest(DmaRequest* req) {
+     DmaEntry* entry;
+     s32 index = DmaMgr_FindDmaIndex(vrom);
+ 
++    { /* [DSCE LOG] every DMA while armed: the last dma.req without a dma.done is the thread-killer */
++        extern void Dsce_Log(const char*, s32, s32, s32, s32);
++        extern s32 gDsceDmaLogArmed;
++        if (gDsceDmaLogArmed) Dsce_Log("dma.req", (s32)vrom, (s32)size, (s32)ram, index);
++    }
+     if ((index >= 0) && (index < sNumDmaEntries)) {
+         entry = &gDmaDataTable[index];
+         if (entry->romEnd == 0) {
+@@ -177,6 +182,8 @@ void DmaMgr_ProcessRequest(DmaRequest* req) {
+             // only part of their content loaded into RAM, so DMA only the requested region.
+             if (entry->file.vromEnd < (vrom + size)) {
+                 // Error, vrom + size ends up in a different file than it started in
++                { extern void Dsce_Log(const char*, s32, s32, s32, s32); extern s32 gDsceDmaLogArmed;
++                  if (gDsceDmaLogArmed) Dsce_Log("dma.errSPAN", (s32)vrom, (s32)size, (s32)entry->file.vromEnd, index); }
+ #if MM_VERSION >= N64_US
+                 Fault_AddHungupAndCrash("../z_std_dma.c", 499);
+ #else
+@@ -192,6 +199,8 @@ void DmaMgr_ProcessRequest(DmaRequest* req) {
+ 
+             if (vrom != entry->file.vromStart) {
+                 // Error, requested vrom is not the start of a file
++                { extern void Dsce_Log(const char*, s32, s32, s32, s32); extern s32 gDsceDmaLogArmed;
++                  if (gDsceDmaLogArmed) Dsce_Log("dma.errSTART", (s32)vrom, (s32)size, (s32)entry->file.vromStart, index); }
+ #if MM_VERSION >= N64_US
+                 Fault_AddHungupAndCrash("../z_std_dma.c", 518);
+ #else
+@@ -201,6 +210,8 @@ void DmaMgr_ProcessRequest(DmaRequest* req) {
+ 
+             if (size != (entry->file.vromEnd - entry->file.vromStart)) {
+                 // Error, only part of the file was requested
++                { extern void Dsce_Log(const char*, s32, s32, s32, s32); extern s32 gDsceDmaLogArmed;
++                  if (gDsceDmaLogArmed) Dsce_Log("dma.errPART", (s32)vrom, (s32)size, (s32)(entry->file.vromEnd - entry->file.vromStart), index); }
+ #if MM_VERSION >= N64_US
+                 Fault_AddHungupAndCrash("../z_std_dma.c", 525);
+ #else
+@@ -216,6 +227,8 @@ void DmaMgr_ProcessRequest(DmaRequest* req) {
+         }
+     } else {
+         // Error, invalid index
++        { extern void Dsce_Log(const char*, s32, s32, s32, s32); extern s32 gDsceDmaLogArmed;
++          if (gDsceDmaLogArmed) Dsce_Log("dma.errINDEX", (s32)vrom, (s32)size, 0, index); }
+ #if MM_VERSION >= N64_US
+         Fault_AddHungupAndCrash("../z_std_dma.c", 558);
+ #else
+@@ -241,6 +254,8 @@ void DmaMgr_ThreadEntry(void* arg) {
+         req = (DmaRequest*)msg;
+ 
+         DmaMgr_ProcessRequest(req);
++        { extern void Dsce_Log(const char*, s32, s32, s32, s32); extern s32 gDsceDmaLogArmed;
++          if (gDsceDmaLogArmed) Dsce_Log("dma.done", (s32)req->vromAddr, (s32)req->size, 0, 0); }
+ 
+         // Notify the sender that the request has been processed
+         if (req->notifyQueue != NULL) {
+diff --git a/src/code/object_table.c b/src/code/object_table.c
+index 4ecdfa2..aad642b 100644
+--- a/src/code/object_table.c
++++ b/src/code/object_table.c
+@@ -6,6 +6,7 @@ s16 gPlayerFormObjectIds[PLAYER_FORM_MAX] = {
+     OBJECT_LINK_ZORA,  // PLAYER_FORM_ZORA
+     OBJECT_LINK_NUTS,  // PLAYER_FORM_DEKU
+     OBJECT_LINK_CHILD, // PLAYER_FORM_HUMAN
++    OBJECT_LINK_CHILD, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ ObjectId gObjectTableSize = OBJECT_ID_MAX;
+diff --git a/src/code/z_actor.c b/src/code/z_actor.c
+index 954e786..b68c2c2 100644
+--- a/src/code/z_actor.c
++++ b/src/code/z_actor.c
+@@ -2353,6 +2353,17 @@ void func_800B8E1C(PlayState* play, Actor* actor, f32 arg2, s16 arg3, f32 arg4)
+  * Play a sound effect at the player's position
+  */
+ void Player_PlaySfx(Player* player, u16 sfxId) {
++    /* [DSCE] While the Mario takeover drives the body, NONE of Link's self-sfx may play --
++     * not just his voice (0x68xx grunts/cries) but also the hidden puppet's cloth rustle,
++     * gear clinks and anim foley ("Link sounds in strange places"). Mario's voice and
++     * surface foley come entirely from the Dsce adapters. The takeover is not alive during
++     * the transform cutscenes, so those keep their authentic sounds. */
++    {
++        extern int gDsceSpikeAlive;
++        if (gDsceSpikeAlive && (player->transformation == PLAYER_FORM_MARIO)) {
++            return;
++        }
++    }
+     if (player->currentMask == PLAYER_MASK_GIANT) {
+         Audio_PlaySfx_AtPosWithPresetLowFreqAndHighReverb(&player->actor.projectedPos, sfxId);
+     } else {
+diff --git a/src/code/z_inventory.c b/src/code/z_inventory.c
+index 07226c4..324f264 100644
+--- a/src/code/z_inventory.c
++++ b/src/code/z_inventory.c
+@@ -1322,4 +1322,121 @@ u8 gPlayerFormItemRestrictions[PLAYER_FORM_MAX][114] = {
+         false, // ITEM_HEART_PIECE
+         false, // ITEM_71
+     },
++    // PLAYER_FORM_MARIO (copy of HUMAN)
++    {
++        true,  // ITEM_OCARINA_OF_TIME
++        true,  // ITEM_BOW
++        true,  // ITEM_ARROW_FIRE
++        true,  // ITEM_ARROW_ICE
++        true,  // ITEM_ARROW_LIGHT
++        true,  // ITEM_OCARINA_FAIRY
++        true,  // ITEM_BOMB
++        true,  // ITEM_BOMBCHU
++        true,  // ITEM_DEKU_STICK
++        true,  // ITEM_DEKU_NUT
++        true,  // ITEM_MAGIC_BEANS
++        true,  // ITEM_SLINGSHOT
++        false, // ITEM_POWDER_KEG
++        true,  // ITEM_PICTOGRAPH_BOX
++        true,  // ITEM_LENS_OF_TRUTH
++        true,  // ITEM_HOOKSHOT
++        true,  // ITEM_SWORD_GREAT_FAIRY
++        true,  // ITEM_LONGSHOT
++        true,  // ITEM_BOTTLE
++        true,  // ITEM_POTION_RED
++        true,  // ITEM_POTION_GREEN
++        true,  // ITEM_POTION_BLUE
++        true,  // ITEM_FAIRY
++        true,  // ITEM_DEKU_PRINCESS
++        true,  // ITEM_MILK_BOTTLE
++        true,  // ITEM_MILK_HALF
++        true,  // ITEM_FISH
++        true,  // ITEM_BUG
++        true,  // ITEM_BLUE_FIRE
++        true,  // ITEM_POE
++        true,  // ITEM_BIG_POE
++        true,  // ITEM_SPRING_WATER
++        true,  // ITEM_HOT_SPRING_WATER
++        true,  // ITEM_ZORA_EGG
++        true,  // ITEM_GOLD_DUST
++        true,  // ITEM_MUSHROOM
++        true,  // ITEM_SEAHORSE
++        true,  // ITEM_CHATEAU
++        true,  // ITEM_HYLIAN_LOACH
++        true,  // ITEM_OBABA_DRINK
++        true,  // ITEM_MOONS_TEAR
++        true,  // ITEM_DEED_LAND
++        true,  // ITEM_DEED_SWAMP
++        true,  // ITEM_DEED_MOUNTAIN
++        true,  // ITEM_DEED_OCEAN
++        true,  // ITEM_ROOM_KEY
++        true,  // ITEM_LETTER_MAMA
++        true,  // ITEM_LETTER_TO_KAFEI
++        true,  // ITEM_PENDANT_OF_MEMORIES
++        true,  // ITEM_TINGLE_MAP
++        true,  // ITEM_MASK_DEKU
++        true,  // ITEM_MASK_GORON
++        true,  // ITEM_MASK_ZORA
++        true,  // ITEM_MASK_FIERCE_DEITY
++        true,  // ITEM_MASK_TRUTH
++        true,  // ITEM_MASK_KAFEIS_MASK
++        true,  // ITEM_MASK_ALL_NIGHT
++        true,  // ITEM_MASK_BUNNY
++        true,  // ITEM_MASK_KEATON
++        true,  // ITEM_MASK_GARO
++        true,  // ITEM_MASK_ROMANI
++        true,  // ITEM_MASK_CIRCUS_LEADER
++        true,  // ITEM_MASK_POSTMAN
++        true,  // ITEM_MASK_COUPLE
++        true,  // ITEM_MASK_GREAT_FAIRY
++        true,  // ITEM_MASK_GIBDO
++        true,  // ITEM_MASK_DON_GERO
++        true,  // ITEM_MASK_KAMARO
++        true,  // ITEM_MASK_CAPTAIN
++        true,  // ITEM_MASK_STONE
++        true,  // ITEM_MASK_BREMEN
++        true,  // ITEM_MASK_BLAST
++        true,  // ITEM_MASK_SCENTS
++        true,  // ITEM_MASK_GIANT
++        true,  // ITEM_BOW_FIRE
++        true,  // ITEM_BOW_ICE
++        true,  // ITEM_BOW_LIGHT
++        false, // ITEM_SWORD_KOKIRI
++        false, // ITEM_SWORD_RAZOR
++        false, // ITEM_SWORD_GILDED
++        false, // ITEM_SWORD_DEITY
++        false, // ITEM_SHIELD_HERO
++        false, // ITEM_SHIELD_MIRROR
++        false, // ITEM_QUIVER_30
++        false, // ITEM_QUIVER_40
++        false, // ITEM_QUIVER_50
++        false, // ITEM_BOMB_BAG_20
++        false, // ITEM_BOMB_BAG_30
++        false, // ITEM_BOMB_BAG_40
++        false, // ITEM_WALLET_DEFAULT
++        false, // ITEM_WALLET_ADULT
++        false, // ITEM_WALLET_GIANT
++        false, // ITEM_FISHING_ROD
++        false, // ITEM_REMAINS_ODOLWA
++        false, // ITEM_REMAINS_GOHT
++        false, // ITEM_REMAINS_GYORG
++        false, // ITEM_REMAINS_TWINMOLD
++        false, // ITEM_SONG_SONATA
++        false, // ITEM_SONG_LULLABY
++        false, // ITEM_SONG_NOVA
++        false, // ITEM_SONG_ELEGY
++        false, // ITEM_SONG_OATH
++        false, // ITEM_SONG_SARIA
++        false, // ITEM_SONG_TIME
++        false, // ITEM_SONG_HEALING
++        false, // ITEM_SONG_EPONA
++        false, // ITEM_SONG_SOARING
++        false, // ITEM_SONG_STORMS
++        false, // ITEM_SONG_SUN
++        false, // ITEM_BOMBERS_NOTEBOOK
++        false, // ITEM_SKULL_TOKEN
++        false, // ITEM_HEART_CONTAINER
++        false, // ITEM_HEART_PIECE
++        false, // ITEM_71
++    },
+ };
+diff --git a/src/code/z_message.c b/src/code/z_message.c
+index 4cbd1b6..f7711c1 100644
+--- a/src/code/z_message.c
++++ b/src/code/z_message.c
+@@ -3267,10 +3267,17 @@ void Message_OpenText(PlayState* play, u16 textId) {
+                            font->messageEnd);
+     } else {
+ #if MM_VERSION >= N64_US
+-        Message_FindMessageNES(play, textId);
++        /* [DSCE] Mario's OWN textId range (0x4000+, unused by vanilla): resolve via a plain-box
++         * template so the engine gets a valid header/DMA window, then the rewrite below fills in
++         * Mario's text. Vanilla ids pass through untouched -- no overlap with anyone's lines. */
++        {
++            extern int Dsce_MarioDialogueIsDsce(u16);
++            Message_FindMessageNES(play, Dsce_MarioDialogueIsDsce(textId) ? 0x51E : textId);
++        }
+         msgCtx->msgLength = font->messageEnd;
+         DmaMgr_RequestSync(&font->msgBuf, SEGMENT_ROM_START(message_data_static) + font->messageStart,
+                            font->messageEnd);
++        { extern void Dsce_MarioDialogue(PlayState*, u16); Dsce_MarioDialogue(play, textId); } /* [DSCE] Mario dialogue: rewrite AFTER the DMA fills msgBuf */
+ #endif
+     }
+ 
+@@ -3367,6 +3374,7 @@ void Message_PauseMenu_ShowDescription(PlayState* play, u16 textId, u8 textBoxPo
+         msgCtx->msgLength = font->messageEnd;
+         DmaMgr_RequestSync(&font->msgBuf, SEGMENT_ROM_START(message_data_static) + font->messageStart,
+                            font->messageEnd);
++        { extern void Dsce_MarioDialogue(PlayState*, u16); Dsce_MarioDialogue(play, textId); } /* [DSCE] Mario dialogue: rewrite AFTER the DMA fills msgBuf */
+ #endif
+     }
+     msgCtx->choiceNum = 0;
+@@ -4218,6 +4226,7 @@ s8 sOcarinaSongFanfareIoData[PLAYER_FORM_MAX] = {
+     0x5D, // PLAYER_FORM_ZORA
+     0x5E, // PLAYER_FORM_DEKU
+     0x35, // PLAYER_FORM_HUMAN
++    0x35, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u8 sPlayerFormOcarinaInstruments[] = {
+diff --git a/src/code/z_parameter.c b/src/code/z_parameter.c
+index 7760378..8e3c3c3 100644
+--- a/src/code/z_parameter.c
++++ b/src/code/z_parameter.c
+@@ -2542,12 +2542,15 @@ s16 sArrowRefillCounts[] = { 10, 30, 40, 50 };
+ s16 sBombchuRefillCounts[] = { 20, 10, 1, 5 };
+ s16 sRupeeRefillCounts[] = { 1, 5, 10, 20, 50, 100, 200 };
+ 
++extern u64 gItemIconBrothersMaskTex[]; // DSCE: appended to icon_item_static at staging
++
+ u8 Item_Give(PlayState* play, u8 item) {
+     Player* player = GET_PLAYER(play);
+     u8 i;
+     u8 temp;
+     u8 slot;
+ 
++
+     slot = SLOT(item);
+     if (item >= ITEM_DEKU_STICKS_5) {
+         slot = SLOT(sExtraItemBases[item - ITEM_DEKU_STICKS_5]);
+diff --git a/src/code/z_play.c b/src/code/z_play.c
+index 01f25af..c0de316 100644
+--- a/src/code/z_play.c
++++ b/src/code/z_play.c
+@@ -1024,7 +1024,9 @@ void Play_UpdateMain(PlayState* this) {
+ 
+             Message_Update(this);
+             Interface_Update(this);
++            { extern void Dsce_Log(const char*,s32,s32,s32,s32); Player* dp = GET_PLAYER(this); if (dp && dp->transformation == PLAYER_FORM_MARIO) Dsce_Log("play.preanimtask", 0,0,0,0); }
+             AnimTaskQueue_Update(this, &this->animTaskQueue);
++            { extern void Dsce_Log(const char*,s32,s32,s32,s32); Player* dp = GET_PLAYER(this); if (dp && dp->transformation == PLAYER_FORM_MARIO) Dsce_Log("play.postanimtask", 0,0,0,0); }
+             SoundSource_UpdateAll(this);
+             ShrinkWindow_Update(this->state.framerateDivisor);
+             TransitionFade_Update(&this->unk_18E48, this->state.framerateDivisor);
+@@ -1047,6 +1049,7 @@ void Play_UpdateMain(PlayState* this) {
+         Play_UpdateWaterCamera(this, this->cameraPtrs[this->nextCamera]);
+         Distortion_Update();
+     }
++    { extern void Dsce_CameraHook(PlayState*); Dsce_CameraHook(this); } /* [DSCE] after Camera_Update */
+ 
+     Environment_Update(this, &this->envCtx, &this->lightCtx, &this->pauseCtx, &this->msgCtx, &this->gameOverCtx,
+                        this->state.gfxCtx);
+@@ -1061,6 +1064,7 @@ void Play_UpdateMain(PlayState* this) {
+ }
+ 
+ void Play_Update(PlayState* this) {
++    { extern void Dsce_PlayUpdateHook(PlayState*); Dsce_PlayUpdateHook(this); } /* [DSCE] hook */
+     if (!sBombersNotebookOpen) {
+         if (this->pauseCtx.bombersNotebookOpen) {
+             sBombersNotebookOpen = true;
+diff --git a/src/code/z_player_lib.c b/src/code/z_player_lib.c
+index 4a28898..d8bb896 100644
+--- a/src/code/z_player_lib.c
++++ b/src/code/z_player_lib.c
+@@ -216,7 +216,14 @@ void func_801229FC(Player* player) {
+                 }
+             }
+         }
+-    } else if ((player->currentMask != PLAYER_MASK_NONE) && (player->currentMask != (u8)player->maskId)) {
++    } else if ((player->currentMask != PLAYER_MASK_NONE) && (player->currentMask < PLAYER_MASK_MAX) &&
++               (player->currentMask != (u8)player->maskId)) {
++        // [DSCE] The `currentMask < PLAYER_MASK_MAX` guard: PLAYER_FORM_MARIO's synthetic mask id is
++        // transformation+PLAYER_MASK_FIERCE_DEITY = 26, past sMaskObjectIds' 24 entries. Without the
++        // guard the OOB read produced a garbage objectId whose vromStart (0x8050000) is outside the
++        // ROM's DMA table -> Fault_AddHungupAndCrash killed the DMA thread -> the next anim load hung
++        // the game right after the transform's white flash. Mario needs no mask object (the takeover
++        // actor draws him), so simply never arm the loader for out-of-table mask ids.
+         player->maskObjectLoadState = 1;
+         player->maskId = player->currentMask;
+     } else if (player->currentMask == PLAYER_MASK_CIRCUS_LEADER) {
+@@ -386,8 +393,11 @@ void func_8012300C(PlayState* play, s32 arg1) {
+ void func_8012301C(Actor* thisx, PlayState* play2) {
+     PlayState* play = play2;
+     Player* this = (Player*)thisx;
++    extern void Dsce_Log(const char* tag, s32 a, s32 b, s32 c, s32 d);
+ 
+     this->av1.actionVar1++;
++    Dsce_Log("xform.8012301C", (s32)this->av1.actionVar1, (s32)GET_PLAYER_FORM, (s32)this->actor.objectSlot,
++             (s32)gActorOverlayTable[ACTOR_PLAYER].profile->objectId);
+ 
+     if (this->av1.actionVar1 == 2) {
+         s16 objectId = gPlayerFormObjectIds[GET_PLAYER_FORM];
+@@ -411,6 +421,7 @@ void func_8012301C(Actor* thisx, PlayState* play2) {
+ 
+ FlexSkeletonHeader* gPlayerSkeletons[PLAYER_FORM_MAX] = {
+     &gLinkFierceDeitySkel, &gLinkGoronSkel, &gLinkZoraSkel, &gLinkDekuSkel, &gLinkHumanSkel,
++    &gLinkHumanSkel, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ s16 D_801BFE14[PLAYER_BOOTS_MAX][18] = {
+@@ -937,6 +948,7 @@ u8 D_801BFF90[PLAYER_FORM_MAX] = {
+     PLAYER_BOOTS_ZORA_LAND,    // PLAYER_FORM_ZORA
+     PLAYER_BOOTS_DEKU,         // PLAYER_FORM_DEKU
+     PLAYER_BOOTS_HYLIAN,       // PLAYER_FORM_HUMAN
++    PLAYER_BOOTS_HYLIAN,       // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u8 sPlayerStrengths[PLAYER_FORM_MAX] = {
+@@ -945,6 +957,7 @@ u8 sPlayerStrengths[PLAYER_FORM_MAX] = {
+     PLAYER_STRENGTH_ZORA,  // PLAYER_FORM_ZORA
+     PLAYER_STRENGTH_DEKU,  // PLAYER_FORM_DEKU
+     PLAYER_STRENGTH_HUMAN, // PLAYER_FORM_HUMAN
++    PLAYER_STRENGTH_HUMAN, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ typedef struct {
+@@ -1014,7 +1027,7 @@ PlayerModelIndices gPlayerModelTypes[PLAYER_MODELGROUP_MAX] = {
+ 
+ Gfx* gPlayerWaistDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkFierceDeityWaistDL, gLinkFierceDeityWaistDL, gLinkGoronWaistDL, gLinkGoronWaistDL, gLinkZoraWaistDL,
+-    gLinkZoraWaistDL,        gLinkDekuWaistDL,        gLinkDekuWaistDL,  gLinkHumanWaistDL, gLinkHumanWaistDL,
++    gLinkZoraWaistDL,        gLinkDekuWaistDL,        gLinkDekuWaistDL,  gLinkHumanWaistDL, gLinkHumanWaistDL, gLinkHumanWaistDL, gLinkHumanWaistDL,
+ };
+ 
+ Gfx* gPlayerHandHoldingShields[2 * (PLAYER_SHIELD_MAX - 1)] = {
+@@ -1034,7 +1047,7 @@ Gfx* gPlayerSheath12DLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuSheathDL,
+     gLinkDekuSheathDL,
+     gLinkHumanSheathEmptyDL,
+-    gLinkHumanSheathEmptyDL,
++    gLinkHumanSheathEmptyDL, gLinkHumanSheathEmptyDL, gLinkHumanSheathEmptyDL,
+ };
+ 
+ Gfx* gPlayerSheath13DLs[2 * PLAYER_FORM_MAX] = {
+@@ -1047,7 +1060,7 @@ Gfx* gPlayerSheath13DLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuSheathDL,
+     gLinkDekuSheathDL,
+     gLinkHumanSheathEmptyDL,
+-    gLinkHumanSheathEmptyDL,
++    gLinkHumanSheathEmptyDL, gLinkHumanSheathEmptyDL, gLinkHumanSheathEmptyDL,
+ };
+ 
+ Gfx* gPlayerSheath14DLs[2 * PLAYER_FORM_MAX] = {
+@@ -1060,7 +1073,7 @@ Gfx* gPlayerSheath14DLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuSheathDL,
+     gLinkDekuSheathDL,
+     gLinkHumanSheathEmptyDL,
+-    gLinkHumanSheathEmptyDL,
++    gLinkHumanSheathEmptyDL, gLinkHumanSheathEmptyDL, gLinkHumanSheathEmptyDL,
+ };
+ 
+ Gfx* gPlayerShields[] = {
+@@ -1090,19 +1103,19 @@ Gfx* gPlayerLeftHandTwoHandSwordDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuLeftHandDL,
+     gLinkDekuLeftHandDL,
+     gLinkHumanLeftHandHoldingGreatFairysSwordDL,
+-    gLinkHumanLeftHandHoldingGreatFairysSwordDL,
++    gLinkHumanLeftHandHoldingGreatFairysSwordDL, gLinkHumanLeftHandHoldingGreatFairysSwordDL, gLinkHumanLeftHandHoldingGreatFairysSwordDL,
+ };
+ 
+ Gfx* gPlayerLeftHandOpenDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkFierceDeityLeftHandDL, gLinkFierceDeityLeftHandDL, gLinkGoronLeftHandOpenDL, gLinkGoronLeftHandOpenDL,
+     gLinkZoraLeftHandOpenDL,    gLinkZoraLeftHandOpenDL,    gLinkDekuLeftHandDL,      gLinkDekuLeftHandDL,
+-    gLinkHumanLeftHandOpenDL,   gLinkHumanLeftHandOpenDL,
++    gLinkHumanLeftHandOpenDL,   gLinkHumanLeftHandOpenDL, gLinkHumanLeftHandOpenDL, gLinkHumanLeftHandOpenDL,
+ };
+ 
+ Gfx* gPlayerLeftHandClosedDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkFierceDeityLeftHandDL, gLinkFierceDeityLeftHandDL, gLinkGoronLeftHandClosedDL, gLinkGoronLeftHandClosedDL,
+     gLinkZoraLeftHandClosedDL,  gLinkZoraLeftHandClosedDL,  gLinkDekuLeftHandDL,        gLinkDekuLeftHandDL,
+-    gLinkHumanLeftHandClosedDL, gLinkHumanLeftHandClosedDL,
++    gLinkHumanLeftHandClosedDL, gLinkHumanLeftHandClosedDL, gLinkHumanLeftHandClosedDL, gLinkHumanLeftHandClosedDL,
+ };
+ 
+ Gfx* gPlayerLeftHandOneHandSwordDLs[2 * PLAYER_FORM_MAX] = {
+@@ -1115,7 +1128,7 @@ Gfx* gPlayerLeftHandOneHandSwordDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuLeftHandDL,
+     gLinkDekuLeftHandDL,
+     gLinkHumanLeftHandHoldingKokiriSwordDL,
+-    gLinkHumanLeftHandHoldingKokiriSwordDL,
++    gLinkHumanLeftHandHoldingKokiriSwordDL, gLinkHumanLeftHandHoldingKokiriSwordDL, gLinkHumanLeftHandHoldingKokiriSwordDL,
+ };
+ 
+ Gfx* D_801C018C[] = {
+@@ -1133,13 +1146,13 @@ Gfx* D_801C018C[] = {
+ Gfx* gPlayerRightHandOpenDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkFierceDeityRightHandDL, gLinkFierceDeityRightHandDL, gLinkGoronRightHandOpenDL, gLinkGoronRightHandOpenDL,
+     gLinkZoraRightHandOpenDL,    gLinkZoraRightHandOpenDL,    gLinkDekuRightHandDL,      gLinkDekuRightHandDL,
+-    gLinkHumanRightHandOpenDL,   gLinkHumanRightHandOpenDL,
++    gLinkHumanRightHandOpenDL,   gLinkHumanRightHandOpenDL, gLinkHumanRightHandOpenDL, gLinkHumanRightHandOpenDL,
+ };
+ 
+ Gfx* gPlayerRightHandClosedDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkFierceDeityRightHandDL, gLinkFierceDeityRightHandDL, gLinkGoronRightHandClosedDL, gLinkGoronRightHandClosedDL,
+     gLinkZoraRightHandClosedDL,  gLinkZoraRightHandClosedDL,  gLinkDekuRightHandDL,        gLinkDekuRightHandDL,
+-    gLinkHumanRightHandClosedDL, gLinkHumanRightHandClosedDL,
++    gLinkHumanRightHandClosedDL, gLinkHumanRightHandClosedDL, gLinkHumanRightHandClosedDL, gLinkHumanRightHandClosedDL,
+ };
+ 
+ Gfx* gPlayerRightHandBowDLs[2 * PLAYER_FORM_MAX] = {
+@@ -1152,7 +1165,7 @@ Gfx* gPlayerRightHandBowDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuRightHandDL,
+     gLinkDekuRightHandDL,
+     gLinkHumanRightHandHoldingBowDL,
+-    gLinkHumanRightHandHoldingBowDL,
++    gLinkHumanRightHandHoldingBowDL, gLinkHumanRightHandHoldingBowDL, gLinkHumanRightHandHoldingBowDL,
+ };
+ 
+ Gfx* gPlayerRightHandInstrumentDLs[2 * PLAYER_FORM_MAX] = {
+@@ -1165,7 +1178,7 @@ Gfx* gPlayerRightHandInstrumentDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuRightHandDL,
+     gLinkDekuRightHandDL,
+     gLinkHumanRightHandHoldingOcarinaDL,
+-    gLinkHumanRightHandHoldingOcarinaDL,
++    gLinkHumanRightHandHoldingOcarinaDL, gLinkHumanRightHandHoldingOcarinaDL, gLinkHumanRightHandHoldingOcarinaDL,
+ };
+ 
+ Gfx* gPlayerRightHandHookshotDLs[2 * PLAYER_FORM_MAX] = {
+@@ -1178,7 +1191,7 @@ Gfx* gPlayerRightHandHookshotDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuRightHandDL,
+     gLinkDekuRightHandDL,
+     gLinkHumanRightHandHoldingHookshotDL,
+-    gLinkHumanRightHandHoldingHookshotDL,
++    gLinkHumanRightHandHoldingHookshotDL, gLinkHumanRightHandHoldingHookshotDL, gLinkHumanRightHandHoldingHookshotDL,
+ };
+ 
+ Gfx* gPlayerLeftHandBottleDLs[2 * PLAYER_FORM_MAX] = {
+@@ -1191,7 +1204,7 @@ Gfx* gPlayerLeftHandBottleDLs[2 * PLAYER_FORM_MAX] = {
+     gLinkDekuLeftHandDL,
+     gLinkDekuLeftHandDL,
+     gLinkHumanLeftHandHoldBottleDL,
+-    gLinkHumanLeftHandHoldBottleDL,
++    gLinkHumanLeftHandHoldBottleDL, gLinkHumanLeftHandHoldBottleDL, gLinkHumanLeftHandHoldBottleDL,
+ };
+ 
+ /* DLists groups end */
+@@ -1199,16 +1212,19 @@ Gfx* gPlayerLeftHandBottleDLs[2 * PLAYER_FORM_MAX] = {
+ Gfx* sPlayerFirstPersonLeftForearmDLs[PLAYER_FORM_MAX] = {
+     gLinkFierceDeityLeftForearmDL, gLinkGoronLeftForearmDL, gLinkZoraLeftForearmDL,
+     gLinkDekuLeftForearmDL,        gLinkHumanLeftForearmDL,
++    gLinkHumanLeftForearmDL, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ Gfx* sPlayerFirstPersonLeftHandDLs[PLAYER_FORM_MAX] = {
+     gLinkFierceDeityLeftHandDL, gLinkGoronLeftHandOpenDL,   gLinkZoraLeftHandClosedDL,
+     gLinkDekuLeftHandDL,        gLinkHumanLeftHandClosedDL,
++    gLinkHumanLeftHandClosedDL, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ Gfx* sPlayerFirstPersonRightShoulderDLs[PLAYER_FORM_MAX] = {
+     gLinkFierceDeityRightShoulderDL, gLinkGoronRightShoulderDL, gLinkZoraRightShoulderDL,
+     gLinkDekuRightShoulderDL,        gLinkHumanRightShoulderDL,
++    gLinkHumanRightShoulderDL, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ Gfx* sPlayerFirstPersonRightHandDLs[PLAYER_FORM_MAX] = {
+@@ -1218,6 +1234,7 @@ Gfx* sPlayerFirstPersonRightHandDLs[PLAYER_FORM_MAX] = {
+     gLinkZoraRightHandOpenDL,
+     gLinkDekuRightHandDL,
+     object_link_child_DL_018490,
++    object_link_child_DL_018490, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ Gfx* sPlayerFirstPersonRightHandHookshotDLs[PLAYER_FORM_MAX] = {
+@@ -1227,6 +1244,7 @@ Gfx* sPlayerFirstPersonRightHandHookshotDLs[PLAYER_FORM_MAX] = {
+     gLinkZoraRightHandOpenDL,
+     gLinkDekuRightHandDL,
+     object_link_child_DL_017B40,
++    object_link_child_DL_017B40, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ // Indexed by model types (left hand, right hand, sheath or waist)
+@@ -1922,6 +1940,17 @@ static TexturePtr sEyeTextures[PLAYER_FORM_MAX][PLAYER_EYES_MAX] = {
+         gLinkHumanEyesDownTex,    // PLAYER_EYES_DOWN
+         gLinkHumanEyesWincingTex, // PLAYER_EYES_WINCING
+     },
++    // PLAYER_FORM_MARIO (copy of HUMAN)
++    {
++        gLinkHumanEyesOpenTex,    // PLAYER_EYES_OPEN
++        gLinkHumanEyesHalfTex,    // PLAYER_EYES_HALF
++        gLinkHumanEyesClosedTex,  // PLAYER_EYES_CLOSED
++        gLinkHumanEyesRightTex,   // PLAYER_EYES_RIGHT
++        gLinkHumanEyesLeftTex,    // PLAYER_EYES_LEFT
++        gLinkHumanEyesUpTex,      // PLAYER_EYES_UP
++        gLinkHumanEyesDownTex,    // PLAYER_EYES_DOWN
++        gLinkHumanEyesWincingTex, // PLAYER_EYES_WINCING
++    },
+ };
+ 
+ static TexturePtr sMouthTextures[PLAYER_FORM_MAX][PLAYER_MOUTH_MAX] = {
+@@ -1960,6 +1989,13 @@ static TexturePtr sMouthTextures[PLAYER_FORM_MAX][PLAYER_MOUTH_MAX] = {
+         gLinkHumanMouthOpenTex,   // PLAYER_MOUTH_OPEN
+         gLinkHumanMouthSmileTex,  // PLAYER_MOUTH_SMILE
+     },
++    // PLAYER_FORM_MARIO (copy of HUMAN)
++    {
++        gLinkHumanMouthClosedTex, // PLAYER_MOUTH_CLOSED
++        gLinkHumanMouthHalfTex,   // PLAYER_MOUTH_HALF
++        gLinkHumanMouthOpenTex,   // PLAYER_MOUTH_OPEN
++        gLinkHumanMouthSmileTex,  // PLAYER_MOUTH_SMILE
++    },
+ };
+ #endif
+ 
+@@ -2053,6 +2089,7 @@ Vec3f D_801C08C0[PLAYER_FORM_MAX] = {
+     { 1406.0f, 0.0f, 0.0f }, // PLAYER_FORM_ZORA
+     { 408.0f, 0.0f, 0.0f },  // PLAYER_FORM_DEKU
+     { 695.0f, 0.0f, 0.0f },  // PLAYER_FORM_HUMAN
++    { 695.0f, 0.0f, 0.0f },  // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ f32 D_801C08FC[PLAYER_FORM_MAX] = {
+@@ -2061,6 +2098,7 @@ f32 D_801C08FC[PLAYER_FORM_MAX] = {
+     1506.0f, // PLAYER_FORM_ZORA
+     359.0f,  // PLAYER_FORM_DEKU
+     826.0f,  // PLAYER_FORM_HUMAN
++    826.0f,  // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ f32 D_801C0910[PLAYER_FORM_MAX] = {
+     170.0416f,  // PLAYER_FORM_FIERCE_DEITY
+@@ -2068,6 +2106,7 @@ f32 D_801C0910[PLAYER_FORM_MAX] = {
+     197.68358f, // PLAYER_FORM_ZORA
+     16.646399f, // PLAYER_FORM_DEKU
+     48.302498f, // PLAYER_FORM_HUMAN
++    48.302498f, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ f32 D_801C0924[PLAYER_FORM_MAX] = {
+     10.019104f,  // PLAYER_FORM_FIERCE_DEITY
+@@ -2075,6 +2114,7 @@ f32 D_801C0924[PLAYER_FORM_MAX] = {
+     -29.12001f,  // PLAYER_FORM_ZORA
+     3.7582989f,  // PLAYER_FORM_DEKU
+     -19.925102f, // PLAYER_FORM_HUMAN
++    -19.925102f, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ f32 D_801C0938[PLAYER_FORM_MAX] = {
+     5.0f, // PLAYER_FORM_FIERCE_DEITY
+@@ -2082,6 +2122,7 @@ f32 D_801C0938[PLAYER_FORM_MAX] = {
+     1.0f, // PLAYER_FORM_ZORA
+     1.0f, // PLAYER_FORM_DEKU
+     3.0f, // PLAYER_FORM_HUMAN
++    3.0f, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ /**
+@@ -3363,6 +3404,7 @@ Vec3f D_801C0CE8[PLAYER_FORM_MAX] = {
+     { 0.0f, 90.0f, -50.0f },     // PLAYER_FORM_ZORA
+     { 0.0f, 20.0f, -60.0f },     // PLAYER_FORM_DEKU
+     { 0.0f, 0.0f, 0.0f },        // PLAYER_FORM_HUMAN
++    { 0.0f, 0.0f, 0.0f },        // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void Player_DrawBunnyHood(PlayState* play) {
+@@ -3701,6 +3743,7 @@ Vec3f sPlayerFootPos[PLAYER_FORM_MAX] = {
+     { 200.0f, 300.0f, 0.0f }, // PLAYER_FORM_ZORA
+     { 200.0f, 150.0f, 0.0f }, // PLAYER_FORM_DEKU
+     { 200.0f, 200.0f, 0.0f }, // PLAYER_FORM_HUMAN
++    { 200.0f, 200.0f, 0.0f }, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void Player_SetFeetPos(PlayState* play, Player* player, s32 limbIndex) {
+@@ -3970,6 +4013,7 @@ void Player_PostLimbDrawGameplay(PlayState* play, s32 limbIndex, Gfx** dList1, G
+                         { -160.0f, 0.0f },   // PLAYER_FORM_ZORA
+                         { 220.0f, -200.0f }, // PLAYER_FORM_DEKU
+                         { 0.0f, 0.0f },      // PLAYER_FORM_HUMAN
++                        { 0.0f, 0.0f },      // PLAYER_FORM_MARIO (copy of HUMAN)
+                     };
+                     Vec2f* temp_s0_4 = &D_801C0E04[player->transformation];
+ 
+@@ -4084,6 +4128,7 @@ void Player_PostLimbDrawGameplay(PlayState* play, s32 limbIndex, Gfx** dList1, G
+                 { -189.5f, -594.87f, 0.0f }, // PLAYER_FORM_ZORA
+                 { -570.0f, -812.0f, 0.0f },  // PLAYER_FORM_DEKU
+                 { -230.0f, -520.0f, 0.0f },  // PLAYER_FORM_HUMAN
++                { -230.0f, -520.0f, 0.0f },  // PLAYER_FORM_MARIO (copy of HUMAN)
+             };
+             Vec3f* temp_s0_7 = &D_801C0E40[player->transformation];
+ 
+diff --git a/src/code/z_skelanime.c b/src/code/z_skelanime.c
+index 671ab8c..8908275 100644
+--- a/src/code/z_skelanime.c
++++ b/src/code/z_skelanime.c
+@@ -1030,6 +1030,9 @@ void AnimTaskQueue_AddLoadPlayerFrame(PlayState* play, PlayerAnimationHeader* an
+     if (task != NULL) {
+         PlayerAnimationHeader* playerAnimHeader = Lib_SegmentedToVirtual(animation);
+         s32 pad;
++        { extern void Dsce_Log(const char*,s32,s32,s32,s32); Player* dp = GET_PLAYER(play);
++          if (dp && dp->transformation == PLAYER_FORM_MARIO)
++            Dsce_Log("animdma", (s32)playerAnimHeader->linkAnimSegment, limbCount, (s32)frameTable, frame); }
+ 
+         osCreateMesgQueue(&task->data.loadPlayerFrame.msgQueue, task->data.loadPlayerFrame.msg,
+                           ARRAY_COUNT(task->data.loadPlayerFrame.msg));
+@@ -1236,8 +1239,12 @@ void AnimTaskQueue_Update(PlayState* play, AnimTaskQueue* animTaskQueue) {
+         AnimTask_CopyUsingMapInverted, AnimTask_ActorMovement,
+     };
+     AnimTask* task = animTaskQueue->tasks;
++    { extern void Dsce_Log(const char*,s32,s32,s32,s32); Player* dp = GET_PLAYER(play);
++      if (dp && dp->transformation == PLAYER_FORM_MARIO) Dsce_Log("atq.count", (s32)animTaskQueue->count, 0, 0, 0); }
+ 
+     while (animTaskQueue->count != 0) {
++        { extern void Dsce_Log(const char*,s32,s32,s32,s32); Player* dp = GET_PLAYER(play);
++          if (dp && dp->transformation == PLAYER_FORM_MARIO) Dsce_Log("atq.task", (s32)task->type, (s32)animTaskQueue->count, 0, 0); }
+         sAnimTaskFuncs[task->type](play, &task->data);
+         task++;
+         animTaskQueue->count--;
+diff --git a/src/code/z_sram_JPN.c b/src/code/z_sram_JPN.c
+index c6790a1..3c7a1f2 100644
+--- a/src/code/z_sram_JPN.c
++++ b/src/code/z_sram_JPN.c
+@@ -1112,6 +1112,7 @@ u8 D_801C6A48[PLAYER_FORM_MAX] = {
+     ITEM_MASK_ZORA,         // PLAYER_FORM_ZORA
+     ITEM_MASK_DEKU,         // PLAYER_FORM_DEKU
+     ITEM_MASK_FIERCE_DEITY, // PLAYER_FORM_HUMAN
++    ITEM_MASK_FIERCE_DEITY, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u8 D_801C6A50[PLAYER_FORM_MAX] = {
+@@ -1120,6 +1121,7 @@ u8 D_801C6A50[PLAYER_FORM_MAX] = {
+     SLOT_MASK_ZORA,         // PLAYER_FORM_ZORA
+     SLOT_MASK_DEKU,         // PLAYER_FORM_DEKU
+     SLOT_MASK_FIERCE_DEITY, // PLAYER_FORM_HUMAN
++    SLOT_MASK_FIERCE_DEITY, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ /**
+diff --git a/src/code/z_sram_NES.c b/src/code/z_sram_NES.c
+index c6790a1..3c7a1f2 100644
+--- a/src/code/z_sram_NES.c
++++ b/src/code/z_sram_NES.c
+@@ -1112,6 +1112,7 @@ u8 D_801C6A48[PLAYER_FORM_MAX] = {
+     ITEM_MASK_ZORA,         // PLAYER_FORM_ZORA
+     ITEM_MASK_DEKU,         // PLAYER_FORM_DEKU
+     ITEM_MASK_FIERCE_DEITY, // PLAYER_FORM_HUMAN
++    ITEM_MASK_FIERCE_DEITY, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u8 D_801C6A50[PLAYER_FORM_MAX] = {
+@@ -1120,6 +1121,7 @@ u8 D_801C6A50[PLAYER_FORM_MAX] = {
+     SLOT_MASK_ZORA,         // PLAYER_FORM_ZORA
+     SLOT_MASK_DEKU,         // PLAYER_FORM_DEKU
+     SLOT_MASK_FIERCE_DEITY, // PLAYER_FORM_HUMAN
++    SLOT_MASK_FIERCE_DEITY, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ /**
+@@ -1396,6 +1398,8 @@ void func_801457CC(GameState* gameState, SramContext* sramCtx) {
+     u16 maskCount;
+ 
+     if (gSaveContext.flashSaveAvailable) {
++        extern void Dsce_SeedPostTutorialSave(SramContext* sramCtx);
++        Dsce_SeedPostTutorialSave(sramCtx); /* [DSCE] one-time optional File 1 on fresh FlashRAM */
+         D_801F6AF0 = CURRENT_TIME;
+         D_801F6AF2 = gSaveContext.flashSaveAvailable;
+         sp64 = 0;
+diff --git a/src/overlays/actors/ovl_Bg_Ikana_Rotaryroom/z_bg_ikana_rotaryroom.c b/src/overlays/actors/ovl_Bg_Ikana_Rotaryroom/z_bg_ikana_rotaryroom.c
+index 6a0850b..72e4ab9 100644
+--- a/src/overlays/actors/ovl_Bg_Ikana_Rotaryroom/z_bg_ikana_rotaryroom.c
++++ b/src/overlays/actors/ovl_Bg_Ikana_Rotaryroom/z_bg_ikana_rotaryroom.c
+@@ -129,7 +129,7 @@ Vec3s D_80B821C4[] = {
+     { 150, 194, -90 },   { 60, 194, -120 },  { -60, 194, 90 },   { 30, 194, 120 },  { 49, 194, -105 },
+ };
+ 
+-f32 D_80B82200[] = { 64.0f, 66.0f, 66.0f, 30.0f, 41.0f };
++f32 D_80B82200[] = { 64.0f, 66.0f, 66.0f, 30.0f, 41.0f, 41.0f }; // [DSCE] +PLAYER_FORM_MARIO (copy of HUMAN)
+ 
+ static InitChainEntry sInitChain[] = {
+     ICHAIN_VEC3F_DIV1000(scale, 100, ICHAIN_STOP),
+diff --git a/src/overlays/actors/ovl_Boss_07/z_boss_07.c b/src/overlays/actors/ovl_Boss_07/z_boss_07.c
+index cb77ee0..4aeaa66 100644
+--- a/src/overlays/actors/ovl_Boss_07/z_boss_07.c
++++ b/src/overlays/actors/ovl_Boss_07/z_boss_07.c
+@@ -1582,6 +1582,7 @@ void Boss07_Wrath_IntroCutscene(Boss07* this, PlayState* play) {
+         { 100.0f, 400.0f, 110.0f }, // PLAYER_FORM_FIERCE_DEITY
+         { 60.0f, 390.0f, 110.0f },  // PLAYER_FORM_ZORA
+         { 30.0f, 430.0f, 110.0f },  // PLAYER_FORM_DEKU
++        { 30.0f, 430.0f, 110.0f },  // PLAYER_FORM_MARIO (copy of HUMAN)
+     };
+ 
+     this->damagedTimer = 20;
+diff --git a/src/overlays/actors/ovl_En_Box/z_en_box.c b/src/overlays/actors/ovl_En_Box/z_en_box.c
+index 0d8784c..b05d115 100644
+--- a/src/overlays/actors/ovl_En_Box/z_en_box.c
++++ b/src/overlays/actors/ovl_En_Box/z_en_box.c
+@@ -445,6 +445,7 @@ void EnBox_WaitOpen(EnBox* this, PlayState* play) {
+         &gBoxBigChestOpenAdultAnim, // PLAYER_FORM_ZORA
+         &gBoxBigChestOpenDekuAnim,  // PLAYER_FORM_DEKU
+         &gBoxBigChestOpenChildAnim, // PLAYER_FORM_HUMAN
++        &gBoxBigChestOpenChildAnim, // PLAYER_FORM_MARIO (copy of HUMAN)
+     };
+     s32 pad;
+     AnimationHeader* anim;
+@@ -465,6 +466,7 @@ void EnBox_WaitOpen(EnBox* this, PlayState* play) {
+                 1.5f, // PLAYER_FORM_ZORA
+                 1.0f, // PLAYER_FORM_DEKU
+                 1.5f, // PLAYER_FORM_HUMAN
++                1.5f, // PLAYER_FORM_MARIO (copy of HUMAN)
+             };
+ 
+             anim = sBigChestAnimations[GET_PLAYER_FORM];
+diff --git a/src/overlays/actors/ovl_En_Door/z_en_door.c b/src/overlays/actors/ovl_En_Door/z_en_door.c
+index 53dadf8..3a96605 100644
+--- a/src/overlays/actors/ovl_En_Door/z_en_door.c
++++ b/src/overlays/actors/ovl_En_Door/z_en_door.c
+@@ -258,12 +258,14 @@ static AnimationHeader* sAnimations[] = {
+     &gDoorGoronOpenLeftAnim,           // PLAYER_FORM_GORON
+     &gDoorFierceDeityZoraOpenLeftAnim, // PLAYER_FORM_ZORA
+     &gDoorDekuOpenLeftAnim,            // PLAYER_FORM_DEKU
++    &gDoorHumanOpenLeftAnim,            // PLAYER_FORM_DEKU
+     &gDoorHumanOpenLeftAnim,           // PLAYER_FORM_HUMAN
+     // right
+     &gDoorFierceDeityZoraOpenRightAnim, // PLAYER_FORM_FIERCE_DEITY
+     &gDoorGoronOpenRightAnim,           // PLAYER_FORM_GORON
+     &gDoorFierceDeityZoraOpenRightAnim, // PLAYER_FORM_ZORA
+     &gDoorDekuOpenRightAnim,            // PLAYER_FORM_DEKU
++    &gDoorHumanOpenRightAnim,            // PLAYER_FORM_DEKU
+     &gDoorHumanOpenRightAnim,           // PLAYER_FORM_HUMAN
+ };
+ static_assert(ARRAY_COUNT(sAnimations) == 2 * PLAYER_FORM_MAX,
+@@ -275,12 +277,14 @@ static u8 sAnimOpenFrames[] = {
+     25, // PLAYER_FORM_GORON
+     25, // PLAYER_FORM_ZORA
+     25, // PLAYER_FORM_DEKU
++    25, // PLAYER_FORM_DEKU
+     25, // PLAYER_FORM_HUMAN
+     // right
+     25, // PLAYER_FORM_FIERCE_DEITY
+     25, // PLAYER_FORM_GORON
+     25, // PLAYER_FORM_ZORA
+     25, // PLAYER_FORM_DEKU
++    25, // PLAYER_FORM_DEKU
+     25, // PLAYER_FORM_HUMAN
+ };
+ static_assert(ARRAY_COUNT(sAnimOpenFrames) == 2 * PLAYER_FORM_MAX,
+@@ -292,12 +296,14 @@ static u8 sAnimCloseFrames[] = {
+     60, // PLAYER_FORM_GORON
+     60, // PLAYER_FORM_ZORA
+     70, // PLAYER_FORM_DEKU
++    70, // PLAYER_FORM_DEKU
+     70, // PLAYER_FORM_HUMAN
+     // right
+     60, // PLAYER_FORM_FIERCE_DEITY
+     60, // PLAYER_FORM_GORON
+     60, // PLAYER_FORM_ZORA
+     60, // PLAYER_FORM_DEKU
++    70, // PLAYER_FORM_DEKU
+     70, // PLAYER_FORM_HUMAN
+ };
+ static_assert(ARRAY_COUNT(sAnimCloseFrames) == 2 * PLAYER_FORM_MAX,
+diff --git a/src/overlays/actors/ovl_En_Floormas/z_en_floormas.c b/src/overlays/actors/ovl_En_Floormas/z_en_floormas.c
+index 534e58c..e7cc778 100644
+--- a/src/overlays/actors/ovl_En_Floormas/z_en_floormas.c
++++ b/src/overlays/actors/ovl_En_Floormas/z_en_floormas.c
+@@ -705,6 +705,7 @@ static Vec3f D_808D3900[PLAYER_FORM_MAX] = {
+     { 25.0f, 35.0f, -2.0f },  // PLAYER_FORM_ZORA
+     { 10.0f, 20.0f, -4.0f },  // PLAYER_FORM_DEKU
+     { 15.0f, 25.0f, -2.0f },  // PLAYER_FORM_HUMAN
++    { 15.0f, 25.0f, -2.0f },  // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void func_808D217C(EnFloormas* this, Player* player) {
+diff --git a/src/overlays/actors/ovl_En_Guard_Nuts/z_en_guard_nuts.c b/src/overlays/actors/ovl_En_Guard_Nuts/z_en_guard_nuts.c
+index 7c41282..70269f6 100644
+--- a/src/overlays/actors/ovl_En_Guard_Nuts/z_en_guard_nuts.c
++++ b/src/overlays/actors/ovl_En_Guard_Nuts/z_en_guard_nuts.c
+@@ -176,6 +176,9 @@ void EnGuardNuts_Wait(EnGuardNuts* this, PlayState* play) {
+         this->guardTextIndex = 3;
+     }
+     this->actor.textId = sTextIds[this->guardTextIndex];
++    if (player->transformation == PLAYER_FORM_MARIO) {
++        this->actor.textId = 0x4008; // [DSCE] Mario's own line (dsce_mario_dialogue.c)
++    }
+     phi_a1 = this->actor.world.rot.y;
+     if (D_80ABBE20 == 2) {
+         EnGuardNuts_Burrow(this, play);
+@@ -244,7 +247,11 @@ void func_80ABB590(EnGuardNuts* this, PlayState* play) {
+                     EnGuardNuts_Burrow(this, play);
+                 } else {
+                     this->guardTextIndex++;
+-                    Message_StartTextbox(play, sTextIds[this->guardTextIndex], &this->actor);
++                    Message_StartTextbox(play,
++                                         (GET_PLAYER(play)->transformation == PLAYER_FORM_MARIO)
++                                             ? 0x4008 // [DSCE] Mario's own line
++                                             : sTextIds[this->guardTextIndex],
++                                         &this->actor);
+                     if (D_80ABBE38[this->guardTextIndex] == 2) {
+                         D_80ABBE20 = 1;
+                     }
+diff --git a/src/overlays/actors/ovl_En_Pr/z_en_pr.c b/src/overlays/actors/ovl_En_Pr/z_en_pr.c
+index 2bfb008..3e7f9c2 100644
+--- a/src/overlays/actors/ovl_En_Pr/z_en_pr.c
++++ b/src/overlays/actors/ovl_En_Pr/z_en_pr.c
+@@ -70,6 +70,7 @@ f32 D_80A338C0[PLAYER_FORM_MAX] = {
+     30.0f, // PLAYER_FORM_ZORA
+     15.0f, // PLAYER_FORM_DEKU
+     15.0f, // PLAYER_FORM_HUMAN
++    15.0f, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ ActorProfile En_Pr_Profile = {
+diff --git a/src/overlays/actors/ovl_En_Prz/z_en_prz.c b/src/overlays/actors/ovl_En_Prz/z_en_prz.c
+index 83d882d..86caaf3 100644
+--- a/src/overlays/actors/ovl_En_Prz/z_en_prz.c
++++ b/src/overlays/actors/ovl_En_Prz/z_en_prz.c
+@@ -63,6 +63,7 @@ f32 D_80A771E0[PLAYER_FORM_MAX] = {
+     40.0f, // PLAYER_FORM_ZORA
+     30.0f, // PLAYER_FORM_DEKU
+     30.0f, // PLAYER_FORM_HUMAN
++    30.0f, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ static ColliderCylinderInit sCylinderInit = {
+diff --git a/src/overlays/actors/ovl_En_Stop_heishi/z_en_stop_heishi.c b/src/overlays/actors/ovl_En_Stop_heishi/z_en_stop_heishi.c
+index b8bec3a..af61cdf 100644
+--- a/src/overlays/actors/ovl_En_Stop_heishi/z_en_stop_heishi.c
++++ b/src/overlays/actors/ovl_En_Stop_heishi/z_en_stop_heishi.c
+@@ -402,6 +402,10 @@ void func_80AE7F34(EnStopheishi* this, PlayState* play) {
+         case PLAYER_FORM_GORON:
+             phi_a2 = 2;
+             break;
++
++        case PLAYER_FORM_MARIO: // [DSCE] a moustached grown man: the adult treatment (see the
++            phi_a2 = 3;         // Mario dialogue table for his gate lines), not the child scolding
++            break;
+     }
+ 
+     if (((phi_a2 == 1) || (phi_a2 == 2) || (phi_a2 == 3)) &&
+@@ -448,6 +452,13 @@ void func_80AE7F34(EnStopheishi* this, PlayState* play) {
+         this->actor.textId = sThirdDayLeaveMessages[this->messageIndex];
+         this->unk_27E = sThirdDayLeaveMessages[this->messageIndex + 1];
+     }
++    // [DSCE] MARIO gets his OWN textIds (0x4000+gate*2+night, dsce_mario_dialogue.c) -- he
++    // borrows the adult posture (phi_a2) but never another form's lines. Day 3 keeps the
++    // moon-panic messages: those aren't identity dialogue.
++    if ((player->transformation == PLAYER_FORM_MARIO) && (gSaveContext.save.day != 3)) {
++        this->actor.textId = 0x4000 + (this->unk_276 * 2) + sp32;
++        this->unk_27E = 0;
++    }
+     if (this->unk_27E != 0) {
+         if ((STOLEN_ITEM_1 == ITEM_SWORD_GREAT_FAIRY) || (STOLEN_ITEM_1 == ITEM_SWORD_KOKIRI) ||
+             (STOLEN_ITEM_1 == ITEM_SWORD_RAZOR) || (STOLEN_ITEM_1 == ITEM_SWORD_GILDED) ||
+diff --git a/src/overlays/actors/ovl_En_Takaraya/z_en_takaraya.c b/src/overlays/actors/ovl_En_Takaraya/z_en_takaraya.c
+index ddd290e..c0e5eda 100644
+--- a/src/overlays/actors/ovl_En_Takaraya/z_en_takaraya.c
++++ b/src/overlays/actors/ovl_En_Takaraya/z_en_takaraya.c
+@@ -70,6 +70,7 @@ u16 D_80ADFB2C[PLAYER_FORM_MAX] = {
+     0x76F, // PLAYER_FORM_ZORA
+     0x76C, // PLAYER_FORM_DEKU
+     0x76D, // PLAYER_FORM_HUMAN
++    0x76D, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u8 D_80ADFB38[PLAYER_FORM_MAX][2] = {
+@@ -78,6 +79,7 @@ u8 D_80ADFB38[PLAYER_FORM_MAX][2] = {
+     { GI_RUPEE_RED, GI_RUPEE_RED },       // PLAYER_FORM_ZORA
+     { GI_DEKU_NUTS_10, GI_DEKU_NUTS_5 },  // PLAYER_FORM_DEKU
+     { GI_RUPEE_PURPLE, GI_RUPEE_PURPLE }, // PLAYER_FORM_HUMAN
++    { GI_RUPEE_PURPLE, GI_RUPEE_PURPLE }, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u16 D_80ADFB44[PLAYER_FORM_MAX] = {
+@@ -86,6 +88,7 @@ u16 D_80ADFB44[PLAYER_FORM_MAX] = {
+     0x777, // PLAYER_FORM_ZORA
+     0x774, // PLAYER_FORM_DEKU
+     0x775, // PLAYER_FORM_HUMAN
++    0x775, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u16 D_80ADFB50[PLAYER_FORM_MAX] = {
+@@ -94,6 +97,7 @@ u16 D_80ADFB50[PLAYER_FORM_MAX] = {
+     0x773, // PLAYER_FORM_ZORA
+     0x770, // PLAYER_FORM_DEKU
+     0x771, // PLAYER_FORM_HUMAN
++    0x771, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void EnTakaraya_Init(Actor* thisx, PlayState* play) {
+diff --git a/src/overlays/actors/ovl_En_Tubo_Trap/z_en_tubo_trap.c b/src/overlays/actors/ovl_En_Tubo_Trap/z_en_tubo_trap.c
+index 757b3b2..5950a0d 100644
+--- a/src/overlays/actors/ovl_En_Tubo_Trap/z_en_tubo_trap.c
++++ b/src/overlays/actors/ovl_En_Tubo_Trap/z_en_tubo_trap.c
+@@ -225,6 +225,7 @@ void EnTuboTrap_HandleImpact(EnTuboTrap* this, PlayState* play) {
+ void EnTuboTrap_Idle(EnTuboTrap* this, PlayState* play) {
+     static s8 sTransformationHeight[] = {
+         40, 40, 40, 25, 28,
++        28, // [DSCE] PLAYER_FORM_MARIO (copy of HUMAN)
+     };
+     Player* player = GET_PLAYER(play);
+     f32 currentHeight;
+diff --git a/src/overlays/actors/ovl_En_Wallmas/z_en_wallmas.c b/src/overlays/actors/ovl_En_Wallmas/z_en_wallmas.c
+index e5cc827..e1cdde5 100644
+--- a/src/overlays/actors/ovl_En_Wallmas/z_en_wallmas.c
++++ b/src/overlays/actors/ovl_En_Wallmas/z_en_wallmas.c
+@@ -136,6 +136,7 @@ static f32 sYOffsetPerForm[PLAYER_FORM_MAX] = {
+     50.0f, // PLAYER_FORM_ZORA
+     20.0f, // PLAYER_FORM_DEKU
+     30.0f, // PLAYER_FORM_HUMAN
++    30.0f, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void EnWallmas_Init(Actor* thisx, PlayState* play) {
+diff --git a/src/overlays/actors/ovl_En_Warp_tag/z_en_warp_tag.c b/src/overlays/actors/ovl_En_Warp_tag/z_en_warp_tag.c
+index c0fd9e9..1a9dc62 100644
+--- a/src/overlays/actors/ovl_En_Warp_tag/z_en_warp_tag.c
++++ b/src/overlays/actors/ovl_En_Warp_tag/z_en_warp_tag.c
+@@ -180,6 +180,8 @@ void EnWarpTag_RespawnPlayer(EnWarptag* this, PlayState* play) {
+             if (this->dyna.actor.playerHeightRel < -80.0f) {
+                 playerSpawnIndexPerForm[PLAYER_FORM_FIERCE_DEITY] = WARPTAG_GET_EXIT_INDEX(&this->dyna.actor);
+                 playerSpawnIndexPerForm[PLAYER_FORM_HUMAN] = playerSpawnIndexPerForm[PLAYER_FORM_FIERCE_DEITY];
++                playerSpawnIndexPerForm[PLAYER_FORM_MARIO] = // [DSCE] copy of HUMAN
++                    playerSpawnIndexPerForm[PLAYER_FORM_FIERCE_DEITY];
+                 playerSpawnIndexPerForm[PLAYER_FORM_GORON] = this->dyna.actor.world.rot.x;
+                 playerSpawnIndexPerForm[PLAYER_FORM_ZORA] = this->dyna.actor.world.rot.y;
+                 playerSpawnIndexPerForm[PLAYER_FORM_DEKU] = this->dyna.actor.world.rot.z;
+diff --git a/src/overlays/actors/ovl_player_actor/z_player.c b/src/overlays/actors/ovl_player_actor/z_player.c
+index 3496891..0c000f5 100644
+--- a/src/overlays/actors/ovl_player_actor/z_player.c
++++ b/src/overlays/actors/ovl_player_actor/z_player.c
+@@ -203,6 +203,8 @@ void Player_Action_83(Player* this, PlayState* play);
+ void Player_Action_84(Player* this, PlayState* play);
+ void Player_Action_85(Player* this, PlayState* play);
+ void Player_Action_86(Player* this, PlayState* play);
++void func_808388B8(PlayState* play, Player* this, PlayerTransformation playerForm); // [DSCE] fwd-decl for the Brother's Mask transform in Player_UseItem
++extern void Dsce_Log(const char* tag, s32 a, s32 b, s32 c, s32 d); // [DSCE LOG] structured ring-buffer log
+ void Player_Action_87(Player* this, PlayState* play);
+ void Player_Action_88(Player* this, PlayState* play);
+ void Player_Action_89(Player* this, PlayState* play);
+@@ -1219,6 +1221,102 @@ PlayerAgeProperties sPlayerAgeProperties[PLAYER_FORM_MAX] = {
+             &gPlayerAnim_clink_normal_climb_endBL,
+         },
+     },
++    {
++        // ceilingCheckHeight
++        40.0f,
++        // shadowScale
++        60.0f,
++        // unk_08
++        11.0f / 17.0f,
++        // unk_0C
++        71.0f,
++        // unk_10
++        50.0f,
++        // unk_14
++        49.0f,
++        // unk_18
++        39.0f,
++        // unk_1C
++        27.0f,
++        // unk_20
++        19.0f,
++        // unk_24
++        22.0f,
++        // unk_28
++        32.4f,
++        // unk_2C
++        32.0f,
++        // unk_30
++        48.0f,
++        // unk_34
++        11.0f / 17.0f * 70.0f,
++        // wallCheckRadius
++        14.0f,
++        // unk_3C
++        12.0f,
++        // unk_40
++        55.0f,
++        // unk_44
++        { -0x18, 0xDED, 0x36C },
++        {
++            { -0x18, 0xD92, 0x35E },
++            { -0x18, 0x1371, 0x3A9 },
++            { 8, 0x1256, 0x17C },
++            { 9, 0x17EA, 0x167 },
++        },
++        {
++            { -0x18, 0x1371, 0x3A9 },
++            { -0x18, 0x195F, 0x3A9 },
++            { 9, 0x17EA, 0x167 },
++            { 9, 0x1E0D, 0x17C },
++        },
++        {
++            { 8, 0x1256, 0x17C },
++            { 9, 0x17EA, 0x167 },
++            { -0x638, 0x1256, 0x17C },
++            { -0x637, 0x17EA, 0x167 },
++        },
++        // voiceSfxIdOffset
++        SFX_VOICE_BANK_SIZE * 1,
++        // surfaceSfxIdOffset
++        0,
++        // unk_98
++        22.0f,
++        // unk_9C
++        29.4343f,
++        // openChestAnim
++        &gPlayerAnim_clink_demo_Tbox_open,
++        // timeTravelStartAnim
++        &gPlayerAnim_clink_demo_goto_future,
++        // timeTravelEndAnim
++        &gPlayerAnim_clink_demo_return_to_future,
++        // unk_AC
++        &gPlayerAnim_clink_normal_climb_startA,
++        // unk_B0
++        &gPlayerAnim_clink_normal_climb_startB,
++        // unk_B4
++        {
++            &gPlayerAnim_clink_normal_climb_upL,
++            &gPlayerAnim_clink_normal_climb_upR,
++            &gPlayerAnim_link_normal_Fclimb_upL,
++            &gPlayerAnim_link_normal_Fclimb_upR,
++        },
++        // unk_C4
++        {
++            &gPlayerAnim_link_normal_Fclimb_sideL,
++            &gPlayerAnim_link_normal_Fclimb_sideR,
++        },
++        // unk_CC
++        {
++            &gPlayerAnim_clink_normal_climb_endAL,
++            &gPlayerAnim_clink_normal_climb_endAR,
++        },
++        // unk_D4
++        {
++            &gPlayerAnim_clink_normal_climb_endBR,
++            &gPlayerAnim_clink_normal_climb_endBL,
++        },
++    },
+ };
+ 
+ PlayerAnimationHeader* D_8085BE84[PLAYER_ANIMGROUP_MAX][PLAYER_ANIMTYPE_MAX] = {
+@@ -1750,6 +1848,15 @@ f32 sInvWaterSpeedFactor = 1.0f; // Inverse of `sWaterSpeedFactor` (1.0f / sWate
+ void Player_AnimSfx_PlayVoice(Player* this, u16 sfxId) {
+     u16 sfxOffset;
+ 
++    // DSCE: while the Mario takeover drives the body, Link's puppeted action machine
++    // must not grunt over Mario's voice (validation: "a lot of Link's sounds").
++    {
++        extern int gDsceSpikeAlive;
++        if (gDsceSpikeAlive != 0) {
++            return;
++        }
++    }
++
+     if (this->currentMask == PLAYER_MASK_GIANT) {
+         Audio_PlaySfx_GiantsMask(&this->actor.projectedPos, sfxId);
+     } else if (this->actor.id == ACTOR_PLAYER) {
+@@ -1836,7 +1943,21 @@ void Player_PlayAnimSfx(Player* this, AnimSfxEntry* entry) {
+ 
+         if (PlayerAnimation_OnFrame(&this->skelAnime, fabsf(ANIMSFX_GET_FRAME(data)))) {
+             if (type == ANIMSFX_SHIFT_TYPE(ANIMSFX_TYPE_GENERAL)) {
+-                Player_PlaySfx(this, entry->sfxId);
++                // [DSCE] Brother's Mask -> Mario transform: swap Link's transform grunt for Mario's
++                // scream at the exact cutscene voice cue. playerForm is already MARIO here (set by
++                // func_808388B8 before the raise anim); the scream comes from the FD voice bank,
++                // which staging swapped to Mario clips. (Mirrors the PC mod's MIM-COHERENCE #4.)
++                if ((entry->sfxId == NA_SE_PL_TRANSFORM_VOICE) &&
++                    (gSaveContext.save.playerForm == PLAYER_FORM_MARIO)) {
++                    /* [DSCE] Mario's mask-on scream, PC timing: the PC fires at this SAME cue but
++                     * with a MarioScreamDelay-ms lead-in before the sample sounds. Arm the countdown
++                     * (the play-update hook converts ms -> 20fps frames and plays at zero). */
++                    extern s32 gDsceScreamDelayFrames;
++                    extern s32 Dsce_ScreamDelayFromTuning(void);
++                    gDsceScreamDelayFrames = Dsce_ScreamDelayFromTuning();
++                } else {
++                    Player_PlaySfx(this, entry->sfxId);
++                }
+             } else if (type == ANIMSFX_SHIFT_TYPE(ANIMSFX_TYPE_FLOOR)) {
+                 Player_AnimSfx_PlayFloor(this, entry->sfxId);
+             } else if (type == ANIMSFX_SHIFT_TYPE(ANIMSFX_TYPE_FLOOR_BY_AGE)) {
+@@ -2773,6 +2894,10 @@ PlayerAnimationHeader* Player_GetIdleAnim(Player* this) {
+     if (this->currentMask == PLAYER_MASK_SCENTS) {
+         return &gPlayerAnim_cl_msbowait;
+     }
++    if (this->transformation == PLAYER_FORM_MARIO) {
++        Dsce_Log("idle.mario", (s32)this->modelAnimType, (s32)this->skelAnime.limbCount,
++                 (s32)D_8085BE84[PLAYER_ANIMGROUP_wait][this->modelAnimType], (s32)this->skelAnime.dListCount);
++    }
+     return D_8085BE84[PLAYER_ANIMGROUP_wait][this->modelAnimType];
+ }
+ 
+@@ -4520,7 +4645,12 @@ void Player_UseItem(PlayState* play, Player* this, ItemId item) {
+          (itemAction == PLAYER_IA_MASK_ZORA) ||
+          ((this->currentBoots >= PLAYER_BOOTS_ZORA_UNDERWATER) && (this->actor.bgCheckFlags & BGCHECKFLAG_GROUND)))) {
+         s32 var_v1 = ((itemAction >= PLAYER_IA_MASK_MIN) && (itemAction <= PLAYER_IA_MASK_MAX) &&
+-                      ((this->transformation != PLAYER_FORM_HUMAN) || (itemAction >= PLAYER_IA_MASK_GIANT)));
++                      ((this->transformation != PLAYER_FORM_HUMAN) || (itemAction >= PLAYER_IA_MASK_GIANT))) ||
++                     /* [DSCE] the Troupe Leader's Mask is FULLY REPLACED by the Brother's Mask
++                      * (PC parity: the PC repurposes this item's action outright). It is a
++                      * TRANSFORMATION mask (into Mario): take the unk_AA5=5 -> ActionHandler_13 ->
++                      * func_808388B8 path (proper cutscene timing), never the instant equip. */
++                     (itemAction == PLAYER_IA_MASK_CIRCUS_LEADER);
+         CollisionPoly* sp5C;
+         s32 sp58;
+         f32 sp54;
+@@ -7646,9 +7776,12 @@ PlayerAnimationHeader* D_8085D160[PLAYER_FORM_MAX] = {
+     &gPlayerAnim_pz_maskoffstart, // PLAYER_FORM_ZORA
+     &gPlayerAnim_pn_maskoffstart, // PLAYER_FORM_DEKU
+     &gPlayerAnim_cl_setmask,      // PLAYER_FORM_HUMAN
++    &gPlayerAnim_cl_setmask,      // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void func_808388B8(PlayState* play, Player* this, PlayerTransformation playerForm) {
++    Dsce_Log("xform.808388B8", (s32)playerForm, (s32)this->transformation, (s32)this->stateFlags1,
++             Play_InCsMode(play) ? 1 : 0);
+     func_8082DE50(play, this);
+     Player_SetAction_PreserveItemAction(play, this, Player_Action_86, 0);
+     Player_Anim_PlayOnceMorphAdjusted(play, this, D_8085D160[this->transformation]);
+@@ -7682,6 +7815,7 @@ u8 sPlayerMass[PLAYER_FORM_MAX] = {
+     80,  // PLAYER_FORM_ZORA
+     20,  // PLAYER_FORM_DEKU
+     50,  // PLAYER_FORM_HUMAN
++    50,  // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ PlayerAnimationHeader* D_8085D17C[PLAYER_FORM_MAX] = {
+@@ -7690,6 +7824,7 @@ PlayerAnimationHeader* D_8085D17C[PLAYER_FORM_MAX] = {
+     &gPlayerAnim_pz_gakkistart,             // PLAYER_FORM_ZORA
+     &gPlayerAnim_pn_gakkistart,             // PLAYER_FORM_DEKU
+     &gPlayerAnim_link_normal_okarina_start, // PLAYER_FORM_HUMAN
++    &gPlayerAnim_link_normal_okarina_start, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ PlayerAnimationHeader* D_8085D190[PLAYER_FORM_MAX] = {
+     &gPlayerAnim_link_normal_okarina_swing, // PLAYER_FORM_FIERCE_DEITY
+@@ -7697,6 +7832,7 @@ PlayerAnimationHeader* D_8085D190[PLAYER_FORM_MAX] = {
+     &gPlayerAnim_pz_gakkiplay,              // PLAYER_FORM_ZORA
+     &gPlayerAnim_pn_gakkiplay,              // PLAYER_FORM_DEKU
+     &gPlayerAnim_link_normal_okarina_swing, // PLAYER_FORM_HUMAN
++    &gPlayerAnim_link_normal_okarina_swing, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u8 D_8085D1A4[PLAYER_IA_MAX] = {
+@@ -7816,6 +7952,15 @@ s32 Player_ActionHandler_13(Player* this, PlayState* play) {
+                         }
+ 
+                         if (this->transformation == PLAYER_FORM_HUMAN) {
++                            // [DSCE] Brother's Mask in human form: run the REAL transform cutscene
++                            // into Mario (raise + flash + scream, then scene reload as MARIO),
++                            // instead of func_80838A20's plain mask-don. currentMask was just set to
++                            // CIRCUS_LEADER above; persist it so Player_Init restores it post-reload.
++                            if (maskId == PLAYER_MASK_CIRCUS_LEADER) {
++                                gSaveContext.save.equippedMask = this->currentMask;
++                                func_808388B8(play, this, PLAYER_FORM_MARIO);
++                                return true;
++                            }
+                             func_80838A20(play, this);
+                             return true;
+                         }
+@@ -9287,6 +9432,7 @@ u16 D_8085D254[] = {
+     0x1805, // PLAYER_FORM_ZORA
+     0x1806, // PLAYER_FORM_DEKU
+     0x1806, // PLAYER_FORM_HUMAN
++    0x1806, // [DSCE] PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ u16 D_8085D25C[] = {
+@@ -9294,6 +9440,8 @@ u16 D_8085D25C[] = {
+     0x1804, // PLAYER_FORM_GORON
+     0x1805, // PLAYER_FORM_ZORA
+     0x1806, // PLAYER_FORM_DEKU
++    0x1806, // [DSCE] PLAYER_FORM_HUMAN (unreachable in vanilla; guards the next entry's index)
++    0x1806, // [DSCE] PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ // Player_MountHorse
+@@ -11200,6 +11348,8 @@ void Player_Init(Actor* thisx, PlayState* play) {
+             tireMark->color = D_8085D33C;
+         }
+ 
++        Dsce_Log("xform.init87", (s32)this->transformation, (s32)this->csAction, (s32)this->stateFlags1,
++                 (s32)this->prevMask);
+         if ((this->csAction == PLAYER_CSACTION_9) || (this->csAction == PLAYER_CSACTION_93)) {
+             Player_SetAction(play, this, Player_Action_CsAction, 0);
+             this->stateFlags1 |= PLAYER_STATE1_20000000;
+@@ -12236,6 +12386,7 @@ f32 D_8085D3E0[PLAYER_FORM_MAX] = {
+     0.8f, // PLAYER_FORM_ZORA
+     1.5f, // PLAYER_FORM_DEKU
+     1.0f, // PLAYER_FORM_HUMAN
++    1.0f, // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void func_80844784(PlayState* play, Player* this) {
+@@ -12401,6 +12552,44 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
+     f32 temp_fv1;
+ 
+     sPlayerControlInput = input;
++    /* [DSCE] While the Mario takeover drives the body, the puppeted player must not self-act:
++     * strip movement/action inputs from ITS view of the pad (stick, A/B/Z/R, D-pad) but keep the
++     * C buttons + START so unmasking and pausing still work. This kills Z-targeting (and its
++     * letterbox) and Link's input-triggered sounds (rolls, sword grunts, shield) under Mario.
++     * The takeover actor reads play->state.input directly, so Mario keeps Z/A/B for his moves. */
++    {
++        extern int gDsceSpikeAlive;
++        static Input sDsceMutedInput;
++        if (gDsceSpikeAlive && (this->transformation == PLAYER_FORM_MARIO)) {
++            u16 keepBtns = BTN_CLEFT | BTN_CDOWN | BTN_CRIGHT | BTN_START;
++
++            /* let A through ONLY while an NPC/sign is offering dialogue, so Mario can talk;
++             * everywhere else A stays stripped (the hidden Link must not roll/climb/act) */
++            if (this->talkActor != NULL) {
++                keepBtns |= BTN_A;
++            }
++
++            sDsceMutedInput = *input;
++            sDsceMutedInput.cur.button &= keepBtns;
++            sDsceMutedInput.prev.button &= keepBtns;
++            sDsceMutedInput.press.button &= keepBtns;
++            sDsceMutedInput.rel.button &= keepBtns;
++            sDsceMutedInput.cur.stick_x = sDsceMutedInput.cur.stick_y = 0;
++            sDsceMutedInput.prev.stick_x = sDsceMutedInput.prev.stick_y = 0;
++            sDsceMutedInput.press.stick_x = sDsceMutedInput.press.stick_y = 0;
++            sDsceMutedInput.rel.stick_x = sDsceMutedInput.rel.stick_y = 0;
++            sPlayerControlInput = &sDsceMutedInput;
++        }
++    }
++    /* [DSCE] Debug transform trigger (test ROMs): L+R+D-Up equips the Brother's Mask via the real
++     * flow (Player_UseItem -> unk_AA5=5 -> ActionHandler_13 -> func_808388B8 -> Mario). A reliable
++     * way to fire the transform headlessly / by hand, since the cold C-button equip is finicky in
++     * mupen. D-Up (not Z) so it never collides with the L+R+Z debug takeover spawn. Harmless in the
++     * shipped ROM (the player would never hold this combo by accident during normal play). */
++    if ((this->transformation == PLAYER_FORM_HUMAN) && (this->unk_AA5 == PLAYER_UNKAA5_0) &&
++        CHECK_BTN_ALL(input->cur.button, BTN_L | BTN_R | BTN_DUP)) {
++        Player_UseItem(play, this, ITEM_MASK_CIRCUS_LEADER);
++    }
+     if (this->unk_D6A < 0) {
+         this->unk_D6A++;
+         if (this->unk_D6A == 0) {
+@@ -12688,12 +12877,14 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
+         if (!(this->stateFlags3 & PLAYER_STATE3_4)) {
+             this->actionFunc(this, play);
+         }
++        if (this->transformation == PLAYER_FORM_MARIO) Dsce_Log("upd.postaction", (s32)this->av1.actionVar1, (s32)this->skelAnime.movementFlags, (s32)this->skelAnime.animation, 0);
+ 
+         if (!var_v1) {
+             Player_UpdateInterface(play, this);
+         }
+ 
+         Player_UpdateCamAndSeqModes(play, this);
++        if (this->transformation == PLAYER_FORM_MARIO) Dsce_Log("upd.postcam", (s32)this->av1.actionVar1, (s32)this->skelAnime.movementFlags, (s32)this->skelAnime.animation, 0);
+ 
+         if (this->skelAnime.movementFlags & ANIM_FLAG_ENABLE_MOVEMENT) {
+             AnimTaskQueue_AddActorMovement(play, &this->actor, &this->skelAnime,
+@@ -12702,6 +12893,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
+         }
+ 
+         Player_UpdateShapeYaw(this, play);
++        if (this->transformation == PLAYER_FORM_MARIO) Dsce_Log("upd.postyaw", (s32)this->av1.actionVar1, (s32)this->skelAnime.movementFlags, (s32)this->skelAnime.animation, 0);
+ 
+         if (this->actor.flags & ACTOR_FLAG_TALK) {
+             this->talkActorDistance = 0.0f;
+@@ -12729,6 +12921,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
+         this->unk_B75 = 0;
+         this->autoLockOnActor = NULL;
+ 
++        if (this->transformation == PLAYER_FORM_MARIO) Dsce_Log("upd.prewind", (s32)this->av1.actionVar1, (s32)this->skelAnime.movementFlags, (s32)this->skelAnime.animation, 0);
+         Math_StepToF(&this->windSpeed, 0.0f, 0.5f);
+         if ((this->unk_B62 != 0) ||
+             ((gSaveContext.magicState == MAGIC_STATE_IDLE) && (gSaveContext.save.saveInfo.playerData.magic != 0) &&
+@@ -12758,6 +12951,8 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
+         }
+ 
+         this->cylinder.dim.yShift = var_fv1_2 - this->actor.world.pos.y;
++        if (this->transformation == PLAYER_FORM_MARIO) Dsce_Log("upd.postcyl", (s32)this->av1.actionVar1, 0, 0, 0);
++        
+ 
+         if (this->unk_B62 != 0) {
+             this->shieldCylinder.base.acFlags = AC_NONE;
+@@ -12840,7 +13035,8 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
+     this->stateFlags3 &= ~(PLAYER_STATE3_4 | PLAYER_STATE3_400);
+     Collider_ResetCylinderAC(play, &this->cylinder.base);
+     Collider_ResetCylinderAC(play, &this->shieldCylinder.base);
+-    Collider_ResetCylinderAT(play, &this->shieldCylinder.base);
++    if (this->transformation == PLAYER_FORM_MARIO) Dsce_Log("upd.precollider", (s32)this->av1.actionVar1, 0, 0, 0);
++        Collider_ResetCylinderAT(play, &this->shieldCylinder.base);
+     Collider_ResetQuadAT(play, &this->meleeWeaponQuads[0].base);
+     Collider_ResetQuadAT(play, &this->meleeWeaponQuads[1].base);
+     Collider_ResetQuadAC(play, &this->shieldQuad.base);
+@@ -12850,6 +13046,8 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
+         this->unk_AC0 = 0.0f;
+     }
+     this->actor.shape.yOffset = this->unk_ABC + this->unk_AC0;
++    if (this->transformation == PLAYER_FORM_MARIO) Dsce_Log("upd.end", (s32)this->av1.actionVar1, 0, 0, 0);
++        
+ }
+ 
+ Vec3f D_8085D41C = { 0.0f, 0.0f, -30.0f };
+@@ -12921,6 +13119,10 @@ void Player_Update(Actor* thisx, PlayState* play) {
+ 
+ void Player_DrawGameplay(PlayState* play, Player* this, s32 lod, Gfx* cullDList,
+                          OverrideLimbDrawFlex overrideLimbDraw) {
++    if (this->transformation == PLAYER_FORM_MARIO) {
++        Dsce_Log("draw.gameplay", (s32)this->transformation, (s32)lod, (s32)this->skelAnime.dListCount,
++                 (s32)this->skelAnime.skeleton);
++    }
+     OPEN_DISPS(play->state.gfxCtx);
+ 
+     gSPSegment(POLY_OPA_DISP++, 0x0C, cullDList);
+@@ -13026,6 +13228,10 @@ void Player_Draw(Actor* thisx, PlayState* play) {
+     f32 one = 1.0f;
+     s32 spEC = false;
+ 
++    if (this->transformation == PLAYER_FORM_MARIO) {
++        Dsce_Log("draw.enter", (s32)this->currentMask, (s32)this->modelGroup, (s32)this->itemAction,
++                 (s32)this->skelAnime.animation);
++    }
+     Math_Vec3f_Copy(&this->unk_D6C, &this->bodyPartsPos[PLAYER_BODYPART_WAIST]);
+     if (this->stateFlags3 & (PLAYER_STATE3_100 | PLAYER_STATE3_40000)) {
+         struct_80124618** spE8 = D_8085D550;
+@@ -17894,6 +18100,7 @@ void Player_Action_70(Player* this, PlayState* play) {
+         0x37, // PLAYER_FORM_ZORA
+         0x23, // PLAYER_FORM_DEKU
+         0x28, // PLAYER_FORM_HUMAN
++        0x28, // PLAYER_FORM_MARIO (copy of HUMAN)
+     };
+     static struct_8085D80C D_8085D80C[] = {
+         { ACTOR_EN_FISH, FISH_PARAMS(ENFISH_0) },                   // PLAYER_BOTTLE_FISH
+@@ -18597,6 +18804,7 @@ u16 D_8085D908[] = {
+     // Avoid UB: Provide the data that would be read by indexing this with PLAYER_FORM_HUMAN.
+     // Both this array and D_8085D910 are read-only so this is not expected to change.
+     WEEKEVENTREG_16_02 | WEEKEVENTREG_16_08, // PLAYER_FORM_HUMAN
++    WEEKEVENTREG_16_02 | WEEKEVENTREG_16_08, // [DSCE] PLAYER_FORM_MARIO (copy of HUMAN) -- read during the Mario transform cutscene
+ #endif
+ };
+ 
+@@ -18609,6 +18817,8 @@ void Player_Action_86(Player* this, PlayState* play) {
+     struct_8085D910* sp4C = D_8085D910;
+     s32 sp48 = false;
+ 
++    Dsce_Log("xform.act86", (s32)this->av1.actionVar1, (s32)this->transformation, (s32)R_PLAY_FILL_SCREEN_ON,
++             (s32)R_PLAY_FILL_SCREEN_ALPHA);
+     func_808323C0(this, play->playerCsIds[PLAYER_CS_ID_MASK_TRANSFORMATION]);
+     sPlayerControlInput = play->state.input;
+ 
+@@ -18689,6 +18899,8 @@ void Player_Action_86(Player* this, PlayState* play) {
+ }
+ 
+ void Player_Action_87(Player* this, PlayState* play) {
++    Dsce_Log("xform.act87", (s32)this->av1.actionVar1, (s32)(this->stateFlags1 & PLAYER_STATE1_2),
++             (s32)R_PLAY_FILL_SCREEN_ON, (s32)this->transformation);
+     Camera_ChangeMode(GET_ACTIVE_CAM(play), (this->prevMask == PLAYER_MASK_NONE) ? CAM_MODE_NORMAL : CAM_MODE_JUMP);
+ 
+     if (R_PLAY_FILL_SCREEN_ON != 0) {
+@@ -18703,6 +18915,8 @@ void Player_Action_87(Player* this, PlayState* play) {
+         if ((this->prevMask == PLAYER_MASK_NONE) && (this->av1.actionVar1 == 4)) {
+             PlayerAnimation_Change(play, &this->skelAnime, Player_GetIdleAnim(this), PLAYER_ANIM_NORMAL_SPEED, 0.0f,
+                                    20.0f, ANIMMODE_ONCE, 20.0f);
++            Dsce_Log("act87.animset", (s32)this->skelAnime.limbCount, (s32)this->skelAnime.dListCount,
++                     (s32)this->skelAnime.animation, (s32)this->skelAnime.jointTable);
+         }
+     } else {
+         s32 pad;
+@@ -20592,6 +20806,7 @@ PlayerAnimationHeader* D_8085E354[PLAYER_FORM_MAX] = {
+     &gPlayerAnim_L_okarina_get, // PLAYER_FORM_ZORA
+     &gPlayerAnim_L_okarina_get, // PLAYER_FORM_DEKU
+     &gPlayerAnim_om_get,        // PLAYER_FORM_HUMAN
++    &gPlayerAnim_om_get,        // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ struct_8085E368 D_8085E368[PLAYER_FORM_MAX] = {
+@@ -20600,6 +20815,7 @@ struct_8085E368 D_8085E368[PLAYER_FORM_MAX] = {
+     { { -200, 700, 100 }, { 800, 600, 800 } }, // PLAYER_FORM_ZORA
+     { { -200, 700, 100 }, { 800, 600, 800 } }, // PLAYER_FORM_DEKU
+     { { -200, 500, 0 }, { 600, 400, 600 } },   // PLAYER_FORM_HUMAN
++    { { -200, 500, 0 }, { 600, 400, 600 } },   // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ Color_RGBA8 D_8085E3A4 = { 255, 255, 255, 0 };
+diff --git a/src/overlays/gamestates/ovl_select/z_select.c b/src/overlays/gamestates/ovl_select/z_select.c
+index bd00e30..453b62f 100644
+--- a/src/overlays/gamestates/ovl_select/z_select.c
++++ b/src/overlays/gamestates/ovl_select/z_select.c
+@@ -819,6 +819,8 @@ static const char* sFormLabel[][2] = {
+     { GFXP_KATAKANA "12(ﾃﾞｸﾅｯﾂ)", GFXP_KATAKANA "12(ﾏｼﾞｪｽﾃｨｯｸ)" },
+     // "5 (Child)" // 5 (NTT Kodomo)
+     { GFXP_HIRAGANA "5(ｺﾄﾞﾓ)", GFXP_KATAKANA "5(NTTｺﾄﾞﾓ)" },
++    // [DSCE] PLAYER_FORM_MARIO (copy of HUMAN)
++    { GFXP_HIRAGANA "5(ｺﾄﾞﾓ)", GFXP_KATAKANA "5(NTTｺﾄﾞﾓ)" },
+ };
+ 
+ void MapSelect_PrintAgeSetting(MapSelectState* this, GfxPrint* printer, s32 playerForm) {
+diff --git a/src/overlays/gamestates/ovl_title/z_title.c b/src/overlays/gamestates/ovl_title/z_title.c
+index 9f16af7..79f859c 100644
+--- a/src/overlays/gamestates/ovl_title/z_title.c
++++ b/src/overlays/gamestates/ovl_title/z_title.c
+@@ -136,6 +136,12 @@ void ConsoleLogo_Main(GameState* thisx) {
+         gSaveContext.gameMode = GAMEMODE_TITLE_SCREEN;
+ 
+         STOP_GAMESTATE(&this->state);
++        { /* [DSCE] TESTBOOT: skip menus, boot straight to Play (no-op unless built with TESTBOOT=1) */
++            extern int Dsce_TestBoot(GameState* state);
++            if (Dsce_TestBoot(&this->state)) {
++                return;
++            }
++        }
+         SET_NEXT_GAMESTATE(&this->state, TitleSetup_Init, sizeof(TitleSetupState));
+     }
+ 
+diff --git a/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_item.c b/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_item.c
+index 0cfa1a5..fccb466 100644
+--- a/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_item.c
++++ b/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_item.c
+@@ -151,6 +151,33 @@ u8 gPlayerFormSlotRestrictions[PLAYER_FORM_MAX][ITEM_NUM_SLOTS] = {
+         true,  // SLOT_BOTTLE_5
+         true,  // SLOT_BOTTLE_6
+     },
++    // PLAYER_FORM_MARIO (copy of HUMAN)
++    {
++        true,  // SLOT_OCARINA
++        true,  // SLOT_BOW
++        true,  // SLOT_ARROW_FIRE
++        true,  // SLOT_ARROW_ICE
++        true,  // SLOT_ARROW_LIGHT
++        true,  // SLOT_TRADE_DEED
++        true,  // SLOT_BOMB
++        true,  // SLOT_BOMBCHU
++        true,  // SLOT_DEKU_STICK
++        true,  // SLOT_DEKU_NUT
++        true,  // SLOT_MAGIC_BEANS
++        true,  // SLOT_TRADE_KEY_MAMA
++        false, // SLOT_POWDER_KEG
++        true,  // SLOT_PICTOGRAPH_BOX
++        true,  // SLOT_LENS_OF_TRUTH
++        true,  // SLOT_HOOKSHOT
++        true,  // SLOT_SWORD_GREAT_FAIRY
++        true,  // SLOT_TRADE_COUPLE
++        true,  // SLOT_BOTTLE_1
++        true,  // SLOT_BOTTLE_2
++        true,  // SLOT_BOTTLE_3
++        true,  // SLOT_BOTTLE_4
++        true,  // SLOT_BOTTLE_5
++        true,  // SLOT_BOTTLE_6
++    },
+ };
+ 
+ s16 sAmmoRectLeft[] = {
+@@ -344,6 +371,7 @@ u8 sPlayerFormItems[PLAYER_FORM_MAX] = {
+     ITEM_MASK_ZORA,         // PLAYER_FORM_ZORA
+     ITEM_MASK_DEKU,         // PLAYER_FORM_DEKU
+     ITEM_NONE,              // PLAYER_FORM_HUMAN
++    ITEM_NONE,              // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void KaleidoScope_UpdateItemCursor(PlayState* play) {
+diff --git a/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_mask.c b/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_mask.c
+index 349c2cc..8641a7e 100644
+--- a/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_mask.c
++++ b/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_mask.c
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include "z_kaleido_scope.h"
++extern u64 gItemIconBrothersMaskTex[]; // DSCE
+ #include "assets/interface/parameter_static/parameter_static.h"
+ 
+ s16 sMaskEquipState = EQUIP_STATE_MAGIC_ARROW_GROW_ORB;
+@@ -151,6 +152,33 @@ u8 gMaskPlayerFormSlotRestrictions[PLAYER_FORM_MAX][MASK_NUM_SLOTS] = {
+         true, // SLOT_MASK_GIANT
+         true, // SLOT_MASK_FIERCE_DEITY
+     },
++    // PLAYER_FORM_MARIO (copy of HUMAN)
++    {
++        true, // SLOT_MASK_POSTMAN
++        true, // SLOT_MASK_ALL_NIGHT
++        true, // SLOT_MASK_BLAST
++        true, // SLOT_MASK_STONE
++        true, // SLOT_MASK_GREAT_FAIRY
++        true, // SLOT_MASK_DEKU
++        true, // SLOT_MASK_KEATON
++        true, // SLOT_MASK_BREMEN
++        true, // SLOT_MASK_BUNNY
++        true, // SLOT_MASK_DON_GERO
++        true, // SLOT_MASK_SCENTS
++        true, // SLOT_MASK_GORON
++        true, // SLOT_MASK_ROMANI
++        true, // SLOT_MASK_CIRCUS_LEADER
++        true, // SLOT_MASK_KAFEIS_MASK
++        true, // SLOT_MASK_COUPLE
++        true, // SLOT_MASK_TRUTH
++        true, // SLOT_MASK_ZORA
++        true, // SLOT_MASK_KAMARO
++        true, // SLOT_MASK_GIBDO
++        true, // SLOT_MASK_GARO
++        true, // SLOT_MASK_CAPTAIN
++        true, // SLOT_MASK_GIANT
++        true, // SLOT_MASK_FIERCE_DEITY
++    },
+ };
+ 
+ #define SET_MOON_MASK_BIT(masksGivenOnMoonIndex, masksGivenOnMoonFlag) \
+@@ -272,6 +300,7 @@ u8 sMaskPlayerFormItems[PLAYER_FORM_MAX] = {
+     ITEM_MASK_ZORA,         // PLAYER_FORM_ZORA
+     ITEM_MASK_DEKU,         // PLAYER_FORM_DEKU
+     ITEM_NONE,              // PLAYER_FORM_HUMAN
++    ITEM_NONE,              // PLAYER_FORM_MARIO (copy of HUMAN)
+ };
+ 
+ void KaleidoScope_UpdateMaskCursor(PlayState* play) {
+diff --git a/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_scope_NES.c b/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_scope_NES.c
+index 4a5441c..396837a 100644
+--- a/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_scope_NES.c
++++ b/src/overlays/kaleido_scope/ovl_kaleido_scope/z_kaleido_scope_NES.c
+@@ -261,6 +261,11 @@ void Kaleido_LoadMapNameStaticLarge(void* segment, u32 texIndex) {
+ }
+ 
+ void Kaleido_LoadItemNameStatic(void* segment, u32 texIndex) {
++    if (texIndex == ITEM_MASK_CIRCUS_LEADER) {
++        // DSCE: the Troupe Leader's Mask is FULLY REPLACED by the Brother's Mask (PC parity):
++        // its name texture is the "BROTHER'S MASK" plate appended at the archive's end.
++        texIndex = 120;
++    }
+     CmpDma_LoadFile(SEGMENT_ROM_START(item_name_static), texIndex, segment, 0x400);
+ }
+ 
+diff --git a/include/tables/notebook_table.h b/include/tables/notebook_table.h
+--- a/include/tables/notebook_table.h
++++ b/include/tables/notebook_table.h
+@@ -67,7 +67,9 @@
+ /* 0x2D */ DEFINE_EVENT(BOMBERS_NOTEBOOK_EVENT_RECEIVED_ALL_NIGHT_MASK, BOMBERS_NOTEBOOK_EVENT_ICON_MASK, BOMBERS_NOTEBOOK_EVENT_COLOR_WEEKEVENTREG_NONE, 0x21B1, 0x216B, WEEKEVENTREG_BOMBERS_NOTEBOOK_EVENT_RECEIVED_ALL_NIGHT_MASK)
+ /* 0x2E */ DEFINE_EVENT(BOMBERS_NOTEBOOK_EVENT_RECEIVED_BUNNY_HOOD, BOMBERS_NOTEBOOK_EVENT_ICON_MASK, BOMBERS_NOTEBOOK_EVENT_COLOR_WEEKEVENTREG_NONE, 0x21B2, 0x216C, WEEKEVENTREG_BOMBERS_NOTEBOOK_EVENT_RECEIVED_BUNNY_HOOD)
+ /* 0x2F */ DEFINE_EVENT(BOMBERS_NOTEBOOK_EVENT_RECEIVED_GAROS_MASK, BOMBERS_NOTEBOOK_EVENT_ICON_MASK, BOMBERS_NOTEBOOK_EVENT_COLOR_WEEKEVENTREG_NONE, 0x21B3, 0x216D, WEEKEVENTREG_BOMBERS_NOTEBOOK_EVENT_RECEIVED_GAROS_MASK)
+-/* 0x30 */ DEFINE_EVENT(BOMBERS_NOTEBOOK_EVENT_RECEIVED_CIRCUS_LEADERS_MASK, BOMBERS_NOTEBOOK_EVENT_ICON_MASK, BOMBERS_NOTEBOOK_EVENT_COLOR_WEEKEVENTREG_NONE, 0x21B4, 0x216E, WEEKEVENTREG_BOMBERS_NOTEBOOK_EVENT_RECEIVED_CIRCUS_LEADERS_MASK)
++/* DSCE: Toto still completes the same notebook event, but its displaced mask reward is
++ * now rupees.  A ribbon denotes a completed reward without claiming another mask. */
++/* 0x30 */ DEFINE_EVENT(BOMBERS_NOTEBOOK_EVENT_RECEIVED_CIRCUS_LEADERS_MASK, BOMBERS_NOTEBOOK_EVENT_ICON_RIBBON, BOMBERS_NOTEBOOK_EVENT_COLOR_WEEKEVENTREG_NONE, 0x21B4, 0x216E, WEEKEVENTREG_BOMBERS_NOTEBOOK_EVENT_RECEIVED_CIRCUS_LEADERS_MASK)
+ /* 0x31 */ DEFINE_EVENT(BOMBERS_NOTEBOOK_EVENT_RECEIVED_POSTMANS_HAT, BOMBERS_NOTEBOOK_EVENT_ICON_MASK, BOMBERS_NOTEBOOK_EVENT_COLOR_WEEKEVENTREG_NONE, 0x21B5, 0x216F, WEEKEVENTREG_BOMBERS_NOTEBOOK_EVENT_RECEIVED_POSTMANS_HAT)
+ /* 0x32 */ DEFINE_EVENT(BOMBERS_NOTEBOOK_EVENT_RECEIVED_COUPLES_MASK, BOMBERS_NOTEBOOK_EVENT_ICON_MASK, BOMBERS_NOTEBOOK_EVENT_COLOR_WEEKEVENTREG_NONE, 0x21B6, 0x2170, WEEKEVENTREG_BOMBERS_NOTEBOOK_EVENT_RECEIVED_COUPLES_MASK)
+ /* 0x33 */ DEFINE_EVENT(BOMBERS_NOTEBOOK_EVENT_RECEIVED_BLAST_MASK, BOMBERS_NOTEBOOK_EVENT_ICON_MASK, BOMBERS_NOTEBOOK_EVENT_COLOR_WEEKEVENTREG_NONE, 0x21B7, 0x2171, WEEKEVENTREG_BOMBERS_NOTEBOOK_EVENT_RECEIVED_BLAST_MASK)
+diff --git a/src/overlays/actors/ovl_En_Toto/z_en_toto.c b/src/overlays/actors/ovl_En_Toto/z_en_toto.c
+--- a/src/overlays/actors/ovl_En_Toto/z_en_toto.c
++++ b/src/overlays/actors/ovl_En_Toto/z_en_toto.c
+@@ -680,7 +680,10 @@ void func_80BA4CB4(EnToto* this, PlayState* play) {
+         }
+     }
+     if ((this->cueId == 4) && !Actor_HasParent(&this->actor, play)) {
+-        Actor_OfferGetItem(&this->actor, play, GI_MASK_CIRCUS_LEADER, 9999.9f, 9999.9f);
++        /* DSCE: the Circus Leader inventory slot is the Brother's Mask, awarded by the
++         * Song of Healing rite.  Preserve Toto's cue, parent handshake, week-event flags,
++         * and notebook completion, but pay the displaced reward as 200 rupees. */
++        Actor_OfferGetItem(&this->actor, play, GI_RUPEE_HUGE, 9999.9f, 9999.9f);
+     }
+ }
+ 

@@ -1,0 +1,61 @@
+#!/bin/bash
+# Canned firehose post-mortems over the ClickHouse ontology (docs/FIREHOSE.md).
+# usage: firehose_query [--db PATH] <runs|last-audio|audio-death|pools|fonts-at|actions> [run_id] [args]
+set -e
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+DB="${DSCE_CLICKHOUSE_PATH:-$HERE/out/firehose/clickhouse}"
+if [ "${1:-}" = "--db" ]; then
+    [ "$#" -ge 3 ] || { echo "--db requires a database path and command" >&2; exit 2; }
+    DB="$2"
+    shift 2
+fi
+Q() { clickhouse local --path "$DB" --multiquery --query "$1"; }
+
+CMD="${1:-}"; RUN="${2:-}"
+case "$CMD" in
+runs)
+    Q "SELECT run_id, ts, rom, rev, events, drops, notes FROM runs ORDER BY ts DESC LIMIT 20 FORMAT PrettyCompact" ;;
+last-audio)
+    # the last 50 events across every audio domain before the end of the run
+    Q "SELECT * FROM (
+         SELECT frame, 'request' AS what, toString(sfx_id) AS x, toString(pos) AS y FROM audio_requests WHERE run_id='$RUN'
+         UNION ALL
+         SELECT frame, 'kernel.sound', toString(key), toString(na_se) FROM kernel_sounds WHERE run_id='$RUN'
+         UNION ALL
+         SELECT frame, 'seqplayer', toString(flags), hex(fonts_player) FROM seqplayer_state WHERE run_id='$RUN' AND flags != 2
+       ) ORDER BY frame DESC LIMIT 50 FORMAT PrettyCompact" ;;
+audio-death)
+    # THE death signal: the last frame with any active synth note, followed by silence
+    # while requests keep flowing; plus font-41 note evidence around that frame.
+    Q "WITH (SELECT max(frame) FROM seqplayer_state WHERE run_id='$RUN' AND active_notes > 0) AS last_note,
+            (SELECT max(frame) FROM audio_requests WHERE run_id='$RUN') AS last_req
+       SELECT 'last_frame_with_active_notes' AS k, toString(last_note) AS v
+       UNION ALL SELECT 'last_request_frame', toString(last_req)
+       UNION ALL SELECT 'verdict', if(last_req > last_note + 60,
+            'AUDIO DIED: requests continued after the synth went silent', 'synth alive to end of run')
+       UNION ALL SELECT 'mario_font_verdict', if(
+            (SELECT count() FROM kernel_sounds WHERE run_id='$RUN' AND miss=0) > 0
+            AND (SELECT max(notes_font41) FROM seqplayer_state WHERE run_id='$RUN') = 0,
+            'MARIO FONT NEVER SOUNDED: minted requests flowed but no font-41 note ever played -- font load failure; check pools + permanent budget',
+            'mario font healthy (font-41 notes observed)')
+       FORMAT PrettyCompact"
+    echo '-- frames with live font-41 notes (the poison evidence):'
+    Q "SELECT min(frame) AS first, max(frame) AS last, count() AS frames_with_font41_notes
+       FROM seqplayer_state WHERE run_id='$RUN' AND notes_font41 > 0 FORMAT PrettyCompact"
+    echo '-- last requests before/after the synth died:'
+    Q "WITH (SELECT max(frame) FROM seqplayer_state WHERE run_id='$RUN' AND active_notes > 0) AS last_note
+       SELECT frame, sfx_id, if(frame > last_note, 'AFTER-DEATH', '') AS note FROM audio_requests
+       WHERE run_id='$RUN' AND frame > last_note - 40 ORDER BY seq LIMIT 30 FORMAT PrettyCompact" ;;
+pools)
+    Q "SELECT max(permanent_used) AS perm_hi, any(permanent_size) AS perm_sz,
+              max(cache_used) AS cache_hi, any(cache_size) AS cache_sz
+       FROM heap_levels WHERE run_id='$RUN' FORMAT PrettyCompact" ;;
+fonts-at)
+    Q "SELECT frame, flags, hex(fonts_player), hex(fonts_voice), hex(chan_enabled) FROM seqplayer_state
+       WHERE run_id='$RUN' AND frame BETWEEN $3-3 AND $3+3 ORDER BY frame FORMAT PrettyCompact" ;;
+actions)
+    Q "SELECT frame, hex(action) AS act, hex(prev_action) AS prev FROM kernel_actions
+       WHERE run_id='$RUN' ORDER BY seq FORMAT PrettyCompact" ;;
+*)
+    echo "usage: firehose_query [--db PATH] <runs|last-audio|audio-death|pools|fonts-at|actions> [run_id] [frame]"; exit 1 ;;
+esac

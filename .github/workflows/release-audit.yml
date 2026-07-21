@@ -1,0 +1,17 @@
+name: release-audit
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  no-game-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject ROMs and extracted media in tree or history
+        run: python3 tools/release_audit.py --tree .
+      - name: Check version, source pins, ignore boundary, and source syntax
+        run: python3 tools/check_release_contract.py

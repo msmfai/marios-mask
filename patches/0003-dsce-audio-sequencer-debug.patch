@@ -1,0 +1,311 @@
+diff --git a/src/audio/lib/load.c b/src/audio/lib/load.c
+--- a/src/audio/lib/load.c
++++ b/src/audio/lib/load.c
+@@ -622,5 +622,12 @@ s32 AudioLoad_SyncInitSeqPlayerInternal(s32 playerIndex, s32 seqId, s32 arg2) {
+     seqPlayer->finished = false;
+     seqPlayer->playerIndex = playerIndex;
++#if DSCE_DBG_AUDIO
++    {
++        extern void Dsce_AudioSeqLoadTrace(void*, void*, s32, u32);
++        u32 realSeqId = AudioLoad_GetRealTableIndex(SEQUENCE_TABLE, seqId);
++        Dsce_AudioSeqLoadTrace(seqPlayer, seqData, seqId, gAudioCtx.sequenceTable->entries[realSeqId].size);
++    }
++#endif
+     //! @bug missing return (but the return value is not used so it's not UB)
+ }
+ 
+@@ -1359,6 +1359,39 @@ s32 AudioLoad_SlowLoadSample(s32 fontId, s32 instId, s8* isDone) {
+     AudioSlowLoad* slowLoad;
+ 
++#if DSCE_DBG_AUDIO
++    extern void Dsce_AudioSlowLoadTrace(s32, s32, void*, void*, s32);
++    s32 invalidRequest = (fontId < 0) || (fontId >= gAudioCtx.soundFontTable->header.numEntries);
++
++    if (!invalidRequest) {
++        if (instId < 0) {
++            invalidRequest = true;
++        } else if (instId < 0x80) {
++            invalidRequest = instId >= gAudioCtx.soundFontList[fontId].numInstruments;
++        } else if (instId < 0x100) {
++            invalidRequest = (instId - 0x80) >= gAudioCtx.soundFontList[fontId].numDrums;
++        } else {
++            invalidRequest = (instId - 0x100) >= gAudioCtx.soundFontList[fontId].numSfx;
++        }
++    }
++    if (invalidRequest) {
++        Dsce_AudioSlowLoadTrace(fontId, instId, NULL, isDone, true);
++        *isDone = 0;
++        return -1;
++    }
++#endif
+     sample = AudioLoad_GetFontSample(fontId, instId);
++#if DSCE_DBG_AUDIO
++    {
++        uintptr_t sampleAddress = (uintptr_t)sample;
++        s32 invalid = (sample != NULL) && ((sampleAddress < 0x80000000) || (sampleAddress >= 0x80800000));
++
++        Dsce_AudioSlowLoadTrace(fontId, instId, sample, isDone, invalid);
++        if (invalid) {
++            *isDone = 0;
++            return -1;
++        }
++    }
++#endif
+     if (sample == NULL) {
+         *isDone = 0;
+         return -1;
+diff --git a/src/audio/lib/seqplayer.c b/src/audio/lib/seqplayer.c
+index df3d8ca..3311d22 100644
+--- a/src/audio/lib/seqplayer.c
++++ b/src/audio/lib/seqplayer.c
+@@ -15,11 +15,51 @@
+ #include "audio/aseq.h"
+ #include "audio/seqplayer.h"
+ #include "attributes.h"
++#include "dsce/dsce_config.h"
+ 
+ static_assert(MML_VERSION == MML_VERSION_MM, "This file implements the MM version of the MML");
+ 
+ #define PROCESS_SCRIPT_END -1
+ 
++#if DSCE_DBG_AUDIO
++extern void Dsce_AudioSeqLayerTrace(void*, s32, void*, s32);
++extern void Dsce_AudioSeqInvalidTrace(void*, s32, void*, s32);
++extern void Dsce_AudioSlowLoadContextTrace(void*, void*, s32);
++extern void Dsce_AudioSeqChannelPtrTrace(void*, s32, void*);
++extern void Dsce_AudioSeqInvalidChannelTrace(void*, void*);
++extern void Dsce_AudioSeqOpcodeTrace(void*, void*, s32);
++extern void Dsce_AudioSeqPlayerOpcodeTrace(void*, void*, s32);
++extern void Dsce_AudioSeqWriteTrace(void*, void*, void*, s32, void*, u32, u32);
++extern void Dsce_AudioSeqStopChanFaultTrace(void*, void*, s32);
++
++static s32 Dsce_AudioSeqChannelIsValid(SequenceChannel* channel) {
++    uintptr_t address = (uintptr_t)channel;
++    uintptr_t poolStart = (uintptr_t)gAudioCtx.miscPool.startAddr;
++    uintptr_t poolEnd = (uintptr_t)gAudioCtx.miscPool.curAddr;
++
++    if (channel == &gAudioCtx.sequenceChannelNone) {
++        return true;
++    }
++    return (address >= poolStart) && ((address + sizeof(SequenceChannel)) <= poolEnd) &&
++           ((address & 0xF) == 0);
++}
++
++static s32 Dsce_AudioSeqLayerIsValid(SequenceLayer* layer) {
++    uintptr_t address;
++    uintptr_t poolStart;
++    uintptr_t poolEnd;
++
++    if (layer == NULL) {
++        return true;
++    }
++    address = (uintptr_t)layer;
++    poolStart = (uintptr_t)&gAudioCtx.sequenceLayers[0];
++    poolEnd = (uintptr_t)&gAudioCtx.sequenceLayers[ARRAY_COUNT(gAudioCtx.sequenceLayers)];
++    return (address >= poolStart) && (address < poolEnd) &&
++           (((address - poolStart) % sizeof(SequenceLayer)) == 0);
++}
++#endif
++
+ u8 AudioScript_ScriptReadU8(SeqScriptState* state);
+ s16 AudioScript_ScriptReadS16(SeqScriptState* state);
+ u16 AudioScript_ScriptReadCompressedU16(SeqScriptState* state);
+@@ -390,6 +411,14 @@ void AudioScript_SeqLayerDisable(SequenceLayer* layer) {
+ void AudioScript_SeqLayerFree(SequenceChannel* channel, s32 layerIndex) {
+     SequenceLayer* layer = channel->layers[layerIndex];
+ 
++#if DSCE_DBG_AUDIO
++    Dsce_AudioSeqLayerTrace(channel, -1 - layerIndex, layer, channel->fontId);
++    if (!Dsce_AudioSeqLayerIsValid(layer)) {
++        Dsce_AudioSeqInvalidTrace(channel, -1 - layerIndex, layer, channel->fontId);
++        channel->layers[layerIndex] = NULL;
++        return;
++    }
++#endif
+     if (layer != NULL) {
+         AudioList_PushBack(&gAudioCtx.layerFreeList, &layer->listItem);
+         AudioScript_SeqLayerDisable(layer);
+@@ -400,5 +443,11 @@ void AudioScript_SequenceChannelDisable(SequenceChannel* channel) {
+     s32 i;
+ 
++#if DSCE_DBG_AUDIO
++    if (!Dsce_AudioSeqChannelIsValid(channel)) {
++        Dsce_AudioSeqInvalidChannelTrace(channel, NULL);
++        return;
++    }
++#endif
+     channel->finished = true;
+ 
+     for (i = 0; i < 4; i++) {
+@@ -432,6 +475,13 @@ void AudioScript_SequencePlayerDisableChannels(SequencePlayer* seqPlayer, u16 ch
+ 
+     for (i = 0; i < SEQ_NUM_CHANNELS; i++) {
+         channel = seqPlayer->channels[i];
++#if DSCE_DBG_AUDIO
++        if (!Dsce_AudioSeqChannelIsValid(channel)) {
++            Dsce_AudioSeqChannelPtrTrace(seqPlayer, i, channel);
++            seqPlayer->channels[i] = &gAudioCtx.sequenceChannelNone;
++            continue;
++        }
++#endif
+         if (IS_SEQUENCE_CHANNEL_VALID(channel) == 1) {
+             AudioScript_SequenceChannelDisable(channel);
+         }
+@@ -1216,10 +1266,13 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
+         SeqScriptState* scriptState = &channel->scriptState;
+         s32 param;
+         s16 temp1;
+         u16 cmdArgU16;
+         u32 cmdArgs[3];
+         s8 cmdArgS8;
++#if DSCE_DBG_AUDIO
++        u8* opcodePc = scriptState->pc;
++#endif
+         u8 cmd = AudioScript_ScriptReadU8(scriptState);
+         u8 lowBits;
+         u8 highBits;
+         s32 delay;
+@@ -1227,7 +1280,10 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
+         u8 new_var;
+         u8 depth;
+         u8* seqData = seqPlayer->seqData;
+         u32 new_var2;
++#if DSCE_DBG_AUDIO
++        Dsce_AudioSeqOpcodeTrace(channel, opcodePc, cmd);
++#endif
+ 
+         // Commands 0xA0 - 0xFF
+         if (cmd >= 0xA0) {
+@@ -1433,7 +1489,11 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
+                 case ASEQ_OP_CHAN_STSEQ: // channel: write into sequence script
+                     cmd = (u8)cmdArgs[0];
+                     cmdArgU16 = (u16)cmdArgs[1];
+                     seqData = &seqPlayer->seqData[cmdArgU16];
++#if DSCE_DBG_AUDIO
++                    Dsce_AudioSeqWriteTrace(seqPlayer, channel, opcodePc, ASEQ_OP_CHAN_STSEQ, seqData,
++                                            seqData[0], (u8)scriptState->value + cmd);
++#endif
+                     seqData[0] = (u8)scriptState->value + cmd;
+                     break;
+ 
+@@ -1452,7 +1512,14 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
+                     break;
+ 
+                 case ASEQ_OP_CHAN_STOPCHAN: // channel: disable channel
+                     cmd = (u8)cmdArgs[0];
++#if DSCE_DBG_AUDIO
++                    if (cmd >= SEQ_NUM_CHANNELS) {
++                        Dsce_AudioSeqStopChanFaultTrace(channel, opcodePc, cmd);
++                        channel->stopScript = true;
++                        goto exit_loop;
++                    }
++#endif
+                     AudioScript_SequenceChannelDisable(seqPlayer->channels[cmd]);
+                     break;
+ 
+@@ -1475,6 +1542,10 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
+                 case ASEQ_OP_CHAN_STPTRTOSEQ: // channel: write large into sequence script
+                     cmdArgU16 = (u16)cmdArgs[0];
+                     seqData = &seqPlayer->seqData[cmdArgU16];
++#if DSCE_DBG_AUDIO
++                    Dsce_AudioSeqWriteTrace(seqPlayer, channel, opcodePc, ASEQ_OP_CHAN_STPTRTOSEQ, seqData,
++                                            ((u32)seqData[0] << 8) | seqData[1], channel->unk_22);
++#endif
+                     seqData[0] = (channel->unk_22 >> 8) & 0xFF;
+                     seqData[1] = channel->unk_22 & 0xFF;
+                     break;
+@@ -1696,7 +1768,11 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
+                 case ASEQ_OP_CHAN_A6: // channel:
+                     cmd = (u8)cmdArgs[0];
+                     cmdArgU16 = (u16)cmdArgs[1];
+                     seqData = seqPlayer->seqData + (u32)(cmdArgU16 + channel->channelIndex);
++#if DSCE_DBG_AUDIO
++                    Dsce_AudioSeqWriteTrace(seqPlayer, channel, opcodePc, ASEQ_OP_CHAN_A6, seqData,
++                                            seqData[0], (u8)scriptState->value + cmd);
++#endif
+                     seqData[0] = (u8)scriptState->value + cmd;
+                     break;
+ 
+@@ -1785,10 +1861,16 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
+             case ASEQ_OP_CHAN_LDSAMPLE: // channel: load sample
+                 if (lowBits < 8) {
++#if DSCE_DBG_AUDIO
++                    Dsce_AudioSlowLoadContextTrace(channel, scriptState->pc - 1, lowBits);
++#endif
+                     channel->seqScriptIO[lowBits] = SEQ_IO_VAL_NONE;
+                     if (AudioLoad_SlowLoadSample(channel->fontId, scriptState->value, &channel->seqScriptIO[lowBits]) ==
+                         -1) {}
+                 } else {
+                     lowBits -= 8;
++#if DSCE_DBG_AUDIO
++                    Dsce_AudioSlowLoadContextTrace(channel, scriptState->pc - 1, lowBits + 8);
++#endif
+                     channel->seqScriptIO[lowBits] = SEQ_IO_VAL_NONE;
+                     if (AudioLoad_SlowLoadSample(channel->fontId, channel->unk_22 + 0x100,
+                                                  &channel->seqScriptIO[lowBits]) == -1) {}
+@@ -1825,6 +1860,14 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
+ exit_loop:
+ 
+     for (i = 0; i < ARRAY_COUNT(channel->layers); i++) {
++#if DSCE_DBG_AUDIO
++        Dsce_AudioSeqLayerTrace(channel, i, channel->layers[i], channel->fontId);
++        if (!Dsce_AudioSeqLayerIsValid(channel->layers[i])) {
++            Dsce_AudioSeqInvalidTrace(channel, i, channel->layers[i], channel->fontId);
++            channel->layers[i] = NULL;
++            continue;
++        }
++#endif
+         if (channel->layers[i] != NULL) {
+             AudioScript_SeqLayerProcessScript(channel->layers[i]);
+         }
+@@ -1847,7 +1923,10 @@ void AudioScript_SequencePlayerProcessSequence(SequencePlayer* seqPlayer) {
+     s32 j;
+     SequenceChannel* channel;
+     u16* new_var;
+     s32 delay;
++#if DSCE_DBG_AUDIO
++    u8* opcodePc;
++#endif
+ 
+     if (!seqPlayer->enabled) {
+         return;
+@@ -1895,7 +1974,13 @@ void AudioScript_SequencePlayerProcessSequence(SequencePlayer* seqPlayer) {
+         seqPlayer->recalculateVolume = true;
+ 
+         while (true) {
++#if DSCE_DBG_AUDIO
++            opcodePc = seqScript->pc;
++#endif
+             cmd = AudioScript_ScriptReadU8(seqScript);
++#if DSCE_DBG_AUDIO
++            Dsce_AudioSeqPlayerOpcodeTrace(seqPlayer, opcodePc, cmd);
++#endif
+ 
+             // 0xF2 and above are "flow control" commands, including termination.
+             if (cmd >= ASEQ_OP_CONTROL_FLOW_FIRST) {
+@@ -2065,7 +2150,11 @@ void AudioScript_SequencePlayerProcessSequence(SequencePlayer* seqPlayer) {
+                     case ASEQ_OP_SEQ_STSEQ: // seqPlayer: write into sequence script
+                         cmd = AudioScript_ScriptReadU8(seqScript);
+                         temp = AudioScript_ScriptReadS16(seqScript);
+                         data2 = &seqPlayer->seqData[temp];
++#if DSCE_DBG_AUDIO
++                        Dsce_AudioSeqWriteTrace(seqPlayer, NULL, opcodePc, ASEQ_OP_SEQ_STSEQ, data2,
++                                                *data2, (u8)seqScript->value + cmd);
++#endif
+                         *data2 = (u8)seqScript->value + cmd;
+                         break;
+ 
+@@ -2181,6 +2270,13 @@ void AudioScript_SequencePlayerProcessSequence(SequencePlayer* seqPlayer) {
+ 
+     for (j = 0; j < SEQ_NUM_CHANNELS; j++) {
+         channel = seqPlayer->channels[j];
++#if DSCE_DBG_AUDIO
++        if (!Dsce_AudioSeqChannelIsValid(channel)) {
++            Dsce_AudioSeqChannelPtrTrace(seqPlayer, j, channel);
++            seqPlayer->channels[j] = &gAudioCtx.sequenceChannelNone;
++            continue;
++        }
++#endif
+         if (channel->enabled) {
+             AudioScript_SequenceChannelProcessScript(channel);
+         }

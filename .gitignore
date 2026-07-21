@@ -1,0 +1,24 @@
+# build products + caches (all regenerable)
+out/
+.work/
+__pycache__/
+*.pyc
+*.n64
+*.rom
+*.v64
+*.z64
+# optional headless-test plugins, always built locally from tools/inputbot/*.c
+tools/inputbot/*.dylib
+tools/inputbot/*.so
+# built cross-binutils (make toolchain)
+toolchain/
+# generated from tuning.yaml at make mod
+src/dsce_tuning.h
+src/dsce_config.h
+# generated from the private .work/sm64 extraction (installation contract:
+# derived from the user's ROMs/PC tree, never committed)
+assets/voice/
+assets/music/
+# scratch debug runs (early sessions)
+test/
+state/

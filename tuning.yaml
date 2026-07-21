@@ -1,0 +1,113 @@
+# DSCE tuning -- the N64 pipeline's equivalent of the PC port's ImGui sliders.
+# Source of truth: EDIT THIS FILE. `make mod` regenerates src/dsce_tuning.h from it.
+# Initial values came from the PC reference implementation and are now versioned here;
+# the standalone build does not read the PC tree.
+# Floats keep their 'f' suffix stripped; integers stay integers.
+
+# --- Brother's Mask cosmetics (staging-time; diffuse RGB, ambient = half) ---
+CapColorR: 24    # cap/shirt/arms -- LINK'S tunic green (Kokiri family, measured in-scene).
+CapColorG: 88    # "it's not Luigi -- it's green mario" (user, 2026-07-05)
+CapColorB: 22
+
+# --- Mario form: physics, camera, collision, model ---
+MarioCamDist: 400.0
+MarioCamHeight: 170.0
+MarioCamLook: 60.0
+MarioCamLerp: 25      # eye smoothing %/frame (PC used 0.25)
+MarioCamYawLag: 8     # auto-align divisor (PC: behind-diff/8 per frame)
+MarioCamOrbitStep: 768   # d-pad left/right orbit speed (binang/frame)
+MarioBrightness: 80      # % light scale ("washed out / too bright" at 100)
+MarioColHeight: 180.0
+MarioColRadius: 70.0
+MarioColYShift: 0.0
+# The PC's saved camera was 212/49/11 when its instrument view was approved.
+# Keep N64's established general camera above, but reproduce those values while singing.
+MarioOcarinaCamDist: 212.0
+MarioOcarinaCamHeight: 49.0
+MarioOcarinaCamLook: 11.0
+MarioOcarinaCamX: -1.0
+MarioOcarinaCamY: 6.0
+MarioOcarinaCamZ: -5.0
+MarioScreamDelay: 1436.0
+MarioSpeedMul: 1.5
+MarioYOff: 120.0
+
+# --- Water-surface healing ---
+WaterHealBand: 80.0
+WaterHealRate: 1.0
+
+# --- Peach statue (INHERITED from the PC dsce_peach_tuning.h bake, 2026-07-07;
+#     wired: absolute world placement + pose + SoH rite sequence) ---
+PeachAnim: 9
+PeachDressRotX: 46.0
+PeachDressRotY: -95.0
+PeachDressRotZ: 49.0
+PeachFaceDeg: 160.57
+PeachFixBone: 21
+PeachFixRotX: -20.0
+PeachFixRotY: 4.0
+PeachFixRotZ: 110.0
+PeachFocusY: 45.0
+PeachForceSpawn: 0
+PeachFrame: 26.0
+PeachFxIndex: 0
+PeachFxPreview: 0
+PeachFxYOff: -30.0
+PeachGone: 0
+PeachPlaceHere: 0
+PeachPlaced: 1
+PeachRotX: 0.0
+PeachRotY: 57.0
+PeachRotZ: 0.0
+PeachSinkDist: 80.0
+PeachStatueScale: 0.06
+PeachStatueStone: 1
+PeachStatueTint: 1.1
+PeachStatueX: -174.0   # walkway spot (reachable); retune to taste -- your PC (0,0,-140) lands on the raised bank here
+PeachStatueY: 0.0
+PeachStatueZ: -97.0
+PeachWorldX: -1695.6
+PeachWorldY: -97.0
+PeachWorldZ: 422.91
+
+# --- Mario scream voice FX (PC audio; unused by the ROM so far) ---
+ScreamPitch: 0.0
+ScreamReverbDelayMs: 70.0
+ScreamReverbFeedback: 0.45
+ScreamReverbMix: 0.0
+ScreamSample: 0
+ScreamTremoloDepth: 0.0
+ScreamTremoloRate: 5.0
+ScreamVibratoDepth: 0.0
+ScreamVibratoRate: 5.5
+ScreamVolume: 1.0
+
+# --- Singing (WIRED 2026-07-07: Mario sings ocarina notes, monophonic pitched voice.
+#     Polyphony/reverb/vibrato remain PC-only: they live in the PC mixer.) ---
+SingAnimId: 0x1D
+SingAnimSpeed: 1.5
+# A4 is the centre real ocarina note: the full D4..D5 range is only -7..+5
+# semitones from the donor instead of pitching the top note a harsh octave up.
+SingBaseSemitone: 9.0
+SingFaceCam: 1
+SingNotePulse: 1
+SingPolyphonic: 1
+SingReverbDelayMs: 70.0
+SingReverbFeedback: 0.45
+SingReverbMix: 0.0
+# Punch Hoo is upbeat but still supplies a 502ms rounded vowel, about twice the
+# usable duration of Punch Yah (285ms) or Punch Wah (252ms).
+SingSample: 5
+SingTremoloDepth: 0.0
+SingTremoloRate: 5.0
+SingTurnSpeed: 0x800
+SingVibratoDepth: 0.0
+SingVibratoRate: 5.5
+SingVolume: 0.6
+
+# --- Song harmony (PC-only) ---
+SongHarmony: 0
+SongSpeed: 1.0
+
+# --- Misc PC features ---
+EndlessStairsMusic: 0

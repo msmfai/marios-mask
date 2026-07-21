@@ -1,0 +1,10 @@
+__ll_lshift
+bzero
+Dsce_AdapterFindFloor
+Dsce_AdapterFindWalls
+Dsce_AdapterFindWater
+Dsce_MarioInPoisonWater
+Dsce_MarioWaterSurfaceHeal
+gDsceMmScale
+gDsceWorldAuthority
+sqrtf

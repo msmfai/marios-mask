@@ -1,0 +1,109 @@
+diff --git a/include/audio/aseq.h b/include/audio/aseq.h
+index 028791c..ee35c1d 100644
+--- a/include/audio/aseq.h
++++ b/include/audio/aseq.h
+@@ -531,6 +531,13 @@
+ .internal ASEQ_MODE_FILTER;     .set ASEQ_MODE_FILTER,   6
+ .internal ASEQ_MODE_ENVELOPE;   .set ASEQ_MODE_ENVELOPE, 7
+ .internal ASEQ_MODE_BUFFER;     .set ASEQ_MODE_BUFFER,   8
++.internal ASEQ_SEQUENCE_OPEN;   .set ASEQ_SEQUENCE_OPEN, 0
++
++.macro _require_sequence_open section_name
++    .if ASEQ_SEQUENCE_OPEN == 0
++        .error "Sequence section `\section_name` is outside .startseq/.endseq"
++    .endif
++.endm
+ 
+ 
+ /* Macros that change structure based on current section */
+@@ -566,6 +573,7 @@
+  * Begin a sequence code section.
+  */
+ .macro .sequence name
++    _require_sequence_open sequence
+     _RESET_SECTION
+ 
+     /* `ldseq` changes structure based on current section. */
+@@ -584,6 +592,7 @@
+  * Begin a channel code section.
+  */
+ .macro .channel name
++    _require_sequence_open channel
+     _RESET_SECTION
+ 
+     /* `ldseq` changes structure based on current section. */
+@@ -618,6 +627,7 @@
+  * Begin a layer code section.
+  */
+ .macro .layer name
++    _require_sequence_open layer
+     _RESET_SECTION
+ 
+     /* `env` changes structure based on current section. */
+@@ -644,6 +654,7 @@
+  * Begin a table section at an unaligned offset.
+  */
+ .macro .table_unaligned name
++    _require_sequence_open table
+     _RESET_SECTION
+ 
+     .set ASEQ_MODE, ASEQ_MODE_TABLE
+@@ -654,6 +665,7 @@
+  * Begin an array section.
+  */
+ .macro .array name
++    _require_sequence_open array
+     _RESET_SECTION
+ 
+     .set ASEQ_MODE, ASEQ_MODE_ARRAY
+@@ -664,6 +676,7 @@
+  * Begin a filter section.
+  */
+ .macro .filter name
++    _require_sequence_open filter
+     _RESET_SECTION
+ 
+     /* `filter` changes structure based on current section. */
+@@ -688,6 +701,7 @@
+  * Begin an envelope section.
+  */
+ .macro .envelope name
++    _require_sequence_open envelope
+     _RESET_SECTION
+ 
+     .set ASEQ_MODE, ASEQ_MODE_ENVELOPE
+@@ -699,6 +713,7 @@
+  * Begin a buffer section.
+  */
+ .macro .buffer name
++    _require_sequence_open buffer
+     _RESET_SECTION
+ 
+     .set ASEQ_MODE, ASEQ_MODE_BUFFER
+@@ -736,6 +751,10 @@
+  */
+ 
+ .macro .startseq name
++    .if ASEQ_SEQUENCE_OPEN != 0
++        .error "Nested .startseq without a matching .endseq"
++    .endif
++    .set ASEQ_SEQUENCE_OPEN, 1
+     /* Begin a sequence. */
+ 
+     /* Write the sequence name into a special .note.name section */
+@@ -754,6 +773,7 @@
+ .endm
+ 
+ .macro .endseq name
++    _require_sequence_open endseq
+     /* End a sequence. Align to 16 bytes, write end and size symbols. */
+     .balign 16
+     _seq_end:
+@@ -761,6 +781,7 @@
+     \name\()_End:
+     .global \name\()_Size
+     .set \name\()_Size, _seq_end - _seq_start
++    .set ASEQ_SEQUENCE_OPEN, 0
+     /* Mark ASEQ_MODE as an internal symbol at the very end since it is redefined many times */
+     .internal ASEQ_MODE
+ .endm
