@@ -1,17 +1,17 @@
 # DSCE Brother's Mask — N64 ROM edition
 
-> **v0.1.0-alpha.1 release candidate:** source-only, experimental, and not yet
-> authorized for publication. See [RELEASE_V0.1_ALPHA.md](RELEASE_V0.1_ALPHA.md).
+> **v0.1.0-alpha.1:** public, source-only, and experimental. See
+> [RELEASE_V0.1_ALPHA.md](RELEASE_V0.1_ALPHA.md).
 
 The **ROM recompilation version** of the Mario-in-MM mod: a modified Majora's Mask
 ROM built from the ZeldaRET decomp and intended for N64-compatible hardware. This is
 an experimental alpha; supported-host status and remaining validation work are below.
 
-`github/brothers-mask/` is the standalone, clean-history GitHub release root. It has no
-runtime or build dependency on another part of this monorepo and contains no ROM,
+This is the standalone, clean-history GitHub release. It has no runtime or build
+dependency on a private development tree and contains no ROM,
 extracted texture/model/audio, generated ROM, or Mario voice file. The user supplies
 two supported ROM revisions and every game asset is extracted locally during the
-build. See [GITHUB_RELEASE.md](GITHUB_RELEASE.md) before publishing.
+build. See [GITHUB_RELEASE.md](GITHUB_RELEASE.md) for the enforced distribution boundary.
 
 ## Two ROMs in, one mod ROM out
 
@@ -52,8 +52,8 @@ tools/build_from_roms.sh --verify-only SM64_US.z64 MM_US.z64
 "Standalone" means this source tree does not read another part of the private
 monorepo. It does **not** mean that a ROM recompilation has no host dependencies.
 The end-to-end release build has been exercised on macOS 26.5.2 arm64. Linux and WSL
-are supported by the pinned upstream build systems but have not yet passed this
-release candidate's clean-build gate; native Windows is unsupported.
+are supported by the pinned upstream build systems but have not yet been validated for
+this alpha; native Windows is unsupported.
 
 A full build needs network access for pinned source dependencies and these host tools:
 
@@ -72,9 +72,9 @@ steps fetches either ROM or extracted game data. `--verify-only` needs only the 
 local files and standard checksum tools.
 
 This is an experimental alpha. Only the exact NTSC-US revisions above are accepted.
-The macOS emulator path has the most testing; the mandatory real-console/EverDrive
-gate remains open, and movement, camera, sound, save, and quest integration still need
-broad play coverage. Back up saves before testing. After publication, report bugs in
+The macOS emulator path has the most testing; real-console/EverDrive validation and
+broad movement, camera, sound, save, and quest coverage remain useful alpha testing.
+Back up saves before testing. Report bugs in
 GitHub Issues with the host OS, build command, scene, exact actions, and observed result;
 never attach ROMs, extracted assets, saves, captures containing copyrighted media, or
 other Nintendo data. Security-sensitive reports should use GitHub's private
@@ -140,7 +140,7 @@ timing, Expansion Pak enabled, and all overclock/TLB-ignore/run-ahead/rewind pat
 The launcher hashes the RetroArch/core binaries and records the complete profile; it
 never edits either binary or the user's global core options. See
 [`docs/N64_INVARIANTS.md`](docs/N64_INVARIANTS.md) for the sourced rationale and the
-mandatory real-console residual test.
+recommended real-console residual test.
 
 The strict core profile is intentionally slower than ordinary Mupen settings even
 when the ROM contains no debug logging. Use it for hardware-sensitivity validation;
@@ -195,6 +195,13 @@ tools/inputbot/build.sh
 
 The resulting `.dylib`/`.so` files, test ROMs, telemetry, screenshots, and emulator
 state remain ignored. No emulator executable or compiled plugin is distributed.
+
+## License
+
+Project-authored source and documentation are released under
+[GPL-3.0-only](LICENSE). Third-party material retains its own
+terms as recorded in [PROVENANCE.md](PROVENANCE.md). The GPL does not grant permission
+to redistribute either input ROM, extracted Nintendo game data, or the generated ROM.
 
 Host quirks the Makefile already handles (discovered 2026-07-02, Apple Silicon):
 - `RUN_CC_CHECK=0` — the host gcc syntax-check pass uses `-m32`, unsupported here.

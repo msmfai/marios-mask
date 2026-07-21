@@ -1,6 +1,7 @@
 # Provenance and content classes
 
-This file describes what a clean export contains. It is not a blanket license.
+This file describes what the public repository contains. `LICENSE` applies to the
+project-authored material identified below; third-party material retains its own terms.
 
 | Content | Source / pin | Public-tree treatment |
 |---|---|---|
@@ -10,8 +11,8 @@ This file describes what a clean export contains. It is not a blanket license.
 | Character conversion | GNU libiconv 1.18 from `https://ftp.gnu.org/pub/gnu/libiconv/` | Source archive fetched and built only in the ignored local toolchain directory. Not committed or redistributed. |
 | MM Python/build tools | Requirements declared by pinned `zeldaret/mm` commit; IDO static-recomp release `v1.2` | Resolved/downloaded into `.work/mm` during the local upstream bootstrap. Version ranges are not a complete lockfile; resolved versions belong in release evidence and nothing is redistributed. |
 | Headless-test plugins | Project-authored `tools/inputbot/*.c` | Source included so public tests do not read the private monorepo. Compiled plugins and Mupen64Plus itself are not included. |
-| `patches/0001-dsce-hooks.patch` | Original mod changes expressed against the pinned MM tree, with patch context | Included for local application; requires legal review before public launch. |
-| `src/dsce/`, `tools/`, `tuning.yaml`, documentation | Project-authored integration and build material, except where a file header says otherwise | Included. No open-source license is granted until the owner deliberately adds one. |
+| `patches/0001-dsce-hooks.patch` | Original mod changes expressed against the pinned MM tree, with patch context | Project-authored changes are GPL-3.0-only. Context remains attributable to the pinned upstream source. |
+| `src/dsce/`, `tools/`, `tuning.yaml`, documentation | Project-authored integration and build material, except where a file header says otherwise | Included under GPL-3.0-only. |
 | ROMs, generated ROMs, extracted model/texture/animation/audio, MIDI, emulator saves | Nintendo game inputs or locally derived build/test output | Never included; rejected by export and CI audit. |
 
 The builder fetches the two upstream Git repositories and two GNU source archives

@@ -62,6 +62,7 @@ MAGIC = {
 REQUIRED = {
     ".gitignore",
     "GITHUB_RELEASE.md",
+    "LICENSE",
     "PROVENANCE.md",
     "README.md",
     "RELEASE_V0.1_ALPHA.md",

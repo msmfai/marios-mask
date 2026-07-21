@@ -2,9 +2,8 @@
 
 ## Outcome
 
-Prepare tag `v0.1.0-alpha.1` from `github/brothers-mask/` as a **new-history source
-repository**, not this monorepo or its Git history. That directory is self-contained relative to the
-monorepo: it accepts two locally supplied, exact-revision ROMs and produces the
+Release tag `v0.1.0-alpha.1` from this **independent, clean-history source repository**.
+It accepts two locally supplied, exact-revision ROMs and produces the
 Brother's Mask Majora's Mask ROM without reading any sibling project. It must never
 contain or ship:
 
@@ -18,30 +17,16 @@ The build uses a private ignored `.work/` directory. `tools/release_audit.py` ch
 the public tree and all Git path history for the prohibited formats. CI runs the same
 gate on every push and pull request.
 
-## Make the clean repository
+## Preserve the clean repository
 
-To refresh the segregated release area from this monorepo:
-
-```sh
-python3 n64/tools/export_github.py /tmp/brothers-mask-source
-cd /tmp/brothers-mask-source
-git init
-git add .
-python3 tools/release_audit.py --tree .
-git commit -m "Initial source-only release"
-```
-
-The exporter refuses to overwrite a non-empty destination. Refresh in a new directory,
-review its manifest, then replace `github/brothers-mask/` deliberately.
-Use a new empty GitHub repository. Do **not** add a GitHub remote to the monorepo, push
-the `native` branch, or preserve its history: older commits contain extracted voice
-and music files even if the current checkout later deletes them. Do not publish the
+Run `python3 tools/release_audit.py --tree .` before every push. Keep this repository's
+history independent from any private development monorepo: importing older private
+history could expose extracted voice, music, ROM, or other generated game data even if
+later commits delete it. Verify `release-manifest.sha256` and do not publish the
 generated `mm-dsce-mario.z64` as a release asset.
 
-Before publishing, inspect `release-manifest.sha256`, choose a license for code you
-personally own, and obtain a qualified lawyer's review of the patch/source boundary.
-The exporter intentionally does not invent a license or assign a copyright holder on
-the owner's behalf.
+Project-authored work is released under GPL-3.0-only. Third-party material retains the
+terms recorded in `PROVENANCE.md`.
 
 "Self-contained" here means no dependency on the surrounding private monorepo. A ROM
 recompilation cannot honestly be dependency-free: the wrapper requires common host
@@ -84,7 +69,3 @@ Primary references checked 2026-07-19:
 - [GitHub DMCA Takedown Policy](https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy)
 - [US Copyright Office fair-use FAQ](https://www.copyright.gov/help/faq/faq-fairuse.html)
 - [US Copyright Office: derivative works](https://www.copyright.gov/eco/help-limitation.html)
-
-For an actual public launch, have counsel apply the relevant country-specific law and
-review Nintendo's current enforcement posture, the full patch, project branding, and
-the proposed code license.

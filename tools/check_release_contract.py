@@ -36,6 +36,13 @@ def main() -> int:
         "GITHUB_RELEASE.md": read("GITHUB_RELEASE.md"),
         "PROVENANCE.md": read("PROVENANCE.md"),
     }
+    license_text = read("LICENSE")
+    for marker in ("GNU GENERAL PUBLIC LICENSE", "Version 3, 29 June 2007"):
+        if marker not in license_text:
+            failures.append(f"LICENSE is not the expected GPL-3.0 text: missing {marker!r}")
+    for name in ("README.md", "PROVENANCE.md"):
+        if "GPL-3.0-only" not in documents[name]:
+            failures.append(f"{name} does not declare GPL-3.0-only")
     for name in ("README.md", "RELEASE_V0.1_ALPHA.md"):
         if version not in documents[name]:
             failures.append(f"{name} does not identify version {version}")

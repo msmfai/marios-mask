@@ -93,7 +93,7 @@ for hardware-safety validation; see `docs/N64_INVARIANTS.md`.
 - [ ] Fall scream on a big drop (West gate bridge → field works)
 - [ ] Unmasked Link still sounds like Link (only Fierce Deity's bank was donated)
 
-## Hardware only (NTSC N64 + Expansion Pak)
+## Recommended hardware coverage (NTSC N64 + Expansion Pak)
 - [ ] Ordinary release ROM completes acquisition, transform, scene load, unmask/remask,
       pause/save/reload, repeated jump/voice/foley, and swamp-swim paths
 - [ ] Native pacing remains stable; no hitching, crackle, missing sound, visual RDP
@@ -101,7 +101,7 @@ for hardware-safety validation; see `docs/N64_INVARIANTS.md`.
 - [ ] Optional conservative stress run with the debug ROM: HUD `TICK MAX <= 8000us`
       and `ARENA MIN >= 50000` after ~10 minutes (debug logging itself adds overhead)
 
-An emulator pass does not waive this hardware gate.
+These hardware checks are recommended alpha coverage and are not a publication gate.
 
 Report anything off — say WHAT you did, WHAT you saw/heard, and WHERE (scene). Voice
 mis-mappings, colors, offsets, and physics feel all have single-file fixes standing by.
