@@ -41,7 +41,7 @@ jobs:
         run: python packaging/build_gui.py --dist "$RUNNER_TEMP/gui" --work "$RUNNER_TEMP/pyinstaller"
       - name: Pack relocatable build runtime
         shell: micromamba-shell {0}
-        run: conda-pack -n marios-mask-builder -o "$RUNNER_TEMP/runtime.tar.gz"
+        run: conda-pack -p "$CONDA_PREFIX" -o "$RUNNER_TEMP/runtime.tar.gz"
       - name: Assemble and audit download
         shell: bash
         env:
@@ -93,7 +93,7 @@ jobs:
           init-shell: powershell
       - name: Pack relocatable Windows Python
         shell: pwsh
-        run: micromamba run -n marios-mask-windows-python conda-pack -n marios-mask-windows-python -o "$env:RUNNER_TEMP\python-runtime.tar.gz"
+        run: micromamba run -n marios-mask-windows-python conda-pack -p "$env:MAMBA_ROOT_PREFIX\envs\marios-mask-windows-python" -o "$env:RUNNER_TEMP\python-runtime.tar.gz"
       - uses: msys2/setup-msys2@v2
         id: msys2
         with:
