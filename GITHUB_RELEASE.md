@@ -11,7 +11,11 @@ contain or ship:
 - extracted Nintendo models, textures, animation data, samples, or music;
 - Mario voice WAV/AIFF files, MIDI files, save states, `.o2r` archives, or asset-bearing
   binary patches;
-- local build directories, emulator captures, or private absolute paths.
+- local build directories, unreviewed diagnostic captures, or private absolute paths.
+
+Up to eight curated, release-build screenshots may live under `docs/screenshots/`.
+They must contain no debug overlays, private paths, ROMs, saves, or extracted source
+assets. Each screenshot is limited to 2 MiB by the release audit.
 
 The standalone builder contains one small two-ROM reference delta. It cannot produce
 the game unless both exact input ROMs are supplied. `tools/release_audit.py` permits

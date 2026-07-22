@@ -1,0 +1,64 @@
+name: Report a problem
+description: Tell us what went wrong while building or playing Mario's Mask.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping test the alpha. Please do not upload, attach, or link to either ROM.
+  - type: dropdown
+    id: problem_area
+    attributes:
+      label: Where did the problem happen?
+      options:
+        - Building the game
+        - Opening the finished game
+        - Playing as Mario
+        - Playing as Link
+        - Somewhere else
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Your computer
+      options:
+        - Windows
+        - Mac with Apple Silicon
+        - Intel Mac
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened?
+      description: Include the area, action, or error message you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How can we make it happen again?
+      placeholder: |
+        1. Go to...
+        2. Put on...
+        3. Press...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+  - type: checkboxes
+    id: no_roms
+    attributes:
+      label: ROM privacy
+      options:
+        - label: I have not attached or linked to a ROM.
+          required: true

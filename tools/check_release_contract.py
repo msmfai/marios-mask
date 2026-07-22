@@ -32,6 +32,7 @@ def main() -> int:
 
     documents = {
         "README.md": read("README.md"),
+        "RELEASE_NOTES.md": read("RELEASE_NOTES.md"),
         "RELEASE_V0.1_ALPHA.md": read("RELEASE_V0.1_ALPHA.md"),
         "GITHUB_RELEASE.md": read("GITHUB_RELEASE.md"),
         "PROVENANCE.md": read("PROVENANCE.md"),
@@ -80,6 +81,8 @@ def main() -> int:
         "patcher/src/lib.rs",
         "patcher/src/main.rs",
         "packaging/macos/Info.plist",
+        "docs/screenshots/README.md",
+        ".github/ISSUE_TEMPLATE/bug_report.yml",
     ):
         if not (ROOT / relative).is_file():
             failures.append(f"standalone GUI release dependency is missing: {relative}")
@@ -94,6 +97,22 @@ def main() -> int:
     ):
         if required not in readme:
             failures.append(f"short README is missing user-facing promise {required!r}")
+
+    for required in (
+        "[Screenshot: Mario standing in Clock Town",
+        "[Screenshot: The Brother's Mask",
+        "[Screenshot: Mario performing",
+        "[Screenshot: The Mario's Mask Builder",
+    ):
+        if required not in readme:
+            failures.append(f"README is missing declared screenshot {required!r}")
+
+    release_notes = documents["RELEASE_NOTES.md"]
+    for required in ("Which download do I choose?", "Windows 10 or 11", "Apple Silicon", "How to use it"):
+        if required not in release_notes:
+            failures.append(f"RELEASE_NOTES.md is missing friendly release text {required!r}")
+    if "--notes-file RELEASE_NOTES.md" not in binary_workflow:
+        failures.append("binary workflow does not publish the friendly release notes")
 
     outside_needles = (
         '/Users/',

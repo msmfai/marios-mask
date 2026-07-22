@@ -102,6 +102,7 @@ jobs:
     needs: [posix-packages, windows-package]
     runs-on: ubuntu-22.04
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
@@ -112,5 +113,5 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
-            gh release create "$GITHUB_REF_NAME" --prerelease --title "Mario's Mask $GITHUB_REF_NAME" --generate-notes
+            gh release create "$GITHUB_REF_NAME" --prerelease --title "Mario's Mask $GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
           gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber

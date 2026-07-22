@@ -47,6 +47,9 @@ FORBIDDEN_PARTS = {
 FORBIDDEN_FILES = {"src/dsce_config.h", "src/dsce_tuning.h"}
 RECIPE = "patcher/recipe/marios-mask-alpha2.mm2p"
 RECIPE_SHA256 = "c8d9a5c97084417e1367e418cfcbc8290edfff79c1c07d14872bf431902e5cad"
+SCREENSHOT_PREFIX = ("docs", "screenshots")
+SCREENSHOT_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
+MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024
 MAGIC = {
     b"RIFF": "RIFF/WAV media",
     b"MThd": "MIDI media",
@@ -68,6 +71,7 @@ REQUIRED = {
     "LICENSE",
     "PROVENANCE.md",
     "README.md",
+    "RELEASE_NOTES.md",
     "RELEASE_V0.1_ALPHA.md",
     "VERSION",
     "patcher/Cargo.lock",
@@ -75,12 +79,20 @@ REQUIRED = {
     RECIPE,
     "patcher/src/lib.rs",
     "patcher/src/main.rs",
+    "docs/screenshots/README.md",
     "tools/build_from_roms.sh",
 }
 
 
+def is_curated_screenshot(path: str) -> bool:
+    rel = Path(path)
+    return rel.parts[:2] == SCREENSHOT_PREFIX and rel.suffix.lower() in SCREENSHOT_SUFFIXES
+
+
 def forbidden_path(path: str) -> str | None:
     rel = Path(path)
+    if is_curated_screenshot(path):
+        return None
     if rel.as_posix() in FORBIDDEN_FILES:
         return "generated build header"
     if rel.suffix.lower() in FORBIDDEN_SUFFIXES:
@@ -123,6 +135,17 @@ def indexed_paths(tree: Path) -> list[str]:
 
 
 def inspect_payload(label: str, data: bytes) -> str | None:
+    if is_curated_screenshot(label):
+        if len(data) > MAX_SCREENSHOT_BYTES:
+            return f"curated screenshot exceeds {MAX_SCREENSHOT_BYTES} bytes"
+        valid_magic = (
+            data.startswith(b"\x89PNG\r\n\x1a\n")
+            or data.startswith(b"\xff\xd8\xff")
+            or (data.startswith(b"RIFF") and data[8:12] == b"WEBP")
+        )
+        if not valid_magic:
+            return "curated screenshot does not match PNG, JPEG, or WebP format"
+        return None
     if label == RECIPE:
         digest = hashlib.sha256(data).hexdigest()
         if not data.startswith(bytes.fromhex("28b52ffd")):
@@ -147,6 +170,7 @@ def inspect_payload(label: str, data: bytes) -> str | None:
 def audit(tree: Path) -> list[str]:
     failures: list[str] = []
     present: set[str] = set()
+    screenshots = 0
     for path in sorted(tree.rglob("*")):
         rel_path = path.relative_to(tree)
         if ".git" in rel_path.parts or FORBIDDEN_PARTS.intersection(rel_path.parts):
@@ -163,6 +187,8 @@ def audit(tree: Path) -> list[str]:
         if ignored_local_path(rel):
             continue
         present.add(rel)
+        if is_curated_screenshot(rel):
+            screenshots += 1
         reason = forbidden_path(rel)
         if reason:
             failures.append(f"{rel}: {reason}")
@@ -173,6 +199,9 @@ def audit(tree: Path) -> list[str]:
 
     for rel in sorted(REQUIRED - present):
         failures.append(f"{rel}: required release file is missing")
+
+    if screenshots > 8:
+        failures.append(f"docs/screenshots contains {screenshots} images; limit is 8")
 
     for rel in indexed_paths(tree):
         reason = forbidden_path(rel)
