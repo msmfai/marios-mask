@@ -258,16 +258,17 @@ if [ ! -f "$MM_ASSET_SENTINEL" ]; then
 fi
 
 echo "Building Brother's Mask ROM..."
-MOD_ARGS=()
-BUILT_NAME="mm-dsce.z64"
-if [ "$LAUNDRY_HEALING" -eq 1 ]; then
-    MOD_ARGS+=(TESTBOOT=1 TB_SCENE=LAUNDRY_POOL TB_GRANT_MASK=0 DEBUG=1)
-    BUILT_NAME="mm-dsce-test-laundry-pool-nomask-debug.z64"
-fi
 MM_MOD_STARTED=1
-"$MAKE_BIN" -C "$PROJECT" -j"$JOBS" mod \
-    MM="$MM_TREE" SM64="$SM64_TREE" TOOLCHAIN="$TOOLCHAIN" OUT="$WORK_DIR/out" \
-    "${MOD_ARGS[@]}"
+if [ "$LAUNDRY_HEALING" -eq 1 ]; then
+    BUILT_NAME="mm-dsce-test-laundry-pool-nomask-debug.z64"
+    "$MAKE_BIN" -C "$PROJECT" -j"$JOBS" mod \
+        MM="$MM_TREE" SM64="$SM64_TREE" TOOLCHAIN="$TOOLCHAIN" OUT="$WORK_DIR/out" \
+        TESTBOOT=1 TB_SCENE=LAUNDRY_POOL TB_GRANT_MASK=0 DEBUG=1
+else
+    BUILT_NAME="mm-dsce.z64"
+    "$MAKE_BIN" -C "$PROJECT" -j"$JOBS" mod \
+        MM="$MM_TREE" SM64="$SM64_TREE" TOOLCHAIN="$TOOLCHAIN" OUT="$WORK_DIR/out"
+fi
 MM_MOD_STARTED=0
 
 BUILT="$WORK_DIR/out/$BUILT_NAME"

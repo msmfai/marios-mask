@@ -81,6 +81,7 @@ def materialize_runtime(root: Path) -> Path:
     target = cache_root() / version / "runtime"
     marker = target / ".marios-mask-runtime-ready"
     if marker.is_file():
+        ensure_compiler_aliases(target)
         return target
     if target.exists():
         shutil.rmtree(target)
@@ -90,8 +91,40 @@ def materialize_runtime(root: Path) -> Path:
     python = target / "bin" / "python3"
     if unpack.is_file() and python.is_file():
         subprocess.run([str(python), str(unpack)], check=True, cwd=target)
+    ensure_compiler_aliases(target)
     marker.write_text("ready\n", encoding="utf-8")
     return target
+
+
+def ensure_compiler_aliases(runtime: Path, system: str | None = None) -> None:
+    """Expose compiler names hard-coded by the pinned decomp host-tool builds."""
+    runtime_bin = runtime / "bin"
+    make = runtime_bin / "make"
+    gmake = runtime_bin / "gmake"
+    if not make.is_file():
+        raise BuilderError("The packaged GNU Make runtime is incomplete.")
+    if not gmake.exists():
+        gmake.symlink_to(make.name)
+    system = system or platform.system()
+    if system == "Darwin":
+        compiler_pairs = (("clang", ("cc", "gcc")), ("clang++", ("c++", "g++")))
+    else:
+        c_candidates = sorted(runtime_bin.glob("*-gcc"))
+        cxx_candidates = sorted(runtime_bin.glob("*-g++"))
+        if not c_candidates or not cxx_candidates:
+            raise BuilderError("The packaged compiler runtime is incomplete.")
+        compiler_pairs = (
+            (c_candidates[0].name, ("cc", "gcc")),
+            (cxx_candidates[0].name, ("c++", "g++")),
+        )
+    for compiler, aliases in compiler_pairs:
+        target = runtime_bin / compiler
+        if not target.is_file():
+            raise BuilderError("The packaged compiler runtime is incomplete.")
+        for alias in aliases:
+            link = runtime_bin / alias
+            if not link.exists():
+                link.symlink_to(target.name)
 
 
 def materialize_windows_python(root: Path) -> Path:
@@ -180,6 +213,22 @@ def build_invocation(root: Path, sm64: Path, mm: Path, output: Path) -> BuildInv
         if runtime.is_dir():
             runtime_bin = runtime / "bin"
             environment["PATH"] = os.pathsep.join([str(runtime_bin), environment.get("PATH", "")])
+            if environment.get("DSCE_PACKAGED_RUNTIME") == "1":
+                git_exec = runtime / "libexec" / "git-core"
+                git_templates = runtime / "share" / "git-core" / "templates"
+                certificates = runtime / "ssl" / "cacert.pem"
+                if (
+                    not (git_exec / "git-remote-https").is_file()
+                    or not git_templates.is_dir()
+                    or not certificates.is_file()
+                ):
+                    raise BuilderError("The packaged Git runtime is incomplete.")
+                # Conda's Git binary retains its original CI prefix after
+                # conda-unpack. Override its two compiled-in search paths.
+                environment["GIT_EXEC_PATH"] = str(git_exec)
+                environment["GIT_TEMPLATE_DIR"] = str(git_templates)
+                environment["GIT_SSL_CAINFO"] = str(certificates)
+                environment["SSL_CERT_FILE"] = str(certificates)
             python = runtime_bin / "python3"
             make = runtime_bin / "make"
             if python.exists():

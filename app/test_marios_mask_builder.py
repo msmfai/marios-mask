@@ -12,6 +12,18 @@ import marios_mask_builder as builder
 
 
 class BuilderTests(unittest.TestCase):
+    def test_macos_compiler_aliases_use_bundled_clang(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            runtime = Path(directory)
+            (runtime / "bin").mkdir()
+            (runtime / "bin" / "clang").touch()
+            (runtime / "bin" / "clang++").touch()
+            (runtime / "bin" / "make").touch()
+            builder.ensure_compiler_aliases(runtime, "Darwin")
+            self.assertEqual((runtime / "bin" / "gcc").readlink(), Path("clang"))
+            self.assertEqual((runtime / "bin" / "g++").readlink(), Path("clang++"))
+            self.assertEqual((runtime / "bin" / "gmake").readlink(), Path("make"))
+
     def test_rejects_missing_input(self) -> None:
         with self.assertRaisesRegex(builder.BuilderError, "both ROMs"):
             builder.validate_choices("", "", "out.z64")
@@ -51,6 +63,11 @@ class BuilderTests(unittest.TestCase):
             (project / "tools" / "build_from_roms.sh").touch()
             (runtime / "bin").mkdir(parents=True)
             (runtime / "bin" / "micromamba").touch()
+            (runtime / "libexec" / "git-core").mkdir(parents=True)
+            (runtime / "libexec" / "git-core" / "git-remote-https").touch()
+            (runtime / "share" / "git-core" / "templates").mkdir(parents=True)
+            (runtime / "ssl").mkdir()
+            (runtime / "ssl" / "cacert.pem").touch()
             sm64 = root / "sm64.z64"
             mm = root / "mm.z64"
             output = root / "result.z64"
@@ -60,6 +77,15 @@ class BuilderTests(unittest.TestCase):
                  mock.patch.object(builder.platform, "system", return_value="Darwin"):
                 invocation = builder.build_invocation(root, sm64, mm, output)
             self.assertEqual(invocation.environment["DSCE_PACKAGED_RUNTIME"], "1")
+            self.assertEqual(
+                invocation.environment["GIT_EXEC_PATH"], str(runtime / "libexec" / "git-core")
+            )
+            self.assertEqual(
+                invocation.environment["GIT_TEMPLATE_DIR"],
+                str(runtime / "share" / "git-core" / "templates"),
+            )
+            self.assertEqual(invocation.environment["SSL_CERT_FILE"], str(runtime / "ssl" / "cacert.pem"))
+            self.assertEqual(invocation.environment["GIT_SSL_CAINFO"], str(runtime / "ssl" / "cacert.pem"))
             self.assertEqual(invocation.command[0], str(runtime / "bin" / "micromamba"))
 
 
