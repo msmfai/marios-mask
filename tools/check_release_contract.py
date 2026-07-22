@@ -98,14 +98,15 @@ def main() -> int:
         if required not in readme:
             failures.append(f"short README is missing user-facing promise {required!r}")
 
-    for required in (
-        "[Screenshot: Mario standing in Clock Town",
-        "[Screenshot: The Brother's Mask",
-        "[Screenshot: Mario performing",
-        "[Screenshot: The Mario's Mask Builder",
-    ):
-        if required not in readme:
-            failures.append(f"README is missing declared screenshot {required!r}")
+    declared_screenshots = (
+        ("[Screenshot: Mario standing in Clock Town", "docs/screenshots/hero-clock-town"),
+        ("[Screenshot: The Brother's Mask", "docs/screenshots/brothers-mask"),
+        ("[Screenshot: Mario performing", "docs/screenshots/mario-movement"),
+        ("[Screenshot: The Mario's Mask Builder", "docs/screenshots/builder"),
+    )
+    for placeholder, image_path in declared_screenshots:
+        if placeholder not in readme and image_path not in readme:
+            failures.append(f"README is missing screenshot placeholder or image {image_path!r}")
 
     release_notes = documents["RELEASE_NOTES.md"]
     for required in ("Which download do I choose?", "Windows 10 or 11", "Apple Silicon", "How to use it"):
