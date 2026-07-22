@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - runner: ubuntu-24.04
-            asset: MariosMaskBuilder-linux-x86_64.tar.xz
+            asset: MariosMaskBuilder-linux-x86_64.tar.gz
           - runner: macos-15
             asset: MariosMaskBuilder-macos-apple-silicon.zip
           - runner: macos-15-intel
@@ -66,7 +66,7 @@ jobs:
             tar -xf "$RUNNER_TEMP/project.tar" -C "$package/payload/project"
             tar -xzf "$RUNNER_TEMP/runtime.tar.gz" -C "$package/runtime"
             python3 packaging/audit_binary_package.py "$package"
-            tar -C "$RUNNER_TEMP/package" -cJf "$RUNNER_TEMP/release/$ASSET" MariosMaskBuilder
+            tar -C "$RUNNER_TEMP/package" -czf "$RUNNER_TEMP/release/$ASSET" MariosMaskBuilder
           fi
       - uses: actions/upload-artifact@v7
         with:
