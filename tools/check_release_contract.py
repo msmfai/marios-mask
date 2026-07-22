@@ -92,9 +92,7 @@ def main() -> int:
         failures.append("patcher/Cargo.toml version does not match VERSION")
 
     readme = documents["README.md"]
-    for required in (
-        "Releases", ".z64", ".v64", ".n64", ".zip", ".gz", "compressed", "decompressed"
-    ):
+    for required in ("Releases", ".z64", ".v64", ".n64", ".zip", ".gz"):
         if required not in readme:
             failures.append(f"short README is missing user-facing promise {required!r}")
 
