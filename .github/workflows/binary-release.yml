@@ -1,0 +1,117 @@
+name: standalone-builder-packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  posix-packages:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            asset: MariosMaskBuilder-linux-x86_64.tar.gz
+            platform: linux
+          - runner: macos-15
+            asset: MariosMaskBuilder-macos-apple-silicon.zip
+            platform: mac
+          - runner: macos-15-intel
+            asset: MariosMaskBuilder-macos-intel.zip
+            platform: mac
+    runs-on: ${{ matrix.runner }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux GUI link libraries
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxkbcommon-dev libxrandr-dev
+      - name: Test standalone patcher
+        run: cargo test --manifest-path patcher/Cargo.toml --locked
+      - name: Build standalone patcher
+        run: cargo build --release --manifest-path patcher/Cargo.toml --locked
+      - name: Assemble and audit download
+        shell: bash
+        env:
+          ASSET: ${{ matrix.asset }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release"
+          if [ "$PLATFORM" = mac ]; then
+            app="$RUNNER_TEMP/MariosMaskBuilder.app"
+            mkdir -p "$app/Contents/MacOS"
+            cp packaging/macos/Info.plist "$app/Contents/Info.plist"
+            cp patcher/target/release/marios-mask-builder "$app/Contents/MacOS/MariosMaskBuilder"
+            chmod +x "$app/Contents/MacOS/MariosMaskBuilder"
+            codesign --force --deep --sign - "$app"
+            python3 packaging/audit_binary_package.py "$app"
+            ditto -c -k --sequesterRsrc --keepParent "$app" "$RUNNER_TEMP/release/$ASSET"
+          else
+            package="$RUNNER_TEMP/package/MariosMaskBuilder"
+            mkdir -p "$package"
+            cp patcher/target/release/marios-mask-builder "$package/MariosMaskBuilder"
+            chmod +x "$package/MariosMaskBuilder"
+            python3 packaging/audit_binary_package.py "$package"
+            tar -C "$RUNNER_TEMP/package" -czf "$RUNNER_TEMP/release/$ASSET" MariosMaskBuilder
+          fi
+          test "$(wc -c < "$RUNNER_TEMP/release/$ASSET")" -le 20971520
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ runner.temp }}/release/${{ matrix.asset }}
+          if-no-files-found: error
+
+  windows-package:
+    runs-on: windows-2025
+    steps:
+      - run: git config --global core.autocrlf input
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test standalone patcher
+        run: cargo test --manifest-path patcher/Cargo.toml --locked
+      - name: Build standalone patcher
+        run: cargo build --release --manifest-path patcher/Cargo.toml --locked
+      - name: Assemble and audit download
+        shell: pwsh
+        run: |
+          $package = "$env:RUNNER_TEMP\package\MariosMaskBuilder"
+          New-Item -ItemType Directory -Force $package | Out-Null
+          Copy-Item "patcher\target\release\marios-mask-builder.exe" "$package\MariosMaskBuilder.exe"
+          python packaging/audit_binary_package.py $package
+          Compress-Archive -Path $package -DestinationPath "$env:RUNNER_TEMP\MariosMaskBuilder-windows-x86_64.zip" -CompressionLevel Optimal
+          if ((Get-Item "$env:RUNNER_TEMP\MariosMaskBuilder-windows-x86_64.zip").Length -gt 20MB) { throw "package exceeds 20 MiB" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MariosMaskBuilder-windows-x86_64.zip
+          path: ${{ runner.temp }}/MariosMaskBuilder-windows-x86_64.zip
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [posix-packages, windows-package]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publish all native downloads together
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --prerelease --title "Mario's Mask $GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
+          gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber
