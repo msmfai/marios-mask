@@ -58,7 +58,7 @@ class NormalizeRomTests(unittest.TestCase):
             supported = {"sm64": {}, "mm": {("md5", digest): "verified"}}
             with mock.patch.object(normalize_rom, "SUPPORTED", supported):
                 self.assertEqual(normalize_rom.normalize("mm", source), "verified")
-            self.assertEqual([source], list(Path(directory).iterdir()))
+            self.assertEqual(["input.rom"], [path.name for path in Path(directory).iterdir()])
 
     def test_zip_and_gzip_inputs(self) -> None:
         payload = bytes.fromhex("80371240") + b"compressed-fixture"
