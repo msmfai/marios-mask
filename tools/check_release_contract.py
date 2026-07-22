@@ -125,7 +125,7 @@ def main() -> int:
     for relative in (
         "patcher/Cargo.lock",
         "patcher/Cargo.toml",
-        "patcher/recipe/marios-mask-alpha2.mm2p",
+        "patcher/recipe/marios-mask-alpha3.mm2p",
         "patcher/src/lib.rs",
         "patcher/src/main.rs",
         "packaging/macos/Info.plist",
@@ -145,6 +145,9 @@ def main() -> int:
     for required in ("Releases", ".z64", ".v64", ".n64", ".zip", ".gz"):
         if required not in readme:
             failures.append(f"short README is missing user-facing promise {required!r}")
+    for required in ("fresh game with no existing save data", "File 1", "File 2 stays empty"):
+        if required not in readme:
+            failures.append(f"README is missing fresh-save convenience wording {required!r}")
 
     declared_screenshots = (
         ("[Screenshot: Mario standing in Clock Town", "docs/screenshots/hero-clock-town"),
@@ -160,6 +163,9 @@ def main() -> int:
     for required in ("Which download do I choose?", "Windows 10 or 11", "Apple Silicon", "How to use it"):
         if required not in release_notes:
             failures.append(f"RELEASE_NOTES.md is missing friendly release text {required!r}")
+    for required in ("fresh save data", "File 1", "empty File 2", "Day 1"):
+        if required not in release_notes:
+            failures.append(f"RELEASE_NOTES.md is missing fresh-save convenience wording {required!r}")
     if "--notes-file RELEASE_NOTES.md" not in binary_workflow:
         failures.append("binary workflow does not publish the friendly release notes")
 

@@ -2,7 +2,7 @@
 
 ## Outcome
 
-Release tag `v0.1.0-alpha.2` from this **independent, clean-history source repository**.
+Release tag `v0.1.0-alpha.3` from this **independent, clean-history source repository**.
 It accepts two locally supplied, exact-revision ROMs and produces the
 Brother's Mask Majora's Mask ROM without reading any sibling project. It must never
 contain or ship:

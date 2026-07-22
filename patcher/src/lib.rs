@@ -10,8 +10,8 @@ const DMADATA_START: usize = 0x1A500;
 const SM64_SHA1: &str = "9bef1128717f958171a4afac3ed78ee2bb4e86ce";
 const MM_COMPRESSED_SHA1: &str = "d6133ace5afaa0882cf214cf88daba39e266c078";
 const MM_DECOMPRESSED_SHA1: &str = "7f5630dbc4d5d61d6276213210c4d5cdd83a47d6";
-const OUTPUT_SHA1: &str = "dab7e682bea7a692aaee99e872c34a54360dd7a2";
-const PATCH: &[u8] = include_bytes!("../recipe/marios-mask-alpha2.mm2p");
+const OUTPUT_SHA1: &str = "682829e76147ac90f105c38ab137b4a4eb65d1e4";
+const PATCH: &[u8] = include_bytes!("../recipe/marios-mask-alpha3.mm2p");
 
 #[derive(Clone, Copy, Debug)]
 struct DmaEntry {

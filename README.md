@@ -23,8 +23,10 @@ As Mario, you can:
 - Long-jump, triple-jump, wall-jump, and more.
 - Explore Termina with Mario's model, voice, and animations.
 
-The first save slot also includes a file named `Link` just after the opening
-tutorial, so you can skip straight to Day 1 if you want.
+On a fresh game with no existing save data, File 1 is automatically prepared as
+`Link` just after the opening tutorial, ready at the start of Day 1. It is included
+only for convenience: File 2 stays empty for a normal new game, and you can erase or
+replace the prepared file at any time.
 
 [Screenshot: The Brother's Mask in the pause-menu inventory, with its description visible]
 

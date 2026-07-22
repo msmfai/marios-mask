@@ -45,8 +45,12 @@ FORBIDDEN_PARTS = {
     ".work", "__pycache__", "assets", "build", "extracted", "out", "state", "target", "test", "toolchain"
 }
 FORBIDDEN_FILES = {"src/dsce_config.h", "src/dsce_tuning.h"}
-RECIPE = "patcher/recipe/marios-mask-alpha2.mm2p"
-RECIPE_SHA256 = "c8d9a5c97084417e1367e418cfcbc8290edfff79c1c07d14872bf431902e5cad"
+RECIPE = "patcher/recipe/marios-mask-alpha3.mm2p"
+RECIPES = {
+    "patcher/recipe/marios-mask-alpha2.mm2p":
+        "c8d9a5c97084417e1367e418cfcbc8290edfff79c1c07d14872bf431902e5cad",
+    RECIPE: "9e61e4f708ee8ca4adf5a96f01540f65be1b6ac6b5c54d208bb68542c9ebf6e0",
+}
 SCREENSHOT_PREFIX = ("docs", "screenshots")
 SCREENSHOT_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024
@@ -148,13 +152,13 @@ def inspect_payload(label: str, data: bytes) -> str | None:
         if not valid_magic:
             return "curated screenshot does not match PNG, JPEG, or WebP format"
         return None
-    if label == RECIPE:
+    if label in RECIPES:
         digest = hashlib.sha256(data).hexdigest()
         if not data.startswith(bytes.fromhex("28b52ffd")):
             return "two-ROM recipe is not a Zstandard reference patch"
         if len(data) > 4 * 1024 * 1024:
             return "two-ROM recipe exceeds the 4 MiB release limit"
-        if digest != RECIPE_SHA256:
+        if digest != RECIPES[label]:
             return f"unexpected two-ROM recipe SHA-256 {digest}"
         return None
     for signature, description in MAGIC.items():

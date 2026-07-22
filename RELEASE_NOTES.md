@@ -29,5 +29,12 @@ not upload anything.
 The downloads are only 3–4 MB and contain no Python runtime, WSL environment,
 compiler, decomp tree, or ROM.
 
+## Start on Day 1
+
+When the game starts with fresh save data, File 1 contains a convenience save named
+`Link` immediately after the opening tutorial. Choose it to start at the beginning of
+Day 1, or use the empty File 2 to begin a normal new game. The prepared file can be
+erased or replaced like any other save.
+
 This is an early alpha, so back up your save. Please report problems on the
 [Issues page](https://github.com/msmfai/marios-mask/issues), but never attach a ROM.
