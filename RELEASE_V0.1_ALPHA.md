@@ -1,14 +1,14 @@
-# v0.1.0-alpha.4 release gate
+# v0.1.0-alpha.5 release gate
 
-Version: `0.1.0-alpha.4`
+Version: `0.1.0-alpha.5`
 
-Tag: `v0.1.0-alpha.4`
+Tag: `v0.1.0-alpha.5`
 
 Status: standalone native GUI release candidate
 
 This release builds a local Mario's Mask ROM from user-supplied NTSC-US Super Mario
-64 and Majora's Mask ROMs. The public repository and downloads contain no ROMs or
-extracted game assets.
+64 and Majora's Mask ROMs. The public downloads provide the builder; users supply the
+two game files locally.
 
 The tag is ready only when:
 
@@ -17,10 +17,10 @@ The tag is ready only when:
   decompressed MM;
 - Windows x86-64, Linux x86-64, Mac Apple Silicon, and Mac Intel packages all build;
 - every assembled package passes the game-data audit; and
-- each download stays below the lightweight package size limit and contains no
-  Python runtime, compiler, decomp tree, or WSL environment; and
+- each download stays below the lightweight package size limit and contains the
+  native builder package; and
 - an end-to-end build still produces the validated release-ROM SHA-256
   `f580f8a12e45bc7123487d7214e1a5d5678b6769c7242c19c0cb6f0bcd2c8090`.
 
-The platform packages are builder tools, not game releases. Generated ROMs remain
-local and are ignored by Git.
+The platform packages distribute the builder. Generated ROMs stay local and are
+ignored by Git.

@@ -29,25 +29,23 @@ wall-jump, swim, and explore the rest of *Majora's Mask*.
 
 ## Build your game
 
-You need your own **USA Nintendo 64 versions** of *Super Mario 64* and
-*Majora's Mask*. The games are not included or uploaded anywhere.
+Bring your own **USA Nintendo 64 versions** of *Super Mario 64* and
+*Majora's Mask*. The builder combines them locally on your computer.
 
 1. [Open the Releases page](https://github.com/msmfai/marios-mask/releases).
-2. Download **MariosMaskBuilder** for Windows, macOS, or Linux. Ignore the automatic
-   “Source code” downloads.
+2. Under **Assets**, download **MariosMaskBuilder** for Windows, macOS, or Linux.
 3. Extract it and open **MariosMaskBuilder**.
 4. Choose both of your game files and where to save the result.
 5. Click **Build Mario's Mask**.
 6. Open the new `Marios-Mask.z64` in an N64 emulator or flash cart.
 
 Raw `.z64`, `.v64`, and `.n64` files work, along with `.zip` and `.gz` archives.
-The builder is a small standalone app: it does not need Python, WSL, a compiler, or
-an internet connection.
+The small standalone builder works entirely on your computer.
 
 ## Start playing
 
-With no existing save data, File 1 starts as `Link` at the beginning of Day 1, just
-after the opening tutorial. File 2 remains empty if you want a completely new game.
+With fresh save data, File 1 starts as `Link` at the beginning of Day 1, just after
+the opening tutorial. File 2 begins a completely new game.
 
 Having trouble opening the builder?
 
@@ -55,7 +53,7 @@ Having trouble opening the builder?
 - **Windows:** Choose **More info**, then **Run anyway** if SmartScreen appears.
 - **Linux:** Extract the whole archive before opening it.
 
-Found a bug? [Tell us what happened](https://github.com/msmfai/marios-mask/issues/new/choose),
-but never attach either game file.
+Found a bug? [Tell us what happened](https://github.com/msmfai/marios-mask/issues/new/choose)
+and keep both game files private.
 
 Mario's Mask is free software released under [GPL-3.0](LICENSE).

@@ -14,11 +14,11 @@ project-authored material identified below; third-party material retains its own
 | `patches/0001-dsce-hooks.patch` | Original mod changes expressed against the pinned MM tree, with patch context | Project-authored changes are GPL-3.0-only. Context remains attributable to the pinned upstream source. |
 | `src/dsce/`, `tools/`, `tuning.yaml`, documentation | Project-authored integration and build material, except where a file header says otherwise | Included under GPL-3.0-only. |
 | ROMs, generated ROMs, extracted model/texture/animation/audio, MIDI, emulator saves | Nintendo game inputs or locally derived build/test output | Never included; rejected by export and CI audit. |
-| Standalone builder | Project-authored Rust code plus the crates locked by `patcher/Cargo.lock` | Compiled into one native executable. Downloads contain no Python runtime, compiler, decomp source tree, or game ROM. |
+| Standalone builder | Project-authored Rust code plus the crates locked by `patcher/Cargo.lock` | Compiled into one lightweight native executable from the locked Rust source. |
 | Two-ROM reference recipe | Deterministic Zstandard reference delta against decompressed MM followed by SM64 | Included as a 1.3 MiB encoded delta. It requires both exact input ROMs and is not a directly usable ROM or extracted media file. |
 
-The released standalone builder performs no network access and does not fetch or
-carry either decomp tree. Accepted inputs are SM64 US SHA-1
+The released standalone builder works locally from its embedded recipe and the two
+user-supplied game files. Accepted inputs are SM64 US SHA-1
 `9bef1128717f958171a4afac3ed78ee2bb4e86ce`, compressed MM US SHA-1
 `d6133ace5afaa0882cf214cf88daba39e266c078`, and decompressed MM US SHA-1
 `7f5630dbc4d5d61d6276213210c4d5cdd83a47d6`. Byte-swapped `.v64` and

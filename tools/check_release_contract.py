@@ -145,7 +145,7 @@ def main() -> int:
     for required in ("Releases", ".z64", ".v64", ".n64", ".zip", ".gz"):
         if required not in readme:
             failures.append(f"short README is missing user-facing promise {required!r}")
-    for required in ("no existing save data", "File 1", "File 2 remains empty"):
+    for required in ("fresh save data", "File 1", "File 2 begins a completely new game"):
         if required not in readme:
             failures.append(f"README is missing fresh-save convenience wording {required!r}")
 
@@ -166,7 +166,7 @@ def main() -> int:
     for required in ("Choose your download", "Windows 10 or 11", "Apple Silicon", "Build Mario's Mask"):
         if required not in release_notes:
             failures.append(f"RELEASE_NOTES.md is missing friendly release text {required!r}")
-    for required in ("fresh save data", "File 1", "File 2 is empty", "Day 1"):
+    for required in ("fresh save data", "File 1", "File 2 begins a completely new game", "Day 1"):
         if required not in release_notes:
             failures.append(f"RELEASE_NOTES.md is missing fresh-save convenience wording {required!r}")
     if "--notes-file RELEASE_NOTES.md" not in binary_workflow:

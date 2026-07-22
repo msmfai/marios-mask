@@ -1,12 +1,12 @@
-# Mario's Mask v0.1.0-alpha.4
+# Mario's Mask v0.1.0-alpha.5
 
 Play *Majora's Mask* as Mario, with movement, attacks, swimming, voice, and animations
 adapted from *Super Mario 64*.
 
-![Mario in Termina](https://raw.githubusercontent.com/msmfai/marios-mask/v0.1.0-alpha.4/docs/screenshots/hero.png)
+![Mario in Termina](https://raw.githubusercontent.com/msmfai/marios-mask/v0.1.0-alpha.5/docs/screenshots/hero.png)
 
-This alpha adds a friendlier project page with real gameplay screenshots. The tested
-ROM recipe is unchanged from alpha.3.
+This alpha adds a friendlier project page with real gameplay screenshots and clearer
+builder instructions.
 
 ## Choose your download
 
@@ -17,8 +17,7 @@ ROM recipe is unchanged from alpha.3.
 | Mac with an Intel processor | `MariosMaskBuilder-macos-intel.zip` |
 | 64-bit Linux | `MariosMaskBuilder-linux-x86_64.tar.gz` |
 
-Download one of the four **MariosMaskBuilder** files under **Assets**. You do not need
-the automatic “Source code” downloads.
+Choose one of the four **MariosMaskBuilder** files under **Assets**.
 
 ## Build Mario's Mask
 
@@ -28,11 +27,10 @@ the automatic “Source code” downloads.
 4. Click **Build Mario's Mask**.
 5. Open `Marios-Mask.z64` in an N64 emulator or flash cart.
 
-The builder works locally and contains no games. It is only a few megabytes and does
-not require Python, WSL, a compiler, or an internet connection.
+The small standalone builder combines your two game files locally on your computer.
 
 With fresh save data, File 1 starts as `Link` on Day 1 after the tutorial.
-File 2 is empty if you prefer a completely new game.
+File 2 begins a completely new game.
 
 This is an early alpha, so back up your saves. Report problems on the
-[Issues page](https://github.com/msmfai/marios-mask/issues), but never attach a ROM.
+[Issues page](https://github.com/msmfai/marios-mask/issues) and keep both ROMs private.

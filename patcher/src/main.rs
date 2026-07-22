@@ -182,7 +182,7 @@ impl eframe::App for BuilderApp {
 
         egui::CentralPanel::default().show(context, |ui| {
             ui.heading("Mario's Mask Builder");
-            ui.label("Choose your own NTSC-US ROMs. Nothing is uploaded.");
+            ui.label("Choose your NTSC-US game files to build locally.");
             ui.add_space(8.0);
 
             Self::path_row(ui, "Super Mario 64", &mut self.sm64, |value| {
