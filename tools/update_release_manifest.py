@@ -10,6 +10,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "release-manifest.sha256"
 SKIP_PARTS = {".git", ".work", "__pycache__", "out", "target", "toolchain"}
+SKIP_FILES = {
+    "src/dsce_config.h",
+    "src/dsce_tuning.h",
+    "tools/inputbot/mupen64plus-input-script.dylib",
+    "tools/inputbot/mupen64plus-input-script.so",
+    "tools/inputbot/mupen64plus-video-null.dylib",
+    "tools/inputbot/mupen64plus-video-null.so",
+}
 
 
 def publishable_files() -> list[Path]:
@@ -19,6 +27,7 @@ def publishable_files() -> list[Path]:
         if path.is_file()
         and path != MANIFEST
         and not SKIP_PARTS.intersection(path.relative_to(ROOT).parts)
+        and path.relative_to(ROOT).as_posix() not in SKIP_FILES
     ]
 
 

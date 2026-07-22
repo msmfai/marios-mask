@@ -13,6 +13,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "release-manifest.sha256"
 MANIFEST_SKIP_PARTS = {".git", ".work", "__pycache__", "out", "target", "toolchain"}
+MANIFEST_SKIP_FILES = {
+    "src/dsce_config.h",
+    "src/dsce_tuning.h",
+    "tools/inputbot/mupen64plus-input-script.dylib",
+    "tools/inputbot/mupen64plus-input-script.so",
+    "tools/inputbot/mupen64plus-video-null.dylib",
+    "tools/inputbot/mupen64plus-video-null.so",
+}
 
 
 def read(relative: str) -> str:
@@ -47,6 +55,7 @@ def verify_manifest() -> list[str]:
         if path.is_file()
         and path != MANIFEST
         and not MANIFEST_SKIP_PARTS.intersection(path.relative_to(ROOT).parts)
+        and path.relative_to(ROOT).as_posix() not in MANIFEST_SKIP_FILES
     }
     missing = sorted(actual.keys() - declared.keys())
     extra = sorted(declared.keys() - actual.keys())
