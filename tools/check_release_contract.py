@@ -145,25 +145,28 @@ def main() -> int:
     for required in ("Releases", ".z64", ".v64", ".n64", ".zip", ".gz"):
         if required not in readme:
             failures.append(f"short README is missing user-facing promise {required!r}")
-    for required in ("fresh game with no existing save data", "File 1", "File 2 stays empty"):
+    for required in ("no existing save data", "File 1", "File 2 remains empty"):
         if required not in readme:
             failures.append(f"README is missing fresh-save convenience wording {required!r}")
 
     declared_screenshots = (
-        ("[Screenshot: Mario standing in Clock Town", "docs/screenshots/hero-clock-town"),
-        ("[Screenshot: The Brother's Mask", "docs/screenshots/brothers-mask"),
-        ("[Screenshot: Mario performing", "docs/screenshots/mario-movement"),
-        ("[Screenshot: The Mario's Mask Builder", "docs/screenshots/builder"),
+        "docs/screenshots/hero.png",
+        "docs/screenshots/clock-town.png",
+        "docs/screenshots/peach-statue.png",
+        "docs/screenshots/brothers-mask.png",
+        "docs/screenshots/mario-swimming.png",
     )
-    for placeholder, image_path in declared_screenshots:
-        if placeholder not in readme and image_path not in readme:
-            failures.append(f"README is missing screenshot placeholder or image {image_path!r}")
+    for image_path in declared_screenshots:
+        if image_path not in readme:
+            failures.append(f"README is missing public screenshot {image_path!r}")
+        if not (ROOT / image_path).is_file():
+            failures.append(f"README screenshot does not exist: {image_path!r}")
 
     release_notes = documents["RELEASE_NOTES.md"]
-    for required in ("Which download do I choose?", "Windows 10 or 11", "Apple Silicon", "How to use it"):
+    for required in ("Choose your download", "Windows 10 or 11", "Apple Silicon", "Build Mario's Mask"):
         if required not in release_notes:
             failures.append(f"RELEASE_NOTES.md is missing friendly release text {required!r}")
-    for required in ("fresh save data", "File 1", "empty File 2", "Day 1"):
+    for required in ("fresh save data", "File 1", "File 2 is empty", "Day 1"):
         if required not in release_notes:
             failures.append(f"RELEASE_NOTES.md is missing fresh-save convenience wording {required!r}")
     if "--notes-file RELEASE_NOTES.md" not in binary_workflow:

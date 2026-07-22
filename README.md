@@ -2,78 +2,60 @@
 
 **Play *Majora's Mask* as Mario.**
 
-Mario's Mask brings Mario's movement, jumps, attacks, voice, and animations from
-*Super Mario 64* into the world of *Majora's Mask*.
+![Mario in Termina](docs/screenshots/hero.png)
 
-[Screenshot: Mario standing in Clock Town beside Tatl, with the normal Majora's Mask HUD visible]
+Mario's Mask brings Mario's movement, attacks, voice, and animations from
+*Super Mario 64* into the world of *Majora's Mask*.
 
 **[Download Mario's Mask](https://github.com/msmfai/marios-mask/releases)**
 
-> **This is an early alpha.** Back up your save files and expect a few rough edges.
+> **Early alpha:** back up your saves and expect a few rough edges.
 
-## What does the mod add?
+## Explore Termina as Mario
 
-The Brother's Mask contains the spirit of a hero from another world. Put it on and
-Link transforms into Mario while the story, world, and quests of *Majora's Mask*
-continue around him.
+![Mario running through Clock Town](docs/screenshots/clock-town.png)
 
-As Mario, you can:
+The Brother's Mask contains the spirit of a hero from another world. Find the stone
+Peach in the Laundry Pool and play the Song of Healing nearby to receive it.
 
-- Run, punch, swim, and ground-pound.
-- Long-jump, triple-jump, wall-jump, and more.
-- Explore Termina with Mario's model, voice, and animations.
+![Link meeting the stone Peach](docs/screenshots/peach-statue.png)
 
-On a fresh game with no existing save data, File 1 is automatically prepared as
-`Link` just after the opening tutorial, ready at the start of Day 1. It is included
-only for convenience: File 2 stays empty for a normal new game, and you can erase or
-replace the prepared file at any time.
+![The Brother's Mask in the inventory](docs/screenshots/brothers-mask.png)
 
-[Screenshot: The Brother's Mask in the pause-menu inventory, with its description visible]
+Put on the mask and Mario can run, punch, ground-pound, long-jump, triple-jump,
+wall-jump, swim, and explore the rest of *Majora's Mask*.
 
-[Screenshot: Mario performing a recognizable move in Termina, such as a triple jump or ground-pound]
+![Mario swimming underwater](docs/screenshots/mario-swimming.png)
 
-## What do I need?
+## Build your game
 
-- Your own **USA version** of *Super Mario 64* for Nintendo 64.
-- Your own **USA version** of *Majora's Mask* for Nintendo 64.
-- An N64 emulator or flash cart to play the finished game.
+You need your own **USA Nintendo 64 versions** of *Super Mario 64* and
+*Majora's Mask*. The games are not included or uploaded anywhere.
 
-The games are not included. The builder works entirely on your computer and does not
-upload your files.
-
-## Build Mario's Mask
-
-Choose the download that matches your computer:
-
-| Computer | Download |
-|---|---|
-| Windows 10 or 11 | `MariosMaskBuilder-windows-x86_64.zip` |
-| Mac with an M1, M2, M3, or M4 chip | `MariosMaskBuilder-macos-apple-silicon.zip` |
-| Older Mac with an Intel processor | `MariosMaskBuilder-macos-intel.zip` |
-| 64-bit Linux | `MariosMaskBuilder-linux-x86_64.tar.gz` |
-
-On the Releases page, download one of the four **MariosMaskBuilder** files under
-**Assets**. You do not need the “Source code” downloads.
-
-1. Extract the download and open **MariosMaskBuilder**.
-2. Choose your *Super Mario 64* game file.
-3. Choose your *Majora's Mask* game file.
-4. Choose where to save the new game.
+1. [Open the Releases page](https://github.com/msmfai/marios-mask/releases).
+2. Download **MariosMaskBuilder** for Windows, macOS, or Linux. Ignore the automatic
+   “Source code” downloads.
+3. Extract it and open **MariosMaskBuilder**.
+4. Choose both of your game files and where to save the result.
 5. Click **Build Mario's Mask**.
-6. Open the new `Marios-Mask.z64` in your emulator or flash cart.
+6. Open the new `Marios-Mask.z64` in an N64 emulator or flash cart.
 
-[Screenshot: The Mario's Mask Builder with both ROMs chosen and the Build Mario's Mask button visible; hide personal folder names]
+Raw `.z64`, `.v64`, and `.n64` files work, along with `.zip` and `.gz` archives.
+The builder is a small standalone app: it does not need Python, WSL, a compiler, or
+an internet connection.
 
-Raw `.z64`, `.v64`, and `.n64` files work, as do `.zip` and `.gz` archives.
+## Start playing
 
-## Having trouble opening the builder?
+With no existing save data, File 1 starts as `Link` at the beginning of Day 1, just
+after the opening tutorial. File 2 remains empty if you want a completely new game.
 
-- **Mac:** Control-click the app, choose **Open**, then choose **Open** again.
-- **Windows:** If SmartScreen appears, choose **More info**, then **Run anyway**.
-- **Linux:** Extract the whole archive before opening the builder.
+Having trouble opening the builder?
 
-Found a problem? [Open a bug report](https://github.com/msmfai/marios-mask/issues/new/choose)
-and tell us what you were doing when it happened. Please never attach either game
-file to an issue.
+- **Mac:** Control-click it, choose **Open**, then choose **Open** again.
+- **Windows:** Choose **More info**, then **Run anyway** if SmartScreen appears.
+- **Linux:** Extract the whole archive before opening it.
+
+Found a bug? [Tell us what happened](https://github.com/msmfai/marios-mask/issues/new/choose),
+but never attach either game file.
 
 Mario's Mask is free software released under [GPL-3.0](LICENSE).

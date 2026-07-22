@@ -1,8 +1,8 @@
-# v0.1.0-alpha.3 release gate
+# v0.1.0-alpha.4 release gate
 
-Version: `0.1.0-alpha.3`
+Version: `0.1.0-alpha.4`
 
-Tag: `v0.1.0-alpha.3`
+Tag: `v0.1.0-alpha.4`
 
 Status: standalone native GUI release candidate
 
