@@ -50,34 +50,6 @@ def main() -> int:
         if tag not in documents[name]:
             failures.append(f"{name} does not identify tag {tag}")
 
-    wrapper = read("tools/build_from_roms.sh")
-    toolchain = read("tools/build-binutils.sh")
-    try:
-        pinned = {
-            "SM64_SHA1": assignment(wrapper, "SM64_SHA1"),
-            "MM_MD5": assignment(wrapper, "MM_MD5"),
-            "SM64_COMMIT": assignment(wrapper, "SM64_COMMIT"),
-            "MM_COMMIT": assignment(wrapper, "MM_COMMIT"),
-            "BINUTILS_VER": assignment(toolchain, "BINUTILS_VER"),
-            "ICONV_VER": assignment(toolchain, "ICONV_VER"),
-        }
-    except ValueError as error:
-        failures.append(str(error))
-        pinned = {}
-
-    expected_docs = {
-        "SM64_SHA1": ("PROVENANCE.md",),
-        "MM_MD5": ("PROVENANCE.md",),
-        "SM64_COMMIT": ("PROVENANCE.md",),
-        "MM_COMMIT": ("PROVENANCE.md",),
-        "BINUTILS_VER": ("PROVENANCE.md",),
-        "ICONV_VER": ("PROVENANCE.md",),
-    }
-    for key, value in pinned.items():
-        for name in expected_docs[key]:
-            if value not in documents[name]:
-                failures.append(f"{name} does not contain {key} pin {value}")
-
     ignored = {line.strip() for line in read(".gitignore").splitlines() if line.strip() and not line.startswith("#")}
     for pattern in ("out/", ".work/", "__pycache__/", "*.pyc", "*.n64", "*.rom", "*.v64", "*.z64", "toolchain/", "src/dsce_config.h", "src/dsce_tuning.h"):
         if pattern not in ignored:
@@ -93,20 +65,28 @@ def main() -> int:
         "windows-2025",
         "macos-15-intel",
         "macos-15",
-        "ubuntu-24.04",
+        "ubuntu-22.04",
+        "cargo build --release --manifest-path patcher/Cargo.toml --locked",
+        "20971520",
         "packaging/audit_binary_package.py",
     ):
         if required not in binary_workflow:
             failures.append(f"binary workflow is missing {required!r}")
 
     for relative in (
-        "app/marios_mask_builder.py",
-        "packaging/environment-posix.yml",
-        "packaging/environment-windows-python.yml",
-        "packaging/patches/mm-tools-windows.patch",
+        "patcher/Cargo.lock",
+        "patcher/Cargo.toml",
+        "patcher/recipe/marios-mask-alpha2.mm2p",
+        "patcher/src/lib.rs",
+        "patcher/src/main.rs",
+        "packaging/macos/Info.plist",
     ):
         if not (ROOT / relative).is_file():
-            failures.append(f"native GUI release dependency is missing: {relative}")
+            failures.append(f"standalone GUI release dependency is missing: {relative}")
+
+    cargo_manifest = read("patcher/Cargo.toml")
+    if f'version = "{version}"' not in cargo_manifest:
+        failures.append("patcher/Cargo.toml version does not match VERSION")
 
     readme = documents["README.md"]
     for required in (
@@ -114,19 +94,6 @@ def main() -> int:
     ):
         if required not in readme:
             failures.append(f"short README is missing user-facing promise {required!r}")
-
-    makefile = read("Makefile")
-    for required in ("MM      ?= .work/mm", "SM64    ?= .work/sm64", "TOOLCHAIN ?= $(CURDIR)/.work/toolchain"):
-        if required not in makefile:
-            failures.append(f"Makefile is not standalone: missing {required!r}")
-
-    for relative in (
-        "tools/inputbot/build.sh",
-        "tools/inputbot/input_script_plugin.c",
-        "tools/inputbot/video_null_plugin.c",
-    ):
-        if not (ROOT / relative).is_file():
-            failures.append(f"standalone public test dependency is missing: {relative}")
 
     outside_needles = (
         '/Users/',
@@ -139,7 +106,7 @@ def main() -> int:
         'os.path.join(HERE, "..", "tools", "inputbot"',
     )
     for path in sorted(ROOT.rglob("*")):
-        if not path.is_file() or any(part in {".git", ".work", "out", "toolchain", "__pycache__"} for part in path.relative_to(ROOT).parts):
+        if not path.is_file() or any(part in {".git", ".work", "out", "target", "toolchain", "__pycache__"} for part in path.relative_to(ROOT).parts):
             continue
         if path.resolve() == Path(__file__).resolve():
             continue

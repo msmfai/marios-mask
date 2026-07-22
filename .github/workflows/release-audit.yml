@@ -5,17 +5,21 @@ on:
   pull_request:
 
 jobs:
-  no-game-data:
-    runs-on: ubuntu-latest
+  standalone-release:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install GUI link libraries
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxkbcommon-dev libxrandr-dev
       - name: Reject ROMs and extracted media in tree or history
         run: python3 tools/release_audit.py --tree .
-      - name: Check version, source pins, ignore boundary, and source syntax
+      - name: Check release contract
         run: python3 tools/check_release_contract.py
-      - name: Test GUI safety and every supported ROM container/byte order
+      - name: Test and size-check the standalone patcher
         run: |
-          python3 tools/test_normalize_rom.py
-          python3 app/test_marios_mask_builder.py
+          cargo test --manifest-path patcher/Cargo.toml --locked
+          cargo build --release --manifest-path patcher/Cargo.toml --locked
+          test "$(wc -c < patcher/target/release/marios-mask-builder)" -le 16777216

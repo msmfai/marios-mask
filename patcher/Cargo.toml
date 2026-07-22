@@ -1,0 +1,22 @@
+[package]
+name = "marios-mask-builder"
+version = "0.1.0-alpha.2"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Standalone two-ROM builder for Mario's Mask"
+
+[dependencies]
+anyhow = "1.0"
+eframe = { version = "0.31.1", default-features = false, features = ["default_fonts", "glow", "x11"] }
+flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
+rfd = { version = "0.15.4", default-features = false, features = ["async-std", "xdg-portal"] }
+sha1 = "0.10"
+zip = { version = "2.4", default-features = false, features = ["deflate"] }
+zstd = { version = "0.13", default-features = false }
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+opt-level = "z"
+panic = "abort"
+strip = "symbols"

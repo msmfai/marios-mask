@@ -7,6 +7,7 @@ __pycache__/
 *.rom
 *.v64
 *.z64
+patcher/target/
 # optional headless-test plugins, always built locally from tools/inputbot/*.c
 tools/inputbot/*.dylib
 tools/inputbot/*.so

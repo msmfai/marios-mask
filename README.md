@@ -12,12 +12,10 @@ Play *Majora's Mask* as Mario.
 6. Open the new `Mario's Mask.z64` in your emulator or flash cart.
 
 `.z64`, `.v64`, `.n64`, `.zip`, and `.gz` files work. The *Majora's Mask* ROM can
-also be internally compressed or decompressed. The first build takes a while; later
-builds are faster.
+also be internally compressed or decompressed.
 
 You need your own two ROMs. The builder does not include or upload them.
 
-This is an early alpha, so back up your save. If something breaks, click
-**Show details** and paste that text into a GitHub issue. Do not attach ROMs.
+This is an early alpha, so back up your save. Do not attach ROMs to bug reports.
 
 Source code is [GPL-3.0](LICENSE).

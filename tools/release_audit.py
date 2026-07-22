@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -41,9 +42,11 @@ FORBIDDEN_SUFFIXES = {
     ".z64",
 }
 FORBIDDEN_PARTS = {
-    ".work", "__pycache__", "assets", "build", "extracted", "out", "state", "test", "toolchain"
+    ".work", "__pycache__", "assets", "build", "extracted", "out", "state", "target", "test", "toolchain"
 }
 FORBIDDEN_FILES = {"src/dsce_config.h", "src/dsce_tuning.h"}
+RECIPE = "patcher/recipe/marios-mask-alpha2.mm2p"
+RECIPE_SHA256 = "c8d9a5c97084417e1367e418cfcbc8290edfff79c1c07d14872bf431902e5cad"
 MAGIC = {
     b"RIFF": "RIFF/WAV media",
     b"MThd": "MIDI media",
@@ -67,6 +70,11 @@ REQUIRED = {
     "README.md",
     "RELEASE_V0.1_ALPHA.md",
     "VERSION",
+    "patcher/Cargo.lock",
+    "patcher/Cargo.toml",
+    RECIPE,
+    "patcher/src/lib.rs",
+    "patcher/src/main.rs",
     "tools/build_from_roms.sh",
 }
 
@@ -115,6 +123,15 @@ def indexed_paths(tree: Path) -> list[str]:
 
 
 def inspect_payload(label: str, data: bytes) -> str | None:
+    if label == RECIPE:
+        digest = hashlib.sha256(data).hexdigest()
+        if not data.startswith(bytes.fromhex("28b52ffd")):
+            return "two-ROM recipe is not a Zstandard reference patch"
+        if len(data) > 4 * 1024 * 1024:
+            return "two-ROM recipe exceeds the 4 MiB release limit"
+        if digest != RECIPE_SHA256:
+            return f"unexpected two-ROM recipe SHA-256 {digest}"
+        return None
     for signature, description in MAGIC.items():
         if data.startswith(signature):
             return f"detected {description}"

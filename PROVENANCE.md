@@ -14,16 +14,15 @@ project-authored material identified below; third-party material retains its own
 | `patches/0001-dsce-hooks.patch` | Original mod changes expressed against the pinned MM tree, with patch context | Project-authored changes are GPL-3.0-only. Context remains attributable to the pinned upstream source. |
 | `src/dsce/`, `tools/`, `tuning.yaml`, documentation | Project-authored integration and build material, except where a file header says otherwise | Included under GPL-3.0-only. |
 | ROMs, generated ROMs, extracted model/texture/animation/audio, MIDI, emulator saves | Nintendo game inputs or locally derived build/test output | Never included; rejected by export and CI audit. |
-| Native builder runtime | Packages selected by `packaging/environment-*.yml` or `.github/workflows/binary-release.yml` from conda-forge and MSYS2 | Included only in platform download archives. Package metadata and licenses remain inside each runtime; no game data is present. |
+| Standalone builder | Project-authored Rust code plus the crates locked by `patcher/Cargo.lock` | Compiled into one native executable. Downloads contain no Python runtime, compiler, decomp source tree, or game ROM. |
+| Two-ROM reference recipe | Deterministic Zstandard reference delta against decompressed MM followed by SM64 | Included as a 1.3 MiB encoded delta. It requires both exact input ROMs and is not a directly usable ROM or extracted media file. |
 
-The builder fetches the two upstream Git repositories and two GNU source archives
-above. The pinned MM bootstrap additionally resolves its declared Python packages and
-downloads IDO static-recomp v1.2. It does not fetch ROMs, keys, voice clips, or other
-game media. Accepted inputs are SM64 US SHA-1
-`9bef1128717f958171a4afac3ed78ee2bb4e86ce`, compressed MM US MD5
-`2a0a8acb61538235bc1094d297fb6556`, and decompressed MM US MD5
-`f46493eaa0628827dbd6ad3ecd8d65d6`. Byte-swapped `.v64` and little-endian `.n64`
-copies are canonicalized before those hashes are checked.
+The released standalone builder performs no network access and does not fetch or
+carry either decomp tree. Accepted inputs are SM64 US SHA-1
+`9bef1128717f958171a4afac3ed78ee2bb4e86ce`, compressed MM US SHA-1
+`d6133ace5afaa0882cf214cf88daba39e266c078`, and decompressed MM US SHA-1
+`7f5630dbc4d5d61d6276213210c4d5cdd83a47d6`. Byte-swapped `.v64` and
+little-endian `.n64` copies are canonicalized before those hashes are checked.
 
 When an upstream pin changes, update this file, the constants in
 `tools/build_from_roms.sh`, and the patch compatibility tests in the same commit.

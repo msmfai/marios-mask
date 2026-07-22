@@ -13,18 +13,16 @@ contain or ship:
   binary patches;
 - local build directories, emulator captures, or private absolute paths.
 
-The build uses a private ignored `.work/` directory. `tools/release_audit.py` checks
-the public tree and all Git path history for the prohibited formats. CI runs the same
-gate on every push and pull request.
+The standalone builder contains one small two-ROM reference delta. It cannot produce
+the game unless both exact input ROMs are supplied. `tools/release_audit.py` permits
+only that exact hashed recipe while rejecting direct ROMs and extracted media.
 
 ## Native builder downloads
 
-The release workflow builds four GUI archives: Windows x86-64, Linux x86-64,
-macOS Apple Silicon, and macOS Intel. Each carries the host tools used by the builder.
-The Windows archive uses a private native MSYS2 environment; it never invokes WSL.
-The packages contain project source, build tools, package metadata, and licenses, but
-no ROM, extracted game asset, save, or generated ROM. The same game-data audit runs
-against every assembled archive before it can be attached to a release.
+The release workflow builds four compiled GUI downloads: Windows x86-64, Linux
+x86-64, macOS Apple Silicon, and macOS Intel. Each download contains only the native
+builder (an app bundle on macOS), not Python, WSL, a compiler, source trees, ROMs,
+extracted game assets, saves, or generated ROMs.
 
 ## Preserve the clean repository
 
@@ -37,6 +35,6 @@ generated `mm-dsce-mario.z64` as a release asset.
 Project-authored work is released under GPL-3.0-only. Third-party material retains the
 terms recorded in `PROVENANCE.md`.
 
-The GUI has no user-installed build dependencies. During the first build it fetches
-the two pinned public decomp source trees and caches them for later builds. It never
-fetches game data. `PROVENANCE.md` records the exact source and input revision pins.
+The GUI has no user-installed build dependencies and performs no network access. It
+normalizes and validates the two local ROMs, decompresses Majora's Mask when needed,
+then applies the embedded two-ROM reference delta.
