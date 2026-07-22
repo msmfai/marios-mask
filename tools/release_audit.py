@@ -74,6 +74,7 @@ REQUIRED = {
     "RELEASE_NOTES.md",
     "RELEASE_V0.1_ALPHA.md",
     "VERSION",
+    "docs/MAINTAINER_RELEASE_SOP.md",
     "patcher/Cargo.lock",
     "patcher/Cargo.toml",
     RECIPE,
@@ -81,6 +82,7 @@ REQUIRED = {
     "patcher/src/main.rs",
     "docs/screenshots/README.md",
     "tools/build_from_roms.sh",
+    "tools/update_release_manifest.py",
 }
 
 

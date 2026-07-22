@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 import subprocess
 import sys
@@ -10,6 +11,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
+MANIFEST = ROOT / "release-manifest.sha256"
+MANIFEST_SKIP_PARTS = {".git", ".work", "__pycache__", "out", "target", "toolchain"}
 
 
 def read(relative: str) -> str:
@@ -23,8 +26,44 @@ def assignment(text: str, name: str) -> str:
     return match.group(1)
 
 
+def verify_manifest() -> list[str]:
+    failures: list[str] = []
+    declared: dict[str, str] = {}
+    for number, line in enumerate(MANIFEST.read_text(encoding="utf-8").splitlines(), 1):
+        match = re.fullmatch(r"([0-9a-f]{64})  ([^/].*)", line)
+        if not match:
+            failures.append(f"release-manifest.sha256:{number}: invalid entry")
+            continue
+        digest, relative = match.groups()
+        path = Path(relative)
+        if path.is_absolute() or ".." in path.parts or relative in declared:
+            failures.append(f"release-manifest.sha256:{number}: unsafe or duplicate path {relative!r}")
+            continue
+        declared[relative] = digest
+
+    actual = {
+        path.relative_to(ROOT).as_posix(): path
+        for path in sorted(ROOT.rglob("*"))
+        if path.is_file()
+        and path != MANIFEST
+        and not MANIFEST_SKIP_PARTS.intersection(path.relative_to(ROOT).parts)
+    }
+    missing = sorted(actual.keys() - declared.keys())
+    extra = sorted(declared.keys() - actual.keys())
+    if missing:
+        failures.append(f"release manifest is missing: {', '.join(missing)}")
+    if extra:
+        failures.append(f"release manifest names absent files: {', '.join(extra)}")
+    for relative in sorted(actual.keys() & declared.keys()):
+        digest = hashlib.sha256(actual[relative].read_bytes()).hexdigest()
+        if digest != declared[relative]:
+            failures.append(f"release manifest hash mismatch: {relative}")
+    return failures
+
+
 def main() -> int:
     failures: list[str] = []
+    failures.extend(verify_manifest())
     version = read("VERSION").strip()
     if not re.fullmatch(r"0\.\d+\.\d+-alpha\.\d+", version):
         failures.append(f"VERSION is not the expected alpha SemVer form: {version!r}")
@@ -82,7 +121,9 @@ def main() -> int:
         "patcher/src/main.rs",
         "packaging/macos/Info.plist",
         "docs/screenshots/README.md",
+        "docs/MAINTAINER_RELEASE_SOP.md",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
+        "tools/update_release_manifest.py",
     ):
         if not (ROOT / relative).is_file():
             failures.append(f"standalone GUI release dependency is missing: {relative}")

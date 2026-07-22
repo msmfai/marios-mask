@@ -42,3 +42,7 @@ terms recorded in `PROVENANCE.md`.
 The GUI has no user-installed build dependencies and performs no network access. It
 normalizes and validates the two local ROMs, decompresses Majora's Mask when needed,
 then applies the embedded two-ROM reference delta.
+
+Maintainers must follow [the release SOP](docs/MAINTAINER_RELEASE_SOP.md). It keeps
+gameplay development in the private superset, requires an exact manifest of this
+public tree, and makes a downloaded native package the final release gate.
