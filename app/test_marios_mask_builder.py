@@ -40,6 +40,27 @@ class BuilderTests(unittest.TestCase):
                 invocation = builder.build_invocation(root, sm64, mm, output)
             self.assertEqual(invocation.command[-3:], [str(sm64), str(mm), str(output)])
             self.assertEqual(invocation.cwd, root)
+            self.assertNotIn("DSCE_PACKAGED_RUNTIME", invocation.environment)
+
+    def test_packaged_invocation_uses_only_bundled_host_tools(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "payload" / "project"
+            runtime = root / "runtime"
+            (project / "tools").mkdir(parents=True)
+            (project / "tools" / "build_from_roms.sh").touch()
+            (runtime / "bin").mkdir(parents=True)
+            (runtime / "bin" / "micromamba").touch()
+            sm64 = root / "sm64.z64"
+            mm = root / "mm.z64"
+            output = root / "result.z64"
+            with mock.patch.object(builder, "materialize_project", return_value=project), \
+                 mock.patch.object(builder, "materialize_runtime", return_value=runtime), \
+                 mock.patch.object(builder, "cache_root", return_value=root / "cache"), \
+                 mock.patch.object(builder.platform, "system", return_value="Darwin"):
+                invocation = builder.build_invocation(root, sm64, mm, output)
+            self.assertEqual(invocation.environment["DSCE_PACKAGED_RUNTIME"], "1")
+            self.assertEqual(invocation.command[0], str(runtime / "bin" / "micromamba"))
 
 
 if __name__ == "__main__":

@@ -239,7 +239,8 @@ if [ ! -f "$MM_ASSET_SENTINEL" ]; then
             MM_BOOTSTRAP_ARGS+=("PYTHON=$MM_VENV_PYTHON")
             ;;
     esac
-    if [ "$(uname -s)" = Darwin ] && [ -x /usr/bin/clang ] && [ -x /usr/bin/clang++ ]; then
+    if [ "${DSCE_PACKAGED_RUNTIME:-0}" != 1 ] && \
+       [ "$(uname -s)" = Darwin ] && [ -x /usr/bin/clang ] && [ -x /usr/bin/clang++ ]; then
         # Avoid PATH-injected GCC wrappers that require a separate dsymutil on macOS.
         MM_BOOTSTRAP_ARGS+=("CC=/usr/bin/clang" "CXX=/usr/bin/clang++")
     fi

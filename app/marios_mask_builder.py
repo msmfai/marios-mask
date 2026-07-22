@@ -145,6 +145,10 @@ def build_invocation(root: Path, sm64: Path, mm: Path, output: Path) -> BuildInv
         raise BuilderError("The builder payload is incomplete.")
 
     environment = os.environ.copy()
+    if (root / "payload" / "project").is_dir() and (root / "runtime").is_dir():
+        # The packaged app carries its own compiler and host tools.  Tell the
+        # shell builder not to prefer optional tools installed on the host.
+        environment["DSCE_PACKAGED_RUNTIME"] = "1"
     work = cache_root() / "work"
     system = platform.system()
     if runtime.is_dir() and system == "Windows":
