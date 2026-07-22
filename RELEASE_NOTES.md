@@ -1,4 +1,4 @@
-# Mario's Mask alpha 2
+# Mario's Mask alpha 3
 
 Historical early-alpha standalone builder release.
 
