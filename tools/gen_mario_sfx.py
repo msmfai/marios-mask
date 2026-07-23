@@ -569,12 +569,14 @@ def main():
         (42, [n for n in order if n.startswith("vo_")]),
     )
     # Sequence 0's compiled font list is reverse-indexed by the audio engine.
-    # With the generated headers included, its list is [1, 41, 42, 0], so the
-    # bytecode operands are local selectors 2 -> global font 41 and 1 -> global
-    # font 42. Passing the global ids here is memory-unsafe: 41 resolves through
-    # bytes before Fonts_0 (0xDD in the affected build), while 42 aliases font 1.
-    # check_sfx_font_selectors.py proves these selectors against the compiled ELF.
-    font_selector = {41: 2, 42: 1}
+    # The generated headers are deliberately staged before the vanilla headers,
+    # producing [41, 42, 1, 0]. This preserves vanilla selector 0 -> font 0 and
+    # selector 1 -> font 1 while assigning 3 -> font 41 and 2 -> font 42.
+    # Inserting the new fonts between 1 and 0 made the unchanged enemy handler's
+    # selector 1 resolve to font 42, silently disabling every native enemy voice.
+    # check_sfx_font_selectors.py proves both vanilla and generated mappings from
+    # the final compiled object.
+    font_selector = {41: 3, 42: 2}
     effect_slot = {}
     for font_id, names in font_groups:
         assert 0 < len(names) <= 64, (font_id, len(names))
@@ -595,12 +597,12 @@ def main():
         for n in order:
             if not n.startswith("vo_"):
                 f.write(f"DEFINE_SFX({chan(n)}, {na_se(n)}, 0x30, 0, 0, 0, "
-                        "SFX_FLAG_FREQ_NO_DIST | SFX_PARAM_RAND_FREQ_SCALE)\n")
+                        "SFX_FLAG_FREQ_NO_DIST)\n")
     with open(os.path.join(outdir, "voicebank.frag"), "w") as f:
         for n in order:
             if n.startswith("vo_"):
                 f.write(f"DEFINE_SFX({chan(n)}, {na_se(n)}, 0x30, 0, 0, 0, "
-                        "SFX_FLAG_FREQ_NO_DIST | SFX_PARAM_RAND_FREQ_SCALE)\n")
+                        "SFX_FLAG_FREQ_NO_DIST)\n")
     with open(os.path.join(outdir, "seq_include.frag"), "w") as f:
         f.write('#include "Soundfont_41.h"\n#include "Soundfont_42.h"\n')
     # Reset both font and instrument mode.  Restoring only font 0 left the previous

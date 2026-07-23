@@ -63,9 +63,6 @@ Stretch features
 Polish
 - [x] goals/08-acquisition-polish.md   — heal RITE DONE; textbox/pedestal/name-hover CLOSED as deferred polish
 
-## Explicitly out of scope (user decision, 2026-07-04)
-- Polyphonic singing bus and the Take On Me sequence (PC-only features)
-
 ## Research
 - [x] Cross-game metamorphic rig (goal 10, INLINE goal 2026-07-08) — `make test-xgame`:
   the real SM64 ROM as Mario's oracle. GREEN: R1 jump action-chain identical, R2 ascent

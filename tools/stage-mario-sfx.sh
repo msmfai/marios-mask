@@ -31,8 +31,11 @@ stage)
     insert_frag "$SBXML" "$GEN/samples.xml.frag" '</SampleBank>' '<Sample Name="DSCE_'
     cp "$GEN/Soundfont_41.xml" "$(dirname "$SFXML")/Soundfont_41.xml"
     cp "$GEN/Soundfont_42.xml" "$(dirname "$SFXML")/Soundfont_42.xml"
+    # Keep the vanilla headers as the final [1, 0] suffix. Sequence font operands
+    # are reverse selectors, so inserting between 1 and 0 would redirect every
+    # native enemy `font 1` command into a generated Mario font.
     insert_frag "$MM/assets/audio/sequences/seq_0.prg.seq" "$GEN/seq_include.frag" \
-        '#include "Soundfont_0.h"' 'Soundfont_41.h'
+        '#include "Soundfont_1.h"' 'Soundfont_41.h'
     grep -q 'Soundfont_42.o' "$MM/spec/spec" || python3 - "$MM/spec/spec" << 'PYSPEC'
 import io, sys
 p = sys.argv[1]

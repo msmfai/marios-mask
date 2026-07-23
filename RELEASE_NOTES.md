@@ -1,12 +1,23 @@
-# Mario's Mask v0.1.0-alpha.5
+# Mario's Mask v0.1.0-alpha.6
 
 Play *Majora's Mask* as Mario, with movement, attacks, swimming, voice, and animations
 adapted from *Super Mario 64*.
 
-![Mario in Termina](https://raw.githubusercontent.com/msmfai/marios-mask/v0.1.0-alpha.5/docs/screenshots/hero.png)
+![Mario caught in Dinolfos fire breath](https://raw.githubusercontent.com/msmfai/marios-mask/v0.1.0-alpha.6/docs/screenshots/fire-breath.png)
 
-This alpha adds a friendlier project page with real gameplay screenshots and clearer
-builder instructions.
+## Enemies now react to Mario
+
+This alpha adds Mario-specific interaction logic across the full catalogue of
+70 enemies and bosses. Enemies keep their original *Majora's Mask* attacks and
+hitboxes, but their encounters now account for Mario's punches, stomps, rebounds,
+knockback, grabs, and other *Super Mario 64*-style responses.
+
+Fire breath and other fire attacks now trigger Mario's burning response, including
+forced movement, flames, and smoke. Native enemy sound banks also remain available
+during combat.
+
+This is still an early alpha. The complete enemy catalogue has logic in place, but
+many encounters need more play-testing and polish.
 
 ## Choose your download
 

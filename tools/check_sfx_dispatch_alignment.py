@@ -12,7 +12,7 @@ ROW = re.compile(
     r"\bDEFINE_SFX\(\s*([A-Za-z0-9_]+)\s*,\s*([A-Za-z0-9_]+)\s*,"
 )
 FULL_ROW = re.compile(r"\bDEFINE_SFX\(([^)]*)\)")
-FIXED_PITCH_FLAGS = {"SFX_FLAG_FREQ_NO_DIST", "SFX_PARAM_RAND_FREQ_SCALE"}
+FIXED_PITCH_FLAGS = {"SFX_FLAG_FREQ_NO_DIST"}
 
 
 def without_comments(text: str) -> str:

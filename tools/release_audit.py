@@ -45,11 +45,13 @@ FORBIDDEN_PARTS = {
     ".work", "__pycache__", "assets", "build", "extracted", "out", "state", "target", "test", "toolchain"
 }
 FORBIDDEN_FILES = {"src/dsce_config.h", "src/dsce_tuning.h"}
-RECIPE = "patcher/recipe/marios-mask-alpha3.mm2p"
+RECIPE = "patcher/recipe/marios-mask-alpha6.mm2p"
 RECIPES = {
     "patcher/recipe/marios-mask-alpha2.mm2p":
         "c8d9a5c97084417e1367e418cfcbc8290edfff79c1c07d14872bf431902e5cad",
-    RECIPE: "9e61e4f708ee8ca4adf5a96f01540f65be1b6ac6b5c54d208bb68542c9ebf6e0",
+    "patcher/recipe/marios-mask-alpha3.mm2p":
+        "9e61e4f708ee8ca4adf5a96f01540f65be1b6ac6b5c54d208bb68542c9ebf6e0",
+    RECIPE: "13a0f8a21ae222e1bdb1c4331f0d85117dfa5b65bb5e0f0c7657b53030711ca5",
 }
 SCREENSHOT_PREFIX = ("docs", "screenshots")
 SCREENSHOT_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}

@@ -125,7 +125,7 @@ def main() -> int:
     for relative in (
         "patcher/Cargo.lock",
         "patcher/Cargo.toml",
-        "patcher/recipe/marios-mask-alpha3.mm2p",
+        "patcher/recipe/marios-mask-alpha6.mm2p",
         "patcher/src/lib.rs",
         "patcher/src/main.rs",
         "packaging/macos/Info.plist",
@@ -155,6 +155,7 @@ def main() -> int:
         "docs/screenshots/peach-statue.png",
         "docs/screenshots/brothers-mask.png",
         "docs/screenshots/mario-swimming.png",
+        "docs/screenshots/fire-breath.png",
     )
     for image_path in declared_screenshots:
         if image_path not in readme:

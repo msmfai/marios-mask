@@ -7,6 +7,7 @@ These are the release-build screenshots used by the main README:
 - `peach-statue.png` — Link meeting the stone Peach in the Laundry Pool.
 - `brothers-mask.png` — the Brother's Mask selected in the inventory.
 - `mario-swimming.png` — Mario swimming underwater.
+- `fire-breath.png` — Mario caught in a Dinolfos fire-breath attack.
 
 Keep screenshots free of debug overlays, private paths, emulator menus, and desktop
 clutter. The release audit limits each image to 2 MiB.

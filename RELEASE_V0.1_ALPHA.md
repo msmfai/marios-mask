@@ -1,8 +1,8 @@
-# v0.1.0-alpha.5 release gate
+# v0.1.0-alpha.6 release gate
 
-Version: `0.1.0-alpha.5`
+Version: `0.1.0-alpha.6`
 
-Tag: `v0.1.0-alpha.5`
+Tag: `v0.1.0-alpha.6`
 
 Status: standalone native GUI release candidate
 
@@ -20,7 +20,7 @@ The tag is ready only when:
 - each download stays below the lightweight package size limit and contains the
   native builder package; and
 - an end-to-end build still produces the validated release-ROM SHA-256
-  `f580f8a12e45bc7123487d7214e1a5d5678b6769c7242c19c0cb6f0bcd2c8090`.
+  `6d60250f851598b56dc2345b6a453fbe918ffa44f200500eb4688578059b42ed`.
 
 The platform packages distribute the builder. Generated ROMs stay local and are
 ignored by Git.

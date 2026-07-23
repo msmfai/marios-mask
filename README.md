@@ -27,6 +27,17 @@ wall-jump, swim, and explore the rest of *Majora's Mask*.
 
 ![Mario swimming underwater](docs/screenshots/mario-swimming.png)
 
+## Fight your way through Termina
+
+The mod now includes Mario-specific interaction logic for the full catalogue of
+70 enemies and bosses. Each one keeps its *Majora's Mask* attacks and hitboxes,
+while Mario responds with appropriate stomps, rebounds, knockback, damage, grabs,
+burning, or other *Super Mario 64*-style behavior.
+
+![Mario caught in Dinolfos fire breath](docs/screenshots/fire-breath.png)
+
+This is still an early alpha, so some encounters need more play-testing.
+
 ## Build your game
 
 Bring your own **USA Nintendo 64 versions** of *Super Mario 64* and

@@ -20,6 +20,7 @@ EXPECTED_PREFIXES = {
     "CHAN_PL_DSCE_": 41,
     "CHAN_VO_DSCE_": 42,
 }
+VANILLA_FONT_SUFFIX = [1, 0]
 
 
 def output(*args: str) -> str:
@@ -72,6 +73,17 @@ def main() -> int:
     found = {prefix: 0 for prefix in EXPECTED_PREFIXES}
     errors: list[str] = []
 
+    # Vanilla Sequence 0 bytecode uses literal selectors 0 and 1 throughout.
+    # They must continue to reverse-resolve to native fonts 0 and 1 after custom
+    # fonts are added. This catches systemic native-bank breakage even when every
+    # generated channel's own selector remains internally consistent.
+    if fonts[-len(VANILLA_FONT_SUFFIX):] != VANILLA_FONT_SUFFIX:
+        errors.append(
+            f"vanilla selector suffix is {fonts[-len(VANILLA_FONT_SUFFIX):]}, "
+            f"expected {VANILLA_FONT_SUFFIX}; selector 0 must resolve to font 0 "
+            "and selector 1 to native enemy font 1"
+        )
+
     for name, address in symbols(nm, obj).items():
         prefix = next((p for p in EXPECTED_PREFIXES if name.startswith(p)), None)
         if prefix is None:
@@ -115,7 +127,7 @@ def main() -> int:
     print(
         "SFX font selector check OK: "
         f"{sum(found.values())} channels, compiled font list {fonts}, "
-        "selectors 2->41 and 1->42"
+        "vanilla 0->0/1->1, generated 3->41/2->42"
     )
     return 0
 
