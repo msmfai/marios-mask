@@ -107,3 +107,9 @@ Mario's Mask is free software under [GPL-3.0](LICENSE). This repository contains
 the standalone builder, not a playable game. Its documented
 [two-input recipe format](patcher/recipe/FORMAT.md) builds locally from the two
 files you select.
+
+> [!NOTE]
+> Due to the rapidly changing features of the mod during alpha, documentation
+> is AI-generated directly from the code to ensure it stays up to date.
+>
+> Rest assured, this is a human-led project.
