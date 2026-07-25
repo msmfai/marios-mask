@@ -47,6 +47,7 @@ REQUIRED = {
     "patcher/Cargo.lock",
     "patcher/Cargo.toml",
     "patcher/recipe/FORMAT.md",
+    "patcher/recipe/REPORT.md",
     RECIPE,
     "patcher/src/bin/recipe_tool.rs",
     "patcher/src/lib.rs",
@@ -61,7 +62,7 @@ N64_MAGICS = {
 }
 RECIPE_MAGIC = b"MMRECP01"
 HEADER_SIZE = 116
-MAX_RECIPE_BYTES = 5 * 1024 * 1024
+MAX_RECIPE_BYTES = 8 * 1024 * 1024
 MAX_OUTPUT_BYTES = 128 * 1024 * 1024
 MAX_COMMANDS = 8_000_000
 
