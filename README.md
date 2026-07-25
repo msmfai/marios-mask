@@ -2,7 +2,7 @@
 
 **Play *Majora's Mask* as Mario.**
 
-![Mario carrying a bomb in Termina Field](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/selected-mario-bomb-jump.png)
+![Mario in Termina](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/hero.png)
 
 Mario's Mask brings Mario's movement, attacks, voice, animations, and playful
 physics from *Super Mario 64* into the world and adventure of *Majora's Mask*.
@@ -19,11 +19,17 @@ The Brother's Mask contains the spirit of a hero from another world. Find the
 stone Peach in Clock Town's Laundry Pool and play the Song of Healing nearby to
 receive it. Put on the mask to become Mario; remove it to return to Link.
 
+![Link meeting the stone Peach](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/peach-statue.png)
+
+![The Brother's Mask in the inventory](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/brothers-mask.png)
+
 With fresh save data, File 1 is named `Link` and begins on Day 1 just after the
 opening tutorial. File 2 begins a completely new game. The prepared file is
 included for convenience—you can still play the introduction whenever you want.
 
 ## Move through Termina like Mario
+
+![Mario running through Clock Town](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/clock-town.png)
 
 Mario can run, punch, kick, crouch, crawl, swim, climb ledges, long-jump,
 side-flip, triple-jump, wall-jump, and ground-pound. His momentum, aerial
@@ -35,12 +41,16 @@ Mario respects the world's walls, floors, voids, water, hazards, moving actors,
 and scene transitions while retaining the expressive movement that defines
 *Super Mario 64*.
 
+![Mario swimming underwater](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/mario-swimming.png)
+
 ## Fight the creatures of Majora's Mask
 
 Mario has specific interaction logic for the full catalogue of enemies and
 bosses. They keep their original attack patterns and hitboxes, while Mario
 responds with appropriate stomps, rebounds, punches, knockback, damage,
 invulnerability, grabs, burning, freezing, or other Mario-style behavior.
+
+![Mario caught in Dinolfos fire breath](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/fire-breath.png)
 
 Fire can send Mario running with smoke trailing behind him. Ice traps him in a
 block. Underwater, air drains his health and surfacing restores it a little at a
@@ -55,6 +65,8 @@ Mario can open Termina's doors, talk to its characters, collect rewards, activat
 switches, open chests, pick up and throw objects, and carry creatures such as
 Cuccos. Handle-operated and automatic doors preserve their different behavior
 while using Mario-appropriate movement.
+
+![Mario carrying a bomb in Termina Field](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/selected-mario-bomb-jump.png)
 
 Usable items are adapted to Mario's controls. Bombs and other throwables can be
 carried and thrown. The bow and Hookshot fire in the direction Mario faces, with
