@@ -13,22 +13,6 @@ the heart of the game—you explore them with a very different hero.
 
 > **Early alpha:** back up your saves and expect some rough edges.
 
-## What alpha means
-
-Mario's Mask will remain in alpha until it is ready for stronger stability and
-compatibility promises.
-
-- New versions may be released without extensive testing.
-- Save compatibility between alpha versions is not guaranteed.
-- Soft-locks are expected. Keep save states as you play, in addition to normal
-  in-game saves.
-- Some content is placeholder or procedurally generated.
-- Features, controls, and balance may change between versions.
-
-When the project reaches beta, development will split into stable and nightly
-releases. Save games will remain compatible or receive a conversion path, and
-procedurally generated content will be restricted to local development builds.
-
 ## Find the Brother's Mask
 
 The Brother's Mask contains the spirit of a hero from another world. Find the
@@ -152,8 +136,25 @@ the standalone builder, not a playable game. Its documented
 [two-input recipe format](patcher/recipe/FORMAT.md) builds locally from the two
 files you select.
 
+## What alpha means
+
+Mario's Mask will remain in alpha until it is ready for stronger stability and
+compatibility promises.
+
+- New versions may be released without extensive testing.
+- Save compatibility between alpha versions is not guaranteed.
+- Soft-locks are expected. Keep save states as you play, in addition to normal
+  in-game saves.
+- Some content is placeholder or procedurally generated.
+- Features, controls, and balance may change between versions.
+
+When the project reaches beta, development will split into stable and nightly
+releases. Save games will remain compatible or receive a conversion path, and
+procedurally generated content will be restricted to local development builds.
+
 > [!NOTE]
-> Due to the rapidly changing features of the mod during alpha, documentation
-> is AI-generated directly from the code to ensure it stays up to date.
+> Due to the rapidly changing features of the mod during alpha, the README and
+> release notes are machine-generated directly from the code to ensure they stay
+> up to date.
 >
 > Rest assured, this is a human-led project.
