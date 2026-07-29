@@ -31,6 +31,7 @@ camera control, conversations, and transitions.
   scene changes more reliably.
 - Dialogue, doors, targeting, items, and scripted interactions return control
   more consistently.
+
 ## Known issues
 
 - Some Mario-specific dialogue paths may still fail to return control and
