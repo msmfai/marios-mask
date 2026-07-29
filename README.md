@@ -47,11 +47,10 @@ Mario's camera has three zoom levels, including a close native-style view. His
 magic ability opens up exaggerated movement, wall climbing, and the strength to
 move or break heavy obstacles.
 
-## Discover classic power-ups
+## Discover a classic power-up
 
-The Wing, Metal, and Vanish Caps are hidden around Termina. Their movement,
-appearance, music, and timers follow Mario across the places where their power
-remains active.
+A classic power-up is hidden somewhere in Termina. Its movement, appearance,
+music, and timer follow Mario across the places where its power remains active.
 
 Mario can also glide with a carried Cucco, climb the Great Bay Turtle's shell,
 deflect attacks with a punch, and find other traversal routes designed around

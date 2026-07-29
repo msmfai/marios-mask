@@ -1,14 +1,14 @@
 # Mario's Mask Alpha 0.8.0
 
 Version 0.8.0 makes Mario a more complete resident of Termina, adds four ways to hear
-the soundtrack, introduces the three classic caps, and improves exploration,
+the soundtrack, introduces a hidden classic power-up, and improves exploration,
 camera control, conversations, and transitions.
 
 ## Added
 
 - Four persistent music configurations: Majora's Mask or mapped Super Mario 64
   compositions, each using either game's instrument palette.
-- The Wing, Metal, and Vanish Caps as discoveries in Termina.
+- A classic power-up hidden somewhere in Termina.
 - A hybrid Mario camera with three zoom levels and a close native-style view.
 - Magic movement mode, wall climbing, heavy-object strength, punch deflection,
   and expanded traversal interactions.
@@ -16,8 +16,8 @@ camera control, conversations, and transitions.
 
 ## Improved
 
-- Mario now participates directly in the native player lifecycle across rooms,
-  cutscenes, items, doors, targeting, Tatl, and other scripted interactions.
+- Mario behaves more consistently across rooms, cutscenes, items, doors,
+  targeting, Tatl, and other scripted interactions.
 - Context actions are easier to activate, including while swimming and using
   lock-on interactions.
 - Save initialization preserves existing files and only supplies the optional
@@ -27,13 +27,10 @@ camera control, conversations, and transitions.
 
 ## Fixed
 
-- Mario's form, power-ups, music, carried objects, and interaction state survive
+- Mario's form, power-up, music, carried objects, and interaction state survive
   scene changes more reliably.
 - Dialogue, doors, targeting, items, and scripted interactions return control
   more consistently.
-- ZIP files created by macOS Finder are accepted even when they contain
-  AppleDouble metadata.
-
 ## Known issues
 
 - Some Mario-specific dialogue paths may still fail to return control and
