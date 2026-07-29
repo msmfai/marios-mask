@@ -6,7 +6,6 @@ from __future__ import annotations
 import hashlib
 import plistlib
 import re
-import tomllib
 from pathlib import Path
 
 import release_audit
@@ -20,10 +19,31 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+def package_version(document: str, header: str, name: str | None = None) -> str:
+    for block in re.split(r"(?=^\[\[?[^\n]+\]\]?\s*$)", document, flags=re.MULTILINE):
+        lines = block.splitlines()
+        if not lines or lines[0].strip() != header:
+            continue
+        if name is not None and not re.search(
+            rf'^name\s*=\s*"{re.escape(name)}"\s*$', block, flags=re.MULTILINE
+        ):
+            continue
+        match = re.search(r'^version\s*=\s*"([^"]+)"\s*$', block, flags=re.MULTILINE)
+        require(match is not None, f"{header} version is missing")
+        return match.group(1)
+    raise AssertionError(f"{header} package {name or ''} is missing".rstrip())
+
+
 def main() -> int:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    cargo = tomllib.loads((ROOT / "patcher/Cargo.toml").read_text(encoding="utf-8"))
-    lock = tomllib.loads((ROOT / "patcher/Cargo.lock").read_text(encoding="utf-8"))
+    cargo_version = package_version(
+        (ROOT / "patcher/Cargo.toml").read_text(encoding="utf-8"), "[package]"
+    )
+    lock_version = package_version(
+        (ROOT / "patcher/Cargo.lock").read_text(encoding="utf-8"),
+        "[[package]]",
+        "marios-mask-builder",
+    )
     notes = (ROOT / "RELEASE_NOTES.md").read_text(encoding="utf-8")
     report = (ROOT / "patcher/recipe/REPORT.md").read_text(encoding="utf-8")
     library = (ROOT / "patcher/src/lib.rs").read_text(encoding="utf-8")
@@ -31,11 +51,8 @@ def main() -> int:
         macos = plistlib.load(handle)
     recipe = (ROOT / release_audit.RECIPE).read_bytes()
 
-    require(version == cargo["package"]["version"], "VERSION and Cargo.toml disagree")
-    package = next(
-        entry for entry in lock["package"] if entry["name"] == "marios-mask-builder"
-    )
-    require(version == package["version"], "VERSION and Cargo.lock disagree")
+    require(version == cargo_version, "VERSION and Cargo.toml disagree")
+    require(version == lock_version, "VERSION and Cargo.lock disagree")
     require(not version.endswith("-dev"), "release version still has the -dev suffix")
     require(
         macos["CFBundleVersion"] == version,
