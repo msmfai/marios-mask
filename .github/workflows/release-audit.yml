@@ -16,6 +16,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxkbcommon-dev libxrandr-dev
       - name: Reject ROMs and extracted media in tree or history
         run: python3 tools/release_audit.py --tree .
+      - name: Check coupled release pins
+        run: python3 tools/check_release_contract.py
       - name: Test and size-check the standalone patcher
         run: |
           cargo test --manifest-path patcher/Cargo.toml --locked

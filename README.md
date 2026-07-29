@@ -2,7 +2,7 @@
 
 **Play *Majora's Mask* as Mario.**
 
-![Mario in Termina](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/hero.png)
+![Mario in Termina](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/hero.png)
 
 Mario's Mask brings Mario's movement, attacks, voice, animations, and playful
 physics from *Super Mario 64* into the world and adventure of *Majora's Mask*.
@@ -19,9 +19,9 @@ The Brother's Mask contains the spirit of a hero from another world. Find the
 stone Peach in Clock Town's Laundry Pool and play the Song of Healing nearby to
 receive it. Put on the mask to become Mario; remove it to return to Link.
 
-![Link meeting the stone Peach](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/peach-statue.png)
+![Link meeting the stone Peach](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/peach-statue.png)
 
-![The Brother's Mask in the inventory](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/brothers-mask.png)
+![The Brother's Mask in the inventory](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/brothers-mask.png)
 
 With fresh save data, File 1 is named `Link` and begins on Day 1 just after the
 opening tutorial. File 2 begins a completely new game. The prepared file is
@@ -29,7 +29,7 @@ included for convenience—you can still play the introduction whenever you want
 
 ## Move through Termina like Mario
 
-![Mario running through Clock Town](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/clock-town.png)
+![Mario running through Clock Town](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/clock-town.png)
 
 Mario can run, punch, kick, crouch, crawl, swim, climb ledges, long-jump,
 side-flip, triple-jump, wall-jump, and ground-pound. His momentum, aerial
@@ -41,7 +41,31 @@ Mario respects the world's walls, floors, voids, water, hazards, moving actors,
 and scene transitions while retaining the expressive movement that defines
 *Super Mario 64*.
 
-![Mario swimming underwater](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/mario-swimming.png)
+![Mario swimming underwater](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/mario-swimming.png)
+
+Mario's camera has three zoom levels, including a close native-style view. His
+magic ability opens up exaggerated movement, wall climbing, and the strength to
+move or break heavy obstacles.
+
+## Discover classic power-ups
+
+The Wing, Metal, and Vanish Caps are hidden around Termina. Their movement,
+appearance, music, and timers follow Mario across the places where their power
+remains active.
+
+Mario can also glide with a carried Cucco, climb the Great Bay Turtle's shell,
+deflect attacks with a punch, and find other traversal routes designed around
+his abilities.
+
+## Change the music
+
+Two secret songs shown on the sign beside the Laundry Pool bell control the
+soundtrack. One switches between *Majora's Mask* music and mapped *Super Mario
+64* compositions. The other switches the instrument palette. The settings are
+independent, giving each save file four persistent soundtrack configurations.
+
+The alpha uses a mixture of hand-authored arrangements and automatic instrument
+conversions. More arrangements will be refined as development continues.
 
 ## Fight the creatures of Majora's Mask
 
@@ -50,7 +74,7 @@ bosses. They keep their original attack patterns and hitboxes, while Mario
 responds with appropriate stomps, rebounds, punches, knockback, damage,
 invulnerability, grabs, burning, freezing, or other Mario-style behavior.
 
-![Mario caught in Dinolfos fire breath](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/fire-breath.png)
+![Mario caught in Dinolfos fire breath](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/fire-breath.png)
 
 Fire can send Mario running with smoke trailing behind him. Ice traps him in a
 block. Underwater, air drains his health and surfacing restores it a little at a
@@ -66,7 +90,7 @@ switches, open chests, pick up and throw objects, and carry creatures such as
 Cuccos. Handle-operated and automatic doors preserve their different behavior
 while using Mario-appropriate movement.
 
-![Mario carrying a bomb in Termina Field](https://github.com/msmfai/marios-mask/releases/download/v0.1.0-alpha.7/selected-mario-bomb-jump.png)
+![Mario carrying a bomb in Termina Field](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/selected-mario-bomb-jump.png)
 
 Usable items are adapted to Mario's controls. Bombs and other throwables can be
 carried and thrown. The bow and Hookshot fire in the direction Mario faces, with
@@ -77,6 +101,10 @@ Mario can play songs and participate in the conversations and quest systems
 needed to continue the adventure. Where the original game expects Link's form,
 the mod aims to provide a Mario-compatible route without changing how ordinary
 Link plays.
+
+Version 0.8.0 expands Mario-aware conversation and quest routing across Termina.
+Some of these paths remain experimental and can still soft-lock, so save before
+trying long quest sequences as Mario.
 
 ## Build your game
 
