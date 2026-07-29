@@ -33,6 +33,7 @@ FORBIDDEN_ROOTS = {
     "state", "test", "toolchain",
 }
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
+EXPECTED_RECIPE_SHA256 = "2db9f458c0a388dd5c946a55b9e35043a22c8e0ce0c0928010b272917607347f"
 REQUIRED = {
     ".github/workflows/binary-release.yml",
     ".github/workflows/release-audit.yml",
@@ -197,6 +198,10 @@ def audit(tree: Path) -> list[str]:
     if current_recipe.is_file():
         digest = hashlib.sha256(current_recipe.read_bytes()).hexdigest()
         print(f"transparent recipe SHA-256: {digest}")
+        if digest != EXPECTED_RECIPE_SHA256:
+            failures.append(
+                f"{RECIPE}: SHA-256 {digest} does not match the reviewed release pin"
+            )
     return failures
 
 

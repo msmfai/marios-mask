@@ -12,7 +12,7 @@ const DMADATA_START: usize = 0x1A500;
 const SM64_SHA1: &str = "9bef1128717f958171a4afac3ed78ee2bb4e86ce";
 const MM_COMPRESSED_SHA1: &str = "d6133ace5afaa0882cf214cf88daba39e266c078";
 const MM_DECOMPRESSED_SHA1: &str = "7f5630dbc4d5d61d6276213210c4d5cdd83a47d6";
-const OUTPUT_SHA1: &str = "02ef9c2346659415fc61df7bc0e4bc3b78d8a7f8";
+const OUTPUT_SHA1: &str = "22a048fb3a0beac1ae2929c8cc69fcd28541fb9f";
 const PATCH: &[u8] = include_bytes!("../recipe/marios-mask.mmrecipe");
 
 #[derive(Clone, Copy, Debug)]
@@ -147,7 +147,7 @@ fn read_zip(data: &[u8]) -> Result<Vec<u8>> {
         .filter(|index| {
             archive
                 .by_index(*index)
-                .map(|entry| !entry.is_dir())
+                .map(|entry| !entry.is_dir() && !is_archive_metadata(entry.name()))
                 .unwrap_or(false)
         })
         .collect();
@@ -177,6 +177,16 @@ fn read_zip(data: &[u8]) -> Result<Vec<u8>> {
         .by_index(candidates[0])
         .context("Could not read the ROM inside the ZIP")?;
     read_limited(entry, "ZIP ROM")
+}
+
+fn is_archive_metadata(name: &str) -> bool {
+    let path = Path::new(name);
+    path.components()
+        .any(|component| component.as_os_str() == "__MACOSX")
+        || path
+            .file_name()
+            .and_then(|value| value.to_str())
+            .is_some_and(|value| value.starts_with("._") || value == ".DS_Store")
 }
 
 fn read_limited<R: Read>(reader: R, label: &str) -> Result<Vec<u8>> {
@@ -432,6 +442,10 @@ mod tests {
         writer.write_all(b"not a ROM").unwrap();
         writer.start_file("game.z64", options).unwrap();
         writer.write_all(b"\x80\x37\x12\x40rom bytes").unwrap();
+        writer.start_file("__MACOSX/._game.z64", options).unwrap();
+        writer.write_all(b"macOS metadata").unwrap();
+        writer.start_file(".DS_Store", options).unwrap();
+        writer.write_all(b"macOS metadata").unwrap();
         let archive = writer.finish().unwrap().into_inner();
         assert_eq!(read_zip(&archive).unwrap(), b"\x80\x37\x12\x40rom bytes");
     }
