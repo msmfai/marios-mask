@@ -47,6 +47,19 @@ Mario's camera has three zoom levels, including a close native-style view. His
 magic ability opens up exaggerated movement, wall climbing, and the strength to
 move or break heavy obstacles.
 
+### Mario controls
+
+These controls apply while wearing the Brother's Mask:
+
+| Control | Action |
+|---|---|
+| D-pad left / right | Rotate the camera around Mario |
+| D-pad up / down | Zoom the camera in or out |
+| R | Toggle Enhanced Mode |
+
+Enhanced Mode consumes magic while active and gives Mario his more extreme
+movement and strength abilities. Press R again to turn it off.
+
 ## Discover a classic power-up
 
 A classic power-up is hidden somewhere in Termina. Its movement, appearance,
