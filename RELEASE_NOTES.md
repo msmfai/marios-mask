@@ -1,11 +1,19 @@
-# Mario's Mask Alpha 0.8.1
+# Mario's Mask Alpha 0.8.2
 
-Alpha 0.8.1 is a focused bug-fix release.
+Alpha 0.8.2 is an urgent memory-stability release.
 
 ## Fixed
 
-- Restored Mario's voice when putting on or removing the Brother's Mask.
-- Mario's attacks can now pop the balloons in Romani Ranch's horseback minigame.
+- Fixed a serious failure mode where N64 memory exhaustion could make the game
+  silently refuse to load actors, objects, or other assets, leaving visible
+  parts of areas missing without reporting an error.
+- Optimised Mario-specific data residency so dialogue, animations, and the
+  Peach statue and object data stay in ROM or load only when needed. This
+  restores memory for affected vanilla area content, including the trees by
+  the Astral Observatory and the Part-Time Employee in Termina Field.
+- Critical load failures now stop with a visible fatal-load report instead of
+  silently continuing with missing content.
+- No vanilla level content was removed to obtain these memory savings.
 
 ## Known issues
 
