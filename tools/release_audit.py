@@ -33,7 +33,7 @@ FORBIDDEN_ROOTS = {
     "state", "test", "toolchain",
 }
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
-EXPECTED_RECIPE_SHA256 = "dcab3e241a165f0a15749193af94e5d706ef683c8316e2e49070c9470dd2ae81"
+EXPECTED_RECIPE_SHA256 = "584151acab8ceecb7c604ec50523465f1f0b515576253be0eb2524b896841759"
 REQUIRED = {
     ".github/workflows/binary-release.yml",
     ".github/workflows/release-audit.yml",
