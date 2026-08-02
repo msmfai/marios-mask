@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit the complete public history for the standalone patcher boundary."""
+"""Audit the complete public history for the patcher and project-site boundary."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ ALLOWED_TOP_LEVEL = {
     "VERSION",
     "packaging",
     "patcher",
+    "site",
     "tools",
 }
 FORBIDDEN_SUFFIXES = {
@@ -36,6 +37,7 @@ RECIPE = "patcher/recipe/marios-mask.mmrecipe"
 EXPECTED_RECIPE_SHA256 = "584151acab8ceecb7c604ec50523465f1f0b515576253be0eb2524b896841759"
 REQUIRED = {
     ".github/workflows/binary-release.yml",
+    ".github/workflows/project-pages.yml",
     ".github/workflows/release-audit.yml",
     ".gitignore",
     "LICENSE",
@@ -54,6 +56,13 @@ REQUIRED = {
     "patcher/src/lib.rs",
     "patcher/src/main.rs",
     "patcher/src/recipe.rs",
+    "site/README.md",
+    "site/app.js",
+    "site/index.html",
+    "site/site-config.json",
+    "site/stable.json",
+    "site/styles.css",
+    "tools/check_project_site.py",
     "tools/release_audit.py",
 }
 N64_MAGICS = {
@@ -215,7 +224,7 @@ def main() -> int:
         for failure in failures:
             print(f"  - {failure}", file=sys.stderr)
         return 1
-    print("Public-history audit passed: every reachable ref is patcher-only")
+    print("Public-history audit passed: every reachable ref is distribution-only")
     return 0
 
 
