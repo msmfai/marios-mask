@@ -1,6 +1,6 @@
 {
-  "version": "0.8.3",
-  "tag": "v0.8.3",
+  "version": "0.9.0",
+  "tag": "v0.9.0",
   "repository": "msmfai/marios-mask",
   "assets": {
     "windows": "MariosMaskBuilder-windows-x86_64.zip",
