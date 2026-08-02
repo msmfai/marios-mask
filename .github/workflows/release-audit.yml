@@ -18,6 +18,8 @@ jobs:
         run: python3 tools/release_audit.py --tree .
       - name: Check coupled release pins
         run: python3 tools/check_release_contract.py
+      - name: Check undeployed project splash page
+        run: python3 tools/check_project_site.py
       - name: Test and size-check the standalone patcher
         run: |
           cargo test --manifest-path patcher/Cargo.toml --locked

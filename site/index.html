@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17120e">
+    <meta
+      name="description"
+      content="Play Majora's Mask as Mario. Download the latest stable Mario's Mask builder."
+    >
+    <title>Mario's Mask</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <section class="trailer" aria-labelledby="project-title">
+        <div id="trailer-frame" class="trailer-frame">
+          <img
+            id="trailer-poster"
+            src="https://github.com/msmfai/marios-mask/releases/download/v0.8.0/hero.png"
+            alt="Mario standing in Termina"
+          >
+          <button id="play-trailer" class="play-trailer" type="button" hidden>
+            <span aria-hidden="true">▶</span>
+            Play trailer
+          </button>
+          <p id="trailer-coming-soon" class="trailer-coming-soon">
+            Trailer coming soon
+          </p>
+        </div>
+        <div class="title-lockup">
+          <p class="eyebrow">A Nintendo 64 crossover mod</p>
+          <h1 id="project-title">Mario's Mask</h1>
+          <p class="tagline">Play <em>Majora's Mask</em> as Mario.</p>
+        </div>
+      </section>
+
+      <section class="download" aria-labelledby="download-title">
+        <div>
+          <p class="eyebrow">Current public build</p>
+          <h2 id="download-title">Download the latest stable version</h2>
+          <p id="stable-version" class="version">Loading current version…</p>
+        </div>
+        <a id="primary-download" class="primary-button" href="https://github.com/msmfai/marios-mask/releases">
+          Download latest stable
+        </a>
+        <div id="platform-downloads" class="platform-downloads" aria-label="Downloads for other platforms">
+          <a data-platform="windows" href="https://github.com/msmfai/marios-mask/releases">Windows</a>
+          <a data-platform="macAppleSilicon" href="https://github.com/msmfai/marios-mask/releases">Mac — Apple Silicon</a>
+          <a data-platform="macIntel" href="https://github.com/msmfai/marios-mask/releases">Mac — Intel</a>
+          <a data-platform="linux" href="https://github.com/msmfai/marios-mask/releases">Linux</a>
+        </div>
+        <p class="build-note">
+          Bring your own USA copies of <em>Super Mario 64</em> and
+          <em>Majora's Mask</em>. The builder combines them locally.
+        </p>
+      </section>
+
+      <section class="description" aria-labelledby="about-title">
+        <p class="eyebrow">A different hero in the same world</p>
+        <h2 id="about-title">Termina, with Mario's movement</h2>
+        <p>
+          Mario's Mask brings Mario's movement, attacks, voice, animations,
+          and playful physics from <em>Super Mario 64</em> into the world and
+          adventure of <em>Majora's Mask</em>. Termina's story, three-day cycle,
+          quests, dungeons, and characters remain at the heart of the game.
+        </p>
+        <p>
+          Find the Brother's Mask to become Mario, explore familiar places with
+          a new move set, and remove it whenever you want to return to Link.
+        </p>
+      </section>
+
+      <footer>
+        <a class="github-link" href="https://github.com/msmfai/marios-mask">
+          View Mario's Mask on GitHub
+          <span aria-hidden="true">↗</span>
+        </a>
+        <p>Mario's Mask is a free, open-source fan project.</p>
+      </footer>
+    </main>
+  </body>
+</html>
