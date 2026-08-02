@@ -1,41 +1,40 @@
-# Mario's Mask Alpha 0.8.3
+# Mario's Mask Alpha 0.9.0
 
-Alpha 0.8.3 is a critical memory-stability update. It completes the memory
-optimisations begun in Alpha 0.8.2.
+Alpha 0.9.0 opens a mysterious new road and expands how Mario belongs in
+Majora's Mask's world, enemies, and scripted scenes.
 
-## What players will notice
+## New
 
-- Areas now have substantially more memory available for their normal scenery,
-  characters, enemies, and objects. This fixes cases where content could silently
-  disappear, especially in busy areas such as Termina Field with a full inventory.
-- Mario's bow, Hookshot, bombs, Bombchus, model, animations, and dialogue continue
-  to work normally, but no longer reserve large amounts of memory while unused.
-- Serious asset-load failures still stop with a visible fatal-load report instead
-  of letting play continue with a partially loaded area.
-- No vanilla level content was removed or altered to obtain these savings.
+- The Clock Tower now contains an authentic wobbling stone portrait portal.
+  Enter it to discover a new playable area adapted from Super Mario 64 to
+  Majora's Mask's native scene, collision, camera, and memory systems.
+- The Brother's Mask is now earned through the encounter beyond the mysterious
+  door rather than from the former stone-Peach statue. The new route includes
+  its own healing sequence, pipe arrival, signs, music controls, and return.
+- Mario can grab tailed Dodongos and real Bombchus from behind, spin them in the
+  SM64 Bowser style, and throw them. Their throws include bespoke reactions,
+  sounds, and explosive finishes.
+- Snappers now support Mario-style stomps and high rebounds. A defeated Snapper
+  leaves a rideable shell with damaging traversal and a shell execution move.
 
-## Technical details
+## Improved
 
-- Mario's Arrow, Hookshot, Bomb, and Bombchu actor overlays now use Majora's Mask's
-  normal demand-loading path. Together they return 33,584 bytes to ZeldaArena while
-  the tools have no active instances.
-- Mario's 133,568-byte model stays uncompressed in ROM and is loaded only while
-  Mario is active, trading ROM space and a bounded form-load copy for lower
-  permanent RAM use.
-- The ROM-resident dialogue and animation data, scene-selective Peach data,
-  demand-resident cap objects, and fatal-load diagnostics introduced in Alpha 0.8.2
-  remain in place.
-- The release build passes 16,013 structural and memory invariants with 3,831,952
-  bytes of static arena headroom. The exhaustive scene/layer preflight is also a
-  required release gate.
+- Mario remains visible when Majora's Mask owns a scripted cutscene. Native
+  cutscene movement now selects matching Mario idle, walk, run, rise, and fall
+  animation atoms without changing Link or any other player form.
+- Mario's cutscene locomotion animation follows the native scripted distance,
+  keeping its cadence aligned with his actual movement.
+- Mario-aware Gorman Brothers race and dialogue handoffs are included.
+- Alpha 0.8.3's demand-loaded asset and fatal-load protections remain part of
+  the 0.9 line; the new area and interactions use the same residency system.
 
 ## Known issues
 
-- Some Mario-specific dialogue paths may still fail to return control and
-  soft-lock the game.
+- Some unusual Mario dialogue, quest, and cutscene combinations remain early
+  alpha paths. Keep save states as well as normal in-game saves.
 - Many opposite-game soundfont arrangements still use programmatic instrument
   conversions rather than fully hand-authored arrangements.
-- This remains an early alpha. Back up your saves and expect rough edges.
+- Save compatibility is not yet guaranteed between alpha releases.
 
 ## Choose your download
 
