@@ -1,19 +1,33 @@
-# Mario's Mask Alpha 0.8.2
+# Mario's Mask Alpha 0.8.3
 
-Alpha 0.8.2 is an urgent memory-stability release.
+Alpha 0.8.3 is a critical memory-stability update. It completes the memory
+optimisations begun in Alpha 0.8.2.
 
-## Fixed
+## What players will notice
 
-- Fixed a serious failure mode where N64 memory exhaustion could make the game
-  silently refuse to load actors, objects, or other assets, leaving visible
-  parts of areas missing without reporting an error.
-- Optimised Mario-specific data residency so dialogue, animations, and the
-  Peach statue and object data stay in ROM or load only when needed. This
-  restores memory for affected vanilla area content, including the trees by
-  the Astral Observatory and the Part-Time Employee in Termina Field.
-- Critical load failures now stop with a visible fatal-load report instead of
-  silently continuing with missing content.
-- No vanilla level content was removed to obtain these memory savings.
+- Areas now have substantially more memory available for their normal scenery,
+  characters, enemies, and objects. This fixes cases where content could silently
+  disappear, especially in busy areas such as Termina Field with a full inventory.
+- Mario's bow, Hookshot, bombs, Bombchus, model, animations, and dialogue continue
+  to work normally, but no longer reserve large amounts of memory while unused.
+- Serious asset-load failures still stop with a visible fatal-load report instead
+  of letting play continue with a partially loaded area.
+- No vanilla level content was removed or altered to obtain these savings.
+
+## Technical details
+
+- Mario's Arrow, Hookshot, Bomb, and Bombchu actor overlays now use Majora's Mask's
+  normal demand-loading path. Together they return 33,584 bytes to ZeldaArena while
+  the tools have no active instances.
+- Mario's 133,568-byte model stays uncompressed in ROM and is loaded only while
+  Mario is active, trading ROM space and a bounded form-load copy for lower
+  permanent RAM use.
+- The ROM-resident dialogue and animation data, scene-selective Peach data,
+  demand-resident cap objects, and fatal-load diagnostics introduced in Alpha 0.8.2
+  remain in place.
+- The release build passes 16,013 structural and memory invariants with 3,831,952
+  bytes of static arena headroom. The exhaustive scene/layer preflight is also a
+  required release gate.
 
 ## Known issues
 
