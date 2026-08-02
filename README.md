@@ -15,11 +15,12 @@ the heart of the game—you explore them with a very different hero.
 
 ## Find the Brother's Mask
 
-The Brother's Mask contains the spirit of a hero from another world. Find the
-stone Peach in Clock Town's Laundry Pool and play the Song of Healing nearby to
-receive it. Put on the mask to become Mario; remove it to return to Link.
+Find the mysterious stone door inside the Clock Tower. Its face wobbles as you
+approach.
 
-![Link meeting the stone Peach](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/peach-statue.png)
+![The mysterious stone door wobbling](https://github.com/msmfai/marios-mask/releases/download/v0.9.0/brothers-mask-stone-door-wobble.png)
+
+![Beyond the mysterious door](https://github.com/msmfai/marios-mask/releases/download/v0.9.0/peaches-castle.png)
 
 ![The Brother's Mask in the inventory](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/brothers-mask.png)
 
@@ -71,10 +72,10 @@ his abilities.
 
 ## Change the music
 
-Two secret songs shown on the sign beside the Laundry Pool bell control the
-soundtrack. One switches between *Majora's Mask* music and mapped *Super Mario
-64* compositions. The other switches the instrument palette. The settings are
-independent, giving each save file four persistent soundtrack configurations.
+Signs beyond the mysterious door teach two secret songs. One switches between
+*Majora's Mask* music and mapped *Super Mario 64* compositions. The other
+switches the instrument palette. The settings are independent, giving each save
+file four persistent soundtrack configurations.
 
 The alpha uses a mixture of hand-authored arrangements and automatic instrument
 conversions. More arrangements will be refined as development continues.
