@@ -1,0 +1,11 @@
+{
+  "version": "0.8.3",
+  "tag": "v0.8.3",
+  "repository": "msmfai/marios-mask",
+  "assets": {
+    "windows": "MariosMaskBuilder-windows-x86_64.zip",
+    "macAppleSilicon": "MariosMaskBuilder-macos-apple-silicon.zip",
+    "macIntel": "MariosMaskBuilder-macos-intel.zip",
+    "linux": "MariosMaskBuilder-linux-x86_64.tar.gz"
+  }
+}
