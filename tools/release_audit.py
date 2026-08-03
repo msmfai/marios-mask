@@ -13,6 +13,7 @@ from pathlib import Path
 ALLOWED_TOP_LEVEL = {
     ".github",
     ".gitignore",
+    "android",
     "LICENSE",
     "PROVENANCE.md",
     "README.md",
@@ -36,6 +37,7 @@ FORBIDDEN_ROOTS = {
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
 EXPECTED_RECIPE_SHA256 = "05010e358dee5d91772ea042026315dcb4f1c9f4e71a51f58c6faa3f5445ff2d"
 REQUIRED = {
+    ".github/workflows/android-release.yml",
     ".github/workflows/binary-release.yml",
     ".github/workflows/project-pages.yml",
     ".github/workflows/release-audit.yml",
@@ -46,6 +48,7 @@ REQUIRED = {
     "RELEASE_NOTES.md",
     "VERSION",
     "packaging/audit_binary_package.py",
+    "packaging/audit_android_package.py",
     "packaging/macos/Info.plist",
     "patcher/Cargo.lock",
     "patcher/Cargo.toml",
@@ -56,6 +59,14 @@ REQUIRED = {
     "patcher/src/lib.rs",
     "patcher/src/main.rs",
     "patcher/src/recipe.rs",
+    "patcher/src/android.rs",
+    "android/README.md",
+    "android/app/build.gradle",
+    "android/app/src/main/AndroidManifest.xml",
+    "android/app/src/main/java/ai/smf/mariosmask/MainActivity.java",
+    "android/build.gradle",
+    "android/gradle.properties",
+    "android/settings.gradle",
     "site/README.md",
     "site/app.js",
     "site/index.html",

@@ -8,6 +8,14 @@ __pycache__/
 *.v64
 *.z64
 patcher/target/
+android/.gradle/
+android/local.properties
+android/**/build/
+android/app/src/main/jniLibs/
+*.apk
+*.aab
+*.jks
+*.keystore
 # optional headless-test plugins, always built locally from tools/inputbot/*.c
 tools/inputbot/*.dylib
 tools/inputbot/*.so
