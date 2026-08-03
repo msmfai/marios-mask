@@ -34,7 +34,7 @@ jobs:
             --no-default-features --features android-jni
       - name: Build and audit debug-signed APK
         run: |
-          gradle -p android --no-daemon :app:assembleDebug
+          gradle -p android --no-daemon :app:lintDebug :app:assembleDebug
           python3 packaging/audit_android_package.py android/app/build/outputs/apk/debug/app-debug.apk
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose android/app/build/outputs/apk/debug/app-debug.apk
 

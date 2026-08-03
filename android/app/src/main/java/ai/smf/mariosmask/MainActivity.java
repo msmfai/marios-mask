@@ -254,7 +254,7 @@ public final class MainActivity extends Activity {
                 });
             } catch (Exception error) {
                 String message = error.getMessage();
-                if (message == null || message.isBlank()) {
+                if (message == null || message.trim().isEmpty()) {
                     message = error.getClass().getSimpleName();
                 }
                 String finalMessage = message;
@@ -313,7 +313,7 @@ public final class MainActivity extends Activity {
     }
 
     private static Uri parseUri(String value) {
-        return value == null || value.isBlank() ? null : Uri.parse(value);
+        return value == null || value.trim().isEmpty() ? null : Uri.parse(value);
     }
 
     private static void deleteRecursively(File path) {
