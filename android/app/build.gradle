@@ -1,0 +1,80 @@
+plugins {
+    id "com.android.application"
+}
+
+def releaseVersion = rootProject.file("../VERSION").text.trim()
+def releaseKeystore = System.getenv("ANDROID_KEYSTORE_PATH")
+
+android {
+    namespace "ai.smf.mariosmask"
+    compileSdk 35
+    buildToolsVersion "35.0.0"
+
+    defaultConfig {
+        applicationId "ai.smf.mariosmask.builder"
+        minSdk 26
+        targetSdk 35
+        versionCode 900
+        versionName releaseVersion
+
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (releaseKeystore) {
+                storeFile file(releaseKeystore)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+        release {
+            minifyEnabled false
+            if (releaseKeystore) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ["src/main/jniLibs"]
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+tasks.register("requireReleaseSigning") {
+    doLast {
+        def required = [
+            "ANDROID_KEYSTORE_PATH",
+            "ANDROID_KEYSTORE_PASSWORD",
+            "ANDROID_KEY_ALIAS",
+            "ANDROID_KEY_PASSWORD",
+        ]
+        def missing = required.findAll { !System.getenv(it) }
+        if (!missing.isEmpty()) {
+            throw new GradleException("Missing Android release signing variables: " + missing.join(", "))
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "assembleRelease") {
+        dependsOn("requireReleaseSigning")
+    }
+}

@@ -29,6 +29,7 @@ body:
         - Mac with Apple Silicon
         - Intel Mac
         - Linux
+        - Android
         - Other
     validations:
       required: true
