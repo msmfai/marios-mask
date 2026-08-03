@@ -5,22 +5,31 @@ edition = "2021"
 license = "GPL-3.0-only"
 description = "Standalone two-ROM builder for Mario's Mask"
 
+[lib]
+crate-type = ["rlib", "cdylib"]
+
 [features]
-default = []
+default = ["desktop"]
+desktop = ["dep:eframe", "dep:rfd"]
+android-jni = ["dep:jni"]
 recipe-tool = []
 
 [dependencies]
 anyhow = "1.0"
-eframe = { version = "0.31.1", default-features = false, features = ["default_fonts", "glow", "x11"] }
+eframe = { version = "0.31.1", default-features = false, features = ["default_fonts", "glow", "x11"], optional = true }
 flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
-rfd = { version = "0.15.4", default-features = false, features = ["async-std", "xdg-portal"] }
+rfd = { version = "0.15.4", default-features = false, features = ["async-std", "xdg-portal"], optional = true }
 sha1 = "0.10"
 sha2 = "0.10"
 zip = { version = "2.4", default-features = false, features = ["deflate"] }
 
+[target.'cfg(target_os = "android")'.dependencies]
+jni = { version = "0.21.1", optional = true }
+
 [[bin]]
 name = "marios-mask-builder"
 path = "src/main.rs"
+required-features = ["desktop"]
 
 [[bin]]
 name = "marios-mask-recipe"

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import plistlib
 import re
 from pathlib import Path
@@ -47,6 +48,17 @@ def main() -> int:
     notes = (ROOT / "RELEASE_NOTES.md").read_text(encoding="utf-8")
     report = (ROOT / "patcher/recipe/REPORT.md").read_text(encoding="utf-8")
     library = (ROOT / "patcher/src/lib.rs").read_text(encoding="utf-8")
+    android_build = (ROOT / "android/app/build.gradle").read_text(encoding="utf-8")
+    android_manifest = (ROOT / "android/app/src/main/AndroidManifest.xml").read_text(
+        encoding="utf-8"
+    )
+    release_workflow = (ROOT / ".github/workflows/binary-release.yml").read_text(
+        encoding="utf-8"
+    )
+    android_workflow = (ROOT / ".github/workflows/android-release.yml").read_text(
+        encoding="utf-8"
+    )
+    stable = json.loads((ROOT / "site/stable.json").read_text(encoding="utf-8"))
     with (ROOT / "packaging/macos/Info.plist").open("rb") as handle:
         macos = plistlib.load(handle)
     recipe = (ROOT / release_audit.RECIPE).read_bytes()
@@ -66,6 +78,20 @@ def main() -> int:
         notes.startswith(f"# Mario's Mask Alpha {version}\n"),
         "release notes title does not match VERSION",
     )
+    require(
+        'rootProject.file("../VERSION")' in android_build
+        and "versionName releaseVersion" in android_build,
+        "Android versionName is not derived from VERSION",
+    )
+    require(
+        "<uses-permission" not in android_manifest,
+        "Android builder must use the document picker without broad permissions",
+    )
+    android_asset = "MariosMaskBuilder-android.apk"
+    require(android_asset in notes, "release notes omit the Android APK")
+    require(android_asset in release_workflow, "tag workflow omits the Android APK")
+    require(android_asset in android_workflow, "Android workflow uses the wrong asset name")
+    require(stable["assets"].get("android") == android_asset, "site Android asset disagrees")
 
     digest = hashlib.sha256(recipe).hexdigest()
     require(

@@ -44,8 +44,9 @@ Majora's Mask's world, enemies, and scripted scenes.
 | Mac with Apple Silicon (M1 or newer) | `MariosMaskBuilder-macos-apple-silicon.zip` |
 | Mac with an Intel processor | `MariosMaskBuilder-macos-intel.zip` |
 | 64-bit Linux | `MariosMaskBuilder-linux-x86_64.tar.gz` |
+| Android 8.0 or newer, 64-bit | `MariosMaskBuilder-android.apk` |
 
-Choose one of the four **MariosMaskBuilder** files under **Assets**.
+Choose the **MariosMaskBuilder** file for your platform under **Assets**.
 
 ## Build Mario's Mask
 
@@ -56,3 +57,6 @@ Choose one of the four **MariosMaskBuilder** files under **Assets**.
 5. Open `Marios-Mask.z64` in an N64 emulator or flash cart.
 
 The builder combines your two game files locally on your computer.
+On Android, install the APK, choose both ROMs through Android's document picker,
+and save the finished ROM directly to your device. The app requests no network
+or broad storage permission.

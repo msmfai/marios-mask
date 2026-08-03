@@ -8,6 +8,7 @@ function preferredPlatform() {
   const platform = navigator.userAgentData?.platform || navigator.platform || "";
   const agent = navigator.userAgent || "";
 
+  if (/Android/i.test(agent)) return "android";
   if (/Win/i.test(platform) || /Windows/i.test(agent)) return "windows";
   if (/Linux/i.test(platform) || /Linux/i.test(agent)) return "linux";
   if (/Mac/i.test(platform) || /Macintosh/i.test(agent)) return "macAppleSilicon";
@@ -32,7 +33,13 @@ async function configureDownloads() {
     if (platform && stable.assets[platform]) {
       primary.href = releaseAssetUrl(stable, stable.assets[platform]);
       primary.textContent = `Download ${stable.version} for ${
-        platform === "windows" ? "Windows" : platform === "linux" ? "Linux" : "Mac"
+        platform === "windows"
+          ? "Windows"
+          : platform === "linux"
+            ? "Linux"
+            : platform === "android"
+              ? "Android"
+              : "Mac"
       }`;
     } else {
       primary.href = `https://github.com/${stable.repository}/releases/tag/${stable.tag}`;

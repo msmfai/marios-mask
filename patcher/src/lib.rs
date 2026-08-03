@@ -5,6 +5,9 @@ use std::fs;
 use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
 
+#[cfg(all(target_os = "android", feature = "android-jni"))]
+mod android;
+
 pub mod recipe;
 
 const MAX_INPUT_SIZE: usize = 128 * 1024 * 1024;

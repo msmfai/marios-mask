@@ -125,7 +125,8 @@ Bring your own USA Nintendo 64 versions of *Super Mario 64* and *Majora's Mask*.
 The builder combines them locally on your computer.
 
 1. [Open the latest release](https://github.com/msmfai/marios-mask/releases/latest).
-2. Under **Assets**, download **MariosMaskBuilder** for Windows, macOS, or Linux.
+2. Under **Assets**, download **MariosMaskBuilder** for Windows, macOS, Linux,
+   or Android.
 3. Extract it and open **MariosMaskBuilder**.
 4. Choose both game files and where to save the result.
 5. Click **Build Mario's Mask**.
@@ -135,6 +136,9 @@ Raw `.z64`, `.v64`, and `.n64` files work, as do `.zip` and `.gz` archives.
 
 Having trouble opening the builder?
 
+- **Android:** Download `MariosMaskBuilder-android.apk`, allow installation from
+  your browser or file manager when Android asks, then open **Mario's Mask
+  Builder**. Android 8.0 or newer on a 64-bit device is required.
 - **Mac:** Control-click it, choose **Open**, then choose **Open** again.
 - **Windows:** Choose **More info**, then **Run anyway** if SmartScreen appears.
 - **Linux:** Extract the whole archive before opening it.
