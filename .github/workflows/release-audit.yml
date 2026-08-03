@@ -25,11 +25,12 @@ jobs:
           sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;28.2.13676358"
           cargo install cargo-ndk --version 4.1.2 --locked
       - name: Build Android JNI libraries
+        working-directory: patcher
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
         run: |
-          cargo ndk -t arm64-v8a -t x86_64 -o android/app/src/main/jniLibs \
-            build --release --manifest-path patcher/Cargo.toml --locked \
+          cargo ndk -t arm64-v8a -t x86_64 -o ../android/app/src/main/jniLibs \
+            build --release --locked \
             --no-default-features --features android-jni
       - name: Build and audit debug-signed APK
         run: |
