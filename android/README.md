@@ -14,10 +14,11 @@ The generated JNI libraries and APK are build products and must not be committed
 Build the Rust engine before invoking Gradle:
 
 ```sh
+cd patcher
 cargo ndk -t arm64-v8a -t x86_64 \
-  -o android/app/src/main/jniLibs \
-  build --release --manifest-path patcher/Cargo.toml --locked \
-  --no-default-features --features android-jni
+  -o ../android/app/src/main/jniLibs \
+  build --release --locked --no-default-features --features android-jni
+cd ..
 gradle -p android :app:assembleDebug
 ```
 
