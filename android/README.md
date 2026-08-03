@@ -19,7 +19,7 @@ cargo ndk -t arm64-v8a -t x86_64 \
   -o ../android/app/src/main/jniLibs \
   build --release --locked --no-default-features --features android-jni
 cd ..
-gradle -p android :app:assembleDebug
+gradle -p android :app:lintDebug :app:assembleDebug
 ```
 
 Release builds require the four `ANDROID_KEY*`/`ANDROID_KEYSTORE*` environment
