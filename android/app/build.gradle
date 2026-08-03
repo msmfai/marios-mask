@@ -8,7 +8,6 @@ def releaseKeystore = System.getenv("ANDROID_KEYSTORE_PATH")
 android {
     namespace "io.github.msmfai.mariosmask"
     compileSdk 35
-    buildToolsVersion "35.0.0"
 
     defaultConfig {
         applicationId "io.github.msmfai.mariosmask.builder"
