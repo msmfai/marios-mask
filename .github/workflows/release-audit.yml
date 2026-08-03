@@ -22,7 +22,7 @@ jobs:
           targets: aarch64-linux-android,x86_64-linux-android
       - name: Install pinned Android toolchain
         run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;28.2.13676358"
+          sdkmanager "platforms;android-35" "build-tools;36.0.0" "ndk;28.2.13676358"
           cargo install cargo-ndk --version 4.1.2 --locked
       - name: Build Android JNI libraries
         working-directory: patcher
@@ -36,7 +36,7 @@ jobs:
         run: |
           gradle -p android --no-daemon :app:assembleDebug
           python3 packaging/audit_android_package.py android/app/build/outputs/apk/debug/app-debug.apk
-          apksigner verify --verbose android/app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose android/app/build/outputs/apk/debug/app-debug.apk
 
   standalone-release:
     runs-on: ubuntu-22.04

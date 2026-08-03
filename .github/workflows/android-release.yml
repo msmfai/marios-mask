@@ -36,7 +36,7 @@ jobs:
           targets: aarch64-linux-android,x86_64-linux-android
       - name: Install pinned Android toolchain
         run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;28.2.13676358"
+          sdkmanager "platforms;android-35" "build-tools;36.0.0" "ndk;28.2.13676358"
           cargo install cargo-ndk --version 4.1.2 --locked
       - name: Build shared Rust engine for Android
         working-directory: patcher
@@ -62,7 +62,7 @@ jobs:
           gradle -p android --no-daemon :app:assembleRelease
           cp android/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/MariosMaskBuilder-android.apk"
           python3 packaging/audit_android_package.py "$RUNNER_TEMP/MariosMaskBuilder-android.apk"
-          apksigner verify --verbose --print-certs "$RUNNER_TEMP/MariosMaskBuilder-android.apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/MariosMaskBuilder-android.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: MariosMaskBuilder-android.apk
