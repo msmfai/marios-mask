@@ -59,7 +59,7 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          gradle -p android --no-daemon :app:assembleRelease
+          gradle -p android --no-daemon :app:lintRelease :app:assembleRelease
           cp android/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/MariosMaskBuilder-android.apk"
           python3 packaging/audit_android_package.py "$RUNNER_TEMP/MariosMaskBuilder-android.apk"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/MariosMaskBuilder-android.apk"
