@@ -1,32 +1,32 @@
-# Mario's Mask Alpha 0.9.0
+# Mario's Mask Alpha 0.9.1
 
-Alpha 0.9.0 opens a mysterious new road and expands how Mario belongs in
-Majora's Mask's world, enemies, and scripted scenes.
-
-## New
-
-- The Clock Tower now contains an authentic wobbling stone portrait portal.
-  Enter it to discover a new playable area adapted from Super Mario 64 to
-  Majora's Mask's native scene, collision, camera, and memory systems.
-- The Brother's Mask is now earned through the encounter beyond the mysterious
-  door rather than from the former stone-Peach statue. The new route includes
-  its own healing sequence, pipe arrival, signs, music controls, and return.
-- Mario can grab tailed Dodongos and real Bombchus from behind, spin them in the
-  SM64 Bowser style, and throw them. Their throws include bespoke reactions,
-  sounds, and explosive finishes.
-- Snappers now support Mario-style stomps and high rebounds. A defeated Snapper
-  leaves a rideable shell with damaging traversal and a shell execution move.
+Alpha 0.9.1 is a major native-systems refactor focused on stability. Mario now
+uses more of Majora's Mask's existing form, bottle, music, and audio-resource
+paths instead of maintaining parallel special cases.
 
 ## Improved
 
-- Mario remains visible when Majora's Mask owns a scripted cutscene. Native
-  cutscene movement now selects matching Mario idle, walk, run, rise, and fall
-  animation atoms without changing Link or any other player form.
-- Mario's cutscene locomotion animation follows the native scripted distance,
-  keeping its cadence aligned with his actual movement.
-- Mario-aware Gorman Brothers race and dialogue handoffs are included.
-- Alpha 0.8.3's demand-loaded asset and fatal-load protections remain part of
-  the 0.9 line; the new area and interactions use the same residency system.
+- Mario's form and underwater bottle interactions now route through the native
+  mask and Zora-manager paths. This keeps ordinary Mario swimming and Metal
+  Mario's underwater walking aligned with the game's established state rules.
+- Mario music variants are native audio assets streamed from ROM on demand,
+  reducing permanent RAM pressure and keeping transitions under the normal
+  sequence-player lifecycle.
+- Music and soundfont cache eviction is now asset-aware. Changing Roads,
+  Borrowed Voices, combat music, and area transitions share the same ownership
+  rules instead of independently invalidating live audio resources.
+- Native ocarina song storage has been prepared for the two Mario songs without
+  relying on the retired takeover shortcut.
+- Audio-resource invariants are documented beside the code so future changes
+  fail close to the architectural boundary instead of surfacing as intermittent
+  missing music or a dead audio engine.
+
+## Validation
+
+- The uninstrumented 8 MiB release build matched vanilla Majora's Mask across
+  all 453 base entrance/spawn cases and all 918 day/time schedule cases.
+- The release sweep recorded no out-of-memory failures, resource-limit errors,
+  critical headroom cases, fragmentation flags, or unexpected actor changes.
 
 ## Known issues
 
