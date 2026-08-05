@@ -15,7 +15,7 @@ const DMADATA_START: usize = 0x1A500;
 const SM64_SHA1: &str = "9bef1128717f958171a4afac3ed78ee2bb4e86ce";
 const MM_COMPRESSED_SHA1: &str = "d6133ace5afaa0882cf214cf88daba39e266c078";
 const MM_DECOMPRESSED_SHA1: &str = "7f5630dbc4d5d61d6276213210c4d5cdd83a47d6";
-const OUTPUT_SHA1: &str = "a1bd65fc329bd1a3b1d340800237a37f2bcc786c";
+const OUTPUT_SHA1: &str = "7801a58efb6cca93eb7a26a1cf17f76ebc0d86d9";
 const PATCH: &[u8] = include_bytes!("../recipe/marios-mask.mmrecipe");
 
 #[derive(Clone, Copy, Debug)]

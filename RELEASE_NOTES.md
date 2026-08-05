@@ -1,32 +1,32 @@
-# Mario's Mask Alpha 0.9.1
+# Mario's Mask Alpha 0.9.2
 
-Alpha 0.9.1 is a major native-systems refactor focused on stability. Mario now
-uses more of Majora's Mask's existing form, bottle, music, and audio-resource
-paths instead of maintaining parallel special cases.
+Alpha 0.9.2 replaces Mario's old post-step speed-up with a single dimensional
+conversion from Super Mario 64's 30 Hz physics to Majora's Mask's 20 Hz player
+loop. Movement is now corrected where velocity, acceleration, turning, damping,
+and collision are integrated instead of moving Mario a second time after the
+native action step.
 
 ## Improved
 
-- Mario's form and underwater bottle interactions now route through the native
-  mask and Zora-manager paths. This keeps ordinary Mario swimming and Metal
-  Mario's underwater walking aligned with the game's established state rules.
-- Mario music variants are native audio assets streamed from ROM on demand,
-  reducing permanent RAM pressure and keeping transitions under the normal
-  sequence-player lifecycle.
-- Music and soundfont cache eviction is now asset-aware. Changing Roads,
-  Borrowed Voices, combat music, and area transitions share the same ownership
-  rules instead of independently invalidating live audio resources.
-- Native ocarina song storage has been prepared for the two Mario songs without
-  relying on the retired takeover shortcut.
-- Audio-resource invariants are documented beside the code so future changes
-  fail close to the architectural boundary instead of surfacing as intermittent
-  missing music or a dead audio engine.
+- Ground, air, swimming, Metal Mario water movement, poles, flight, shells,
+  whirlpools, and tail-spinning now share the same 20 Hz physics model.
+- Linear and angular velocities use the 30-to-20 Hz time ratio; acceleration
+  and gravity use its square; friction and damping preserve their real-time
+  decay.
+- Mario turns more like his Super Mario 64 counterpart, and swimming responds
+  more naturally without a separate movement-speed workaround.
+- Collision now resolves the converted movement directly. The removed
+  corrected-endpoint pass can no longer push Mario beyond the position the
+  action's own collision step accepted.
 
 ## Validation
 
-- The uninstrumented 8 MiB release build matched vanilla Majora's Mask across
-  all 453 base entrance/spawn cases and all 918 day/time schedule cases.
-- The release sweep recorded no out-of-memory failures, resource-limit errors,
-  critical headroom cases, fragmentation flags, or unexpected actor changes.
+- Source and architecture contracts enforce the dimensional conversion and
+  reject restoration of the retired post-step speed knobs.
+- Fresh acquisition and kernel fixture ROMs passed the no-mask boot check and
+  all 717 Mario interaction assertions.
+- The uninstrumented 8 MiB release build is required to pass the exhaustive
+  vanilla Majora's Mask area-memory comparison before publication.
 
 ## Known issues
 
