@@ -1,32 +1,21 @@
-# Mario's Mask Alpha 0.9.2
+# Mario's Mask Alpha 0.10.0
 
-Alpha 0.9.2 replaces Mario's old post-step speed-up with a single dimensional
-conversion from Super Mario 64's 30 Hz physics to Majora's Mask's 20 Hz player
-loop. Movement is now corrected where velocity, acceleration, turning, damping,
-and collision are integrated instead of moving Mario a second time after the
-native action step.
+Alpha 0.10.0 promotes 7 tested changes from the private release train.
 
-## Improved
+## Changes
 
-- Ground, air, swimming, Metal Mario water movement, poles, flight, shells,
-  whirlpools, and tail-spinning now share the same 20 Hz physics model.
-- Linear and angular velocities use the 30-to-20 Hz time ratio; acceleration
-  and gravity use its square; friction and damping preserve their real-time
-  decay.
-- Mario turns more like his Super Mario 64 counterpart, and swimming responds
-  more naturally without a separate movement-speed workaround.
-- Collision now resolves the converted movement directly. The removed
-  corrected-endpoint pass can no longer push Mario beyond the position the
-  action's own collision step accepted.
+- Build: isolate writable state per worktree.
+- Lock nested build compatibility links.
+- Build: resolve shared toolchain before seeding.
+- Build: preserve provisioned source snapshots.
+- Build: canonicalize isolated submake paths.
+- Resume failed candidate checkpoints safely.
+- Retire invalid Twinmold entrance probes.
 
 ## Validation
 
-- Source and architecture contracts enforce the dimensional conversion and
-  reject restoration of the retired post-step speed knobs.
-- Fresh acquisition and kernel fixture ROMs passed the no-mask boot check and
-  all 717 Mario interaction assertions.
-- The uninstrumented 8 MiB release build is required to pass the exhaustive
-  vanilla Majora's Mask area-memory comparison before publication.
+- The uninstrumented 8 MiB release build passed the exhaustive vanilla-MM area-memory comparison.
+- The downloaded builder is required to reproduce the approved ROM byte-for-byte from both supported Majora's Mask input forms.
 
 ## Known issues
 
