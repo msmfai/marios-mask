@@ -1,28 +1,29 @@
 # Mario's Mask Alpha 0.10.0
 
-Alpha 0.10.0 promotes 7 tested changes from the private release train.
+Alpha 0.10.0 gives Mario a proper instrument and improves how his Super Mario
+64 animations look and sound inside Majora's Mask.
 
-## Changes
+## What's new
 
-- Build: isolate writable state per worktree.
-- Lock nested build compatibility links.
-- Build: resolve shared toolchain before seeding.
-- Build: preserve provisioned source snapshots.
-- Build: canonicalize isolated submake paths.
-- Resume failed candidate checkpoints safely.
-- Retire invalid Twinmold entrance probes.
-
-## Validation
-
-- The uninstrumented 8 MiB release build passed the exhaustive vanilla-MM area-memory comparison.
-- The downloaded builder is required to reproduce the approved ROM byte-for-byte from both supported Majora's Mask input forms.
+- Mario now plays songs with Guru-Guru's hand-cranked music box instead of an
+  ocarina. He holds it between both hands and uses its familiar accordion voice.
+- Mario squashes with each note while you play and while a completed song is
+  played back to you.
+- Mario's animation poses are now smoothed for Majora's Mask's frame rate, so
+  movement looks faster and more fluid.
+- Heel turns no longer make Mario briefly face backwards before returning to
+  the correct direction.
+- Mario's accordion sound no longer leaks into Peach's Castle doors or other
+  unrelated effects.
+- The Happy Mask Salesman's Mario-specific conversation now pauses on
+  "So what exactly..." before "Are you?", accompanied by his uncanny laugh.
 
 ## Known issues
 
 - Some unusual Mario dialogue, quest, and cutscene combinations remain early
   alpha paths. Keep save states as well as normal in-game saves.
-- Many opposite-game soundfont arrangements still use programmatic instrument
-  conversions rather than fully hand-authored arrangements.
+- Many opposite-game instrument arrangements are still automatically converted
+  rather than fully hand-authored.
 - Save compatibility is not yet guaranteed between alpha releases.
 
 ## Choose your download
