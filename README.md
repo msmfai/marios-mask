@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/juno-logo.png" alt="Juno logo" width="720">
-</p>
-
 # Mario's Mask
 
 **Play *Majora's Mask* as Mario.**
@@ -186,3 +182,7 @@ If you make a video about Mario's Mask, please include a link to this GitHub
 repository in the video description and give a shoutout to the **Augmented
 Nonsense** YouTube channel. Thank you for helping people find the project and
 its creator.
+
+<p align="center">
+  <img src="assets/juno-logo.png" alt="Juno logo" width="720">
+</p>
