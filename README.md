@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/juno-logo.png" alt="Juno logo" width="720">
+</p>
+
 # Mario's Mask
 
 **Play *Majora's Mask* as Mario.**
