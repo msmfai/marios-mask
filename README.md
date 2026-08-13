@@ -179,3 +179,10 @@ procedurally generated content will be restricted to local development builds.
 > up to date.
 >
 > Rest assured, this is a human-led project.
+
+## A request for video creators
+
+If you make a video about Mario's Mask, please include a link to this GitHub
+repository in the video description and give a shoutout to the **Augmented
+Nonsense** YouTube channel. Thank you for helping people find the project and
+its creator.
