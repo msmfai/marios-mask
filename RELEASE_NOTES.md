@@ -1,25 +1,89 @@
 # Mario's Mask Alpha 0.11.0
 
-Alpha 0.11 makes Mario's combat more dependable and gives him a smoother route
-through the Southern Swamp.
+Alpha 0.11 is a major gameplay update. It adds Metal Mario, elemental powers, a
+new way to use the bow, new world content, and a broad pass over Mario's combat,
+movement, and interactions.
 
-## Combat feels fairer
+## Metal Mario and the Cavern of the Metal Cap
 
-- Mario's attacks now win against ordinary enemy body contact instead of being
-  interrupted by every overlapping hitbox.
-- Clearly dangerous attacks still beat Mario, including swords, blades, large
-  horns, lasers, spikes, and other obvious weapon surfaces.
-- Enemy and boss attacks were reviewed individually, making punches, kicks,
-  dives, lunges, and ground pounds much more consistent across the game.
+- A new portal in Clock Tower leads to the Cavern of the Metal Cap.
+- Pressing the green switch unlocks Metal Cap boxes placed around Ikana.
+- Metal Mario is invincible, has his proper heavy movement sounds and music,
+  sinks to the floor underwater, and can punch while walking on the seabed.
+- Metal Mario can smash underwater obstacles, including the wooden barriers at
+  Pirates' Fortress. Enhanced swimming can also break through them at speed.
+- Reflected sunlight now charges Metal Mario's body. His next attack releases
+  the stored light, allowing him to activate mirrors, sun switches, sun blocks,
+  and light-sensitive enemies.
 
-## Better Southern Swamp traversal
+## Fire, Ice, and Light powers
 
-- Mario can stand and run on the swamp's lily pads.
-- Swimming into a lily pad now makes Mario climb onto it naturally.
-- Lily pads give Mario a short window to jump after stepping off an edge, making
-  them less fiddly without changing the rest of his movement.
+- Fire, Ice, and Light Arrows now give Mario a matching elemental power instead
+  of putting him into Link's bow stance.
+- Each activation uses the normal arrow and magic cost, changes Mario's powered
+  appearance, and charges his next three attacks.
+- Punches, kicks, and other attacks launch elemental projectiles. Ground pounds
+  create an elemental burst around Mario.
+- Fire and Ice projectiles bounce through the environment before bursting;
+  Light attacks retain their native puzzle and enemy interactions.
+
+## Mario's new bow
+
+- The ordinary Hero's Bow now works like a Mario cannon: hold the item button to
+  charge, aim Mario, then release to launch him along the shot line.
+- Draw strength controls launch speed, from a short hop to a full cannon blast.
+- Mario, the bow, arrow, pulled string, camera, sounds, smoke, and impact effects
+  now follow one shared aim direction.
+- The Great Fairy's Sword is now a throwable Mario weapon with its own flight,
+  impact, and landing presentation.
+
+## Combat overhaul
+
+- Enhanced Mode is now a traversal power rather than a damage upgrade. Mario's
+  ordinary attacks retain their full strength without consuming magic.
+- Normal punches deal 3 damage. Movement attacks such as jump kicks, slide
+  kicks, and dives deal 6.
+- Mario can smash expected breakables such as rocks, snowballs, pots, and jars
+  without Enhanced Mode.
+- Ground pounds now carry Goron ground-pound force, including flipping Snappers
+  and activating enemies and objects that respond to Goron impacts.
+- Bosses accept Mario's attacks across their active vulnerable bodies instead
+  of demanding Link-sized precision. Mario can, for example, attack Goht across
+  its body rather than trying to hit one exact point.
+- Mario's attacks now win against ordinary enemy body contact. Clearly visible
+  weapons and hazards such as swords, blades, large horns, lasers, and spikes
+  still beat him.
+- Enemy and boss attack surfaces were reviewed individually, making punches,
+  kicks, dives, lunges, and ground pounds far more consistent.
+
+## World and traversal changes
+
+- Mario can stand and run on Southern Swamp lily pads, climb onto them directly
+  from the water, and still jump for a brief moment after leaving an edge.
 - A well-aimed lunge defeats the giant Octoroks, opening a Mario-style shortcut
   through the swamp.
+- A new Snapper encounter has been added to Termina Field.
+- Song of Storms now drains and refills the moat outside Peach's Castle.
+- Mario can climb cleanly over the top of ladders that previously trapped him
+  in a rapid climbing loop.
+- Gold Skulltula tokens are easier for Mario's larger body to collect.
+- Diving into a Cucco grabs it without hurting it or provoking a Cucco attack.
+- Mario's movement timing has been retuned for Majora's Mask's 20 Hz gameplay,
+  improving action windows and animation timing throughout his move set.
+
+## Presentation and progression fixes
+
+- The Brother's Mask now uses a native Mario-faced model and properly aligned
+  inventory art, without the Circus Leader's tear effect.
+- Playing Elegy of Emptiness as Mario now creates a solid Talon statue. Its
+  collision forms safely and moves Mario out of the way instead of overlapping
+  him.
+- Mario's animation root motion has been restored, so his pelvis and feet move
+  correctly during idle animations instead of pumping through the floor.
+- Mario's fire animation no longer restores the missing M emblem on his cap.
+- Mario's death now completes its Bowser laugh and transition without playing
+  Majora's Mask's Game Over music or hanging on a black screen.
+- Woodfall's Gekko and Snapper interactions have been restored for Mario.
 
 ## Known issues
 
