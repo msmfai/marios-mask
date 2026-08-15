@@ -1,21 +1,25 @@
 # Mario's Mask Alpha 0.11.0
 
-Alpha 0.11.0 promotes 7 tested changes from the private release train.
+Alpha 0.11 makes Mario's combat more dependable and gives him a smoother route
+through the Southern Swamp.
 
-## Changes
+## Combat feels fairer
 
-- Implement configurable Mario attack priority.
-- Refine Southern Swamp Mario traversal.
-- Merge configurable Mario attack priority.
-- Ignore local nested worktrees.
-- Fix expanded Mario attack kernel expectations.
-- Document reviewed Termina memory substitutions.
-- Resume dirty public release checkpoints.
+- Mario's attacks now win against ordinary enemy body contact instead of being
+  interrupted by every overlapping hitbox.
+- Clearly dangerous attacks still beat Mario, including swords, blades, large
+  horns, lasers, spikes, and other obvious weapon surfaces.
+- Enemy and boss attacks were reviewed individually, making punches, kicks,
+  dives, lunges, and ground pounds much more consistent across the game.
 
-## Validation
+## Better Southern Swamp traversal
 
-- The uninstrumented 8 MiB release build passed the exhaustive vanilla-MM area-memory comparison.
-- The downloaded builder is required to reproduce the approved ROM byte-for-byte from both supported Majora's Mask input forms.
+- Mario can stand and run on the swamp's lily pads.
+- Swimming into a lily pad now makes Mario climb onto it naturally.
+- Lily pads give Mario a short window to jump after stepping off an edge, making
+  them less fiddly without changing the rest of his movement.
+- A well-aimed lunge defeats the giant Octoroks, opening a Mario-style shortcut
+  through the swamp.
 
 ## Known issues
 
