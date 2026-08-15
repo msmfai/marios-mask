@@ -1,22 +1,21 @@
-# Mario's Mask Alpha 0.10.0
+# Mario's Mask Alpha 0.11.0
 
-Alpha 0.10.0 gives Mario a proper instrument and improves how his Super Mario
-64 animations look and sound inside Majora's Mask.
+Alpha 0.11.0 promotes 7 tested changes from the private release train.
 
-## What's new
+## Changes
 
-- Mario now plays songs with Guru-Guru's hand-cranked music box instead of an
-  ocarina. He holds it between both hands and uses its familiar accordion voice.
-- Mario squashes with each note while you play and while a completed song is
-  played back to you.
-- Mario's animation poses are now smoothed for Majora's Mask's frame rate, so
-  movement looks faster and more fluid.
-- Heel turns no longer make Mario briefly face backwards before returning to
-  the correct direction.
-- Mario's accordion sound no longer leaks into Peach's Castle doors or other
-  unrelated effects.
-- The Happy Mask Salesman's Mario-specific conversation now pauses on
-  "So what exactly..." before "Are you?", accompanied by his uncanny laugh.
+- Implement configurable Mario attack priority.
+- Refine Southern Swamp Mario traversal.
+- Merge configurable Mario attack priority.
+- Ignore local nested worktrees.
+- Fix expanded Mario attack kernel expectations.
+- Document reviewed Termina memory substitutions.
+- Resume dirty public release checkpoints.
+
+## Validation
+
+- The uninstrumented 8 MiB release build passed the exhaustive vanilla-MM area-memory comparison.
+- The downloaded builder is required to reproduce the approved ROM byte-for-byte from both supported Majora's Mask input forms.
 
 ## Known issues
 
