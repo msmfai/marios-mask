@@ -14,6 +14,7 @@ ALLOWED_TOP_LEVEL = {
     ".github",
     ".gitignore",
     "android",
+    "assets",
     "LICENSE",
     "PROVENANCE.md",
     "README.md",
@@ -35,7 +36,11 @@ FORBIDDEN_ROOTS = {
     "state", "test", "toolchain",
 }
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
-EXPECTED_RECIPE_SHA256 = "30555649003b1ddb877d034aef9c6614c77b8a14cd964d22abf03955811f2da5"
+EXPECTED_RECIPE_SHA256 = "6f9d2c1b9e615fc9efba7666ab96788330b8933010af5809aff73982e3b44c5d"
+REVIEWED_MEDIA_SHA256 = {
+    "assets/juno-logo.png":
+        "771286cb1173c678d0d6cbaac45653e66d732c92cbc66bb977c8850c6b1e2c95",
+}
 REQUIRED = {
     ".github/workflows/android-release.yml",
     ".github/workflows/binary-release.yml",
@@ -67,6 +72,7 @@ REQUIRED = {
     "android/build.gradle",
     "android/gradle.properties",
     "android/settings.gradle",
+    "assets/juno-logo.png",
     "site/README.md",
     "site/app.js",
     "site/index.html",
@@ -101,6 +107,8 @@ def forbidden_path(name: str) -> str | None:
     path = Path(name)
     if not path.parts:
         return "empty path"
+    if name in REVIEWED_MEDIA_SHA256:
+        return None
     if path.parts[0] not in ALLOWED_TOP_LEVEL:
         return "outside the standalone-patcher boundary"
     if path.parts[0] in FORBIDDEN_ROOTS:
@@ -163,6 +171,12 @@ def parse_recipe(data: bytes) -> str | None:
 
 
 def inspect_blob(name: str, data: bytes) -> str | None:
+    expected_media = REVIEWED_MEDIA_SHA256.get(name)
+    if expected_media is not None:
+        digest = hashlib.sha256(data).hexdigest()
+        if digest != expected_media:
+            return f"reviewed media SHA-256 changed to {digest}"
+        return None
     if name.endswith(".mmrecipe"):
         return parse_recipe(data)
     if data.startswith(bytes.fromhex("28b52ffd")):
