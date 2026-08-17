@@ -98,8 +98,8 @@ def main() -> int:
         digest == release_audit.EXPECTED_RECIPE_SHA256,
         "recipe SHA-256 does not match release_audit.py",
     )
-    require(recipe[:8] == b"MMRECP01", "recipe header is invalid")
-    output_sha256 = recipe[80:112].hex()
+    require(recipe[:8] == b"MMRECP02", "recipe header is invalid")
+    output_sha256 = recipe[112:144].hex()
     require(output_sha256 in report, "recipe output SHA-256 is missing from REPORT.md")
 
     output_sha1 = re.search(r'const OUTPUT_SHA1: &str = "([0-9a-f]{40})";', library)

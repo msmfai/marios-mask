@@ -121,14 +121,14 @@ trying long quest sequences as Mario.
 
 ## Build your game
 
-Bring your own USA Nintendo 64 versions of *Super Mario 64* and *Majora's Mask*.
-The builder combines them locally on your computer.
+Bring your own USA Nintendo 64 versions of *Super Mario 64*, *Ocarina of Time*
+1.1, and *Majora's Mask*. The builder combines them locally on your computer.
 
 1. [Open the latest release](https://github.com/msmfai/marios-mask/releases/latest).
 2. Under **Assets**, download **MariosMaskBuilder** for Windows, macOS, Linux,
    or Android.
 3. Extract it and open **MariosMaskBuilder**.
-4. Choose both game files and where to save the result.
+4. Choose all three game files and where to save the result.
 5. Click **Build Mario's Mask**.
 6. Open the new `Marios-Mask.z64` in an N64 emulator or flash cart.
 
@@ -144,14 +144,15 @@ Having trouble opening the builder?
 - **Linux:** Extract the whole archive before opening it.
 
 Found a bug? [Tell us what happened](https://github.com/msmfai/marios-mask/issues/new/choose)
-and keep both game files private.
+and keep all three game files private.
 
 ## About the builder
 
 Mario's Mask is free software under [GPL-3.0](LICENSE). This repository contains
 the standalone builder, not a playable game. Its documented
-[two-input recipe format](patcher/recipe/FORMAT.md) builds locally from the two
-files you select.
+[three-input recipe format](patcher/recipe/FORMAT.md) builds locally from the
+three files you select. Nintendo-derived content is read from those files; it is
+not embedded in the builder.
 
 ## What alpha means
 

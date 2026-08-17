@@ -2,12 +2,13 @@ use anyhow::{bail, ensure, Context, Result};
 use sha2::{Digest, Sha256};
 use std::fmt::Write as _;
 
-pub const MAGIC: &[u8; 8] = b"MMRECP01";
-const HEADER_SIZE: usize = 8 + 8 + 32 + 32 + 32 + 4;
+pub const MAGIC: &[u8; 8] = b"MMRECP02";
+const HEADER_SIZE: usize = 8 + 8 + 32 + 32 + 32 + 32 + 4;
 const COPY_MM: u8 = 0;
 const COPY_SM64: u8 = 1;
 const LITERAL: u8 = 2;
 const COPY_OUTPUT: u8 = 3;
+const COPY_OOT: u8 = 4;
 const MAX_COMMANDS: usize = 8_000_000;
 const MAX_OUTPUT_SIZE: usize = 128 * 1024 * 1024;
 
@@ -17,6 +18,7 @@ pub struct RecipeStats {
     pub output_bytes: usize,
     pub mm_bytes: usize,
     pub sm64_bytes: usize,
+    pub oot_bytes: usize,
     pub literal_origin_bytes: usize,
     pub stored_literal_bytes: usize,
     pub output_copy_bytes: usize,
@@ -33,7 +35,7 @@ pub struct LiteralRange {
 
 impl RecipeStats {
     pub fn source_bytes(&self) -> usize {
-        self.mm_bytes + self.sm64_bytes
+        self.mm_bytes + self.sm64_bytes + self.oot_bytes
     }
 
     pub fn source_percent(&self) -> f64 {
@@ -46,11 +48,12 @@ impl RecipeStats {
 
     pub fn report(&self) -> String {
         format!(
-            "commands: {}\noutput bytes: {}\nMM-origin bytes: {}\nSM64-origin bytes: {}\nliteral-origin bytes: {}\nstored literal bytes: {}\noutput-copy bytes: {}\nliteral payload SHA-256: {}\ninput-derived: {:.4}%\n",
+            "commands: {}\noutput bytes: {}\nMM-origin bytes: {}\nSM64-origin bytes: {}\nOoT-origin bytes: {}\nliteral-origin bytes: {}\nstored literal bytes: {}\noutput-copy bytes: {}\nliteral payload SHA-256: {}\ninput-derived: {:.4}%\n",
             self.commands,
             self.output_bytes,
             self.mm_bytes,
             self.sm64_bytes,
+            self.oot_bytes,
             self.literal_origin_bytes,
             self.stored_literal_bytes,
             self.output_copy_bytes,
@@ -72,9 +75,15 @@ impl RecipeStats {
     }
 }
 
-pub fn apply(recipe: &[u8], mm: &[u8], sm64: &[u8]) -> Result<(Vec<u8>, RecipeStats)> {
+pub fn apply(
+    recipe: &[u8],
+    mm: &[u8],
+    sm64: &[u8],
+    oot: &[u8],
+    oot_source: &[u8],
+) -> Result<(Vec<u8>, RecipeStats)> {
     let header = Header::parse(recipe)?;
-    header.validate_inputs(mm, sm64)?;
+    header.validate_inputs(mm, sm64, oot)?;
     let mut cursor = HEADER_SIZE;
     let mut output = Vec::with_capacity(header.output_size);
     let mut origins = Vec::with_capacity(header.output_size);
@@ -89,14 +98,19 @@ pub fn apply(recipe: &[u8], mm: &[u8], sm64: &[u8]) -> Result<(Vec<u8>, RecipeSt
         let kind = take_u8(recipe, &mut cursor)
             .with_context(|| format!("recipe command {command_index} has no opcode"))?;
         match kind {
-            COPY_MM | COPY_SM64 => {
+            COPY_MM | COPY_SM64 | COPY_OOT => {
                 let offset = take_u32(recipe, &mut cursor)? as usize;
                 let length = take_u32(recipe, &mut cursor)? as usize;
                 ensure!(
                     length > 0,
                     "recipe command {command_index} is an empty copy"
                 );
-                let source = if kind == COPY_MM { mm } else { sm64 };
+                let source = match kind {
+                    COPY_MM => mm,
+                    COPY_SM64 => sm64,
+                    COPY_OOT => oot_source,
+                    _ => unreachable!(),
+                };
                 let end = offset
                     .checked_add(length)
                     .context("recipe copy range overflows")?;
@@ -107,9 +121,12 @@ pub fn apply(recipe: &[u8], mm: &[u8], sm64: &[u8]) -> Result<(Vec<u8>, RecipeSt
                 if kind == COPY_MM {
                     stats.mm_bytes += length;
                     origins.resize(origins.len() + length, COPY_MM);
-                } else {
+                } else if kind == COPY_SM64 {
                     stats.sm64_bytes += length;
                     origins.resize(origins.len() + length, COPY_SM64);
+                } else {
+                    stats.oot_bytes += length;
+                    origins.resize(origins.len() + length, COPY_OOT);
                 }
             }
             LITERAL => {
@@ -165,6 +182,7 @@ pub fn apply(recipe: &[u8], mm: &[u8], sm64: &[u8]) -> Result<(Vec<u8>, RecipeSt
                     match origin {
                         COPY_MM => stats.mm_bytes += 1,
                         COPY_SM64 => stats.sm64_bytes += 1,
+                        COPY_OOT => stats.oot_bytes += 1,
                         LITERAL => stats.literal_origin_bytes += 1,
                         _ => unreachable!("validated origin tag"),
                     }
@@ -198,6 +216,7 @@ pub fn apply(recipe: &[u8], mm: &[u8], sm64: &[u8]) -> Result<(Vec<u8>, RecipeSt
 pub enum Command {
     CopyMm { offset: u32, length: u32 },
     CopySm64 { offset: u32, length: u32 },
+    CopyOot { offset: u32, length: u32 },
     CopyOutput { offset: u32, length: u32 },
     Literal(Vec<u8>),
 }
@@ -207,13 +226,20 @@ impl Command {
         match self {
             Self::CopyMm { length, .. }
             | Self::CopySm64 { length, .. }
+            | Self::CopyOot { length, .. }
             | Self::CopyOutput { length, .. } => *length as usize,
             Self::Literal(bytes) => bytes.len(),
         }
     }
 }
 
-pub fn encode(mm: &[u8], sm64: &[u8], output: &[u8], commands: &[Command]) -> Result<Vec<u8>> {
+pub fn encode(
+    mm: &[u8],
+    sm64: &[u8],
+    oot: &[u8],
+    output: &[u8],
+    commands: &[Command],
+) -> Result<Vec<u8>> {
     ensure!(
         output.len() <= MAX_OUTPUT_SIZE,
         "output exceeds the recipe size limit"
@@ -241,6 +267,7 @@ pub fn encode(mm: &[u8], sm64: &[u8], output: &[u8], commands: &[Command]) -> Re
     recipe.extend_from_slice(&(output.len() as u64).to_le_bytes());
     recipe.extend_from_slice(&Sha256::digest(mm));
     recipe.extend_from_slice(&Sha256::digest(sm64));
+    recipe.extend_from_slice(&Sha256::digest(oot));
     recipe.extend_from_slice(&Sha256::digest(output));
     recipe.extend_from_slice(&(commands.len() as u32).to_le_bytes());
 
@@ -253,6 +280,11 @@ pub fn encode(mm: &[u8], sm64: &[u8], output: &[u8], commands: &[Command]) -> Re
             }
             Command::CopySm64 { offset, length } => {
                 recipe.push(COPY_SM64);
+                recipe.extend_from_slice(&offset.to_le_bytes());
+                recipe.extend_from_slice(&length.to_le_bytes());
+            }
+            Command::CopyOot { offset, length } => {
+                recipe.push(COPY_OOT);
                 recipe.extend_from_slice(&offset.to_le_bytes());
                 recipe.extend_from_slice(&length.to_le_bytes());
             }
@@ -279,6 +311,7 @@ struct Header {
     output_size: usize,
     mm_sha256: [u8; 32],
     sm64_sha256: [u8; 32],
+    oot_sha256: [u8; 32],
     output_sha256: [u8; 32],
     command_count: usize,
 }
@@ -292,7 +325,7 @@ impl Header {
             output_size <= MAX_OUTPUT_SIZE,
             "recipe output exceeds the size limit"
         );
-        let command_count = u32::from_le_bytes(recipe[112..116].try_into().unwrap()) as usize;
+        let command_count = u32::from_le_bytes(recipe[144..148].try_into().unwrap()) as usize;
         ensure!(
             command_count <= MAX_COMMANDS,
             "recipe command count exceeds the limit"
@@ -301,12 +334,13 @@ impl Header {
             output_size,
             mm_sha256: recipe[16..48].try_into().unwrap(),
             sm64_sha256: recipe[48..80].try_into().unwrap(),
-            output_sha256: recipe[80..112].try_into().unwrap(),
+            oot_sha256: recipe[80..112].try_into().unwrap(),
+            output_sha256: recipe[112..144].try_into().unwrap(),
             command_count,
         })
     }
 
-    fn validate_inputs(&self, mm: &[u8], sm64: &[u8]) -> Result<()> {
+    fn validate_inputs(&self, mm: &[u8], sm64: &[u8], oot: &[u8]) -> Result<()> {
         ensure!(
             Sha256::digest(mm).as_slice() == self.mm_sha256,
             "Majora's Mask SHA-256 does not match the recipe"
@@ -314,6 +348,10 @@ impl Header {
         ensure!(
             Sha256::digest(sm64).as_slice() == self.sm64_sha256,
             "Super Mario 64 SHA-256 does not match the recipe"
+        );
+        ensure!(
+            Sha256::digest(oot).as_slice() == self.oot_sha256,
+            "Ocarina of Time SHA-256 does not match the recipe"
         );
         Ok(())
     }
@@ -344,6 +382,7 @@ mod tests {
     fn applies_and_reports_each_byte_class() {
         let mm = b"abcdefgh";
         let sm64 = b"01234567";
+        let oot = b"oot-rom";
         let output = b"abc123!gh";
         let commands = vec![
             Command::CopyMm {
@@ -360,8 +399,8 @@ mod tests {
                 length: 2,
             },
         ];
-        let encoded = encode(mm, sm64, output, &commands).unwrap();
-        let (actual, stats) = apply(&encoded, mm, sm64).unwrap();
+        let encoded = encode(mm, sm64, oot, output, &commands).unwrap();
+        let (actual, stats) = apply(&encoded, mm, sm64, oot, b"").unwrap();
         assert_eq!(actual, output);
         assert_eq!(stats.mm_bytes, 5);
         assert_eq!(stats.sm64_bytes, 3);
@@ -374,6 +413,7 @@ mod tests {
     fn output_copies_preserve_transitive_origins() {
         let mm = b"abcdefgh";
         let sm64 = b"01234567";
+        let oot = b"oot-rom";
         let output = b"ab!ab!ab!";
         let commands = vec![
             Command::CopyMm {
@@ -386,8 +426,8 @@ mod tests {
                 length: 6,
             },
         ];
-        let encoded = encode(mm, sm64, output, &commands).unwrap();
-        let (actual, stats) = apply(&encoded, mm, sm64).unwrap();
+        let encoded = encode(mm, sm64, oot, output, &commands).unwrap();
+        let (actual, stats) = apply(&encoded, mm, sm64, oot, b"").unwrap();
         assert_eq!(actual, output);
         assert_eq!(stats.mm_bytes, 6);
         assert_eq!(stats.literal_origin_bytes, 3);
@@ -399,10 +439,12 @@ mod tests {
     fn rejects_trailing_bytes() {
         let mm = b"abcdefgh";
         let sm64 = b"01234567";
+        let oot = b"oot-rom";
         let output = b"abc";
         let mut encoded = encode(
             mm,
             sm64,
+            oot,
             output,
             &[Command::CopyMm {
                 offset: 0,
@@ -411,7 +453,7 @@ mod tests {
         )
         .unwrap();
         encoded.push(0);
-        assert!(apply(&encoded, mm, sm64)
+        assert!(apply(&encoded, mm, sm64, oot, b"")
             .unwrap_err()
             .to_string()
             .contains("trailing"));
