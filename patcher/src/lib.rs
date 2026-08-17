@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 #[cfg(all(target_os = "android", feature = "android-jni"))]
 mod android;
 
+pub mod oot;
 pub mod recipe;
 
 const MAX_INPUT_SIZE: usize = 128 * 1024 * 1024;
@@ -15,8 +16,28 @@ const DMADATA_START: usize = 0x1A500;
 const SM64_SHA1: &str = "9bef1128717f958171a4afac3ed78ee2bb4e86ce";
 const MM_COMPRESSED_SHA1: &str = "d6133ace5afaa0882cf214cf88daba39e266c078";
 const MM_DECOMPRESSED_SHA1: &str = "7f5630dbc4d5d61d6276213210c4d5cdd83a47d6";
-const OUTPUT_SHA1: &str = "3e69a2a01080fba89365f5c1c410b4e0c3c49ced";
+const OUTPUT_SHA1: &str = "76007c936cfa57352af85e0a47a6d314f664ea72";
 const PATCH: &[u8] = include_bytes!("../recipe/marios-mask.mmrecipe");
+const MARIO_COLOR_MAGIC: &[u8; 8] = b"DSCECOLR";
+const MARIO_COLOR_GUARD: &[u8; 5] = &[1, 0xA5, 0x1D, 0x5A, 0xE1];
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BuildOptions {
+    pub mario_color: [u8; 3],
+}
+
+impl BuildOptions {
+    pub const LINK_IS_REAL: [u8; 3] = [24, 88, 22];
+    pub const ORIGINAL_MARIO: [u8; 3] = [255, 0, 0];
+}
+
+impl Default for BuildOptions {
+    fn default() -> Self {
+        Self {
+            mario_color: Self::LINK_IS_REAL,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 struct DmaEntry {
@@ -63,22 +84,52 @@ impl DmaEntry {
 
 pub fn build_from_paths<F>(
     sm64_path: &Path,
+    oot_path: &Path,
     mm_path: &Path,
     output_path: &Path,
+    progress: F,
+) -> Result<()>
+where
+    F: FnMut(&str),
+{
+    build_from_paths_with_options(
+        sm64_path,
+        oot_path,
+        mm_path,
+        output_path,
+        BuildOptions::default(),
+        progress,
+    )
+}
+
+pub fn build_from_paths_with_options<F>(
+    sm64_path: &Path,
+    oot_path: &Path,
+    mm_path: &Path,
+    output_path: &Path,
+    options: BuildOptions,
     mut progress: F,
 ) -> Result<()>
 where
     F: FnMut(&str),
 {
-    ensure!(sm64_path != mm_path, "Choose two different ROM files.");
     ensure!(
-        output_path != sm64_path && output_path != mm_path,
-        "The output cannot overwrite either input ROM."
+        sm64_path != mm_path && sm64_path != oot_path && oot_path != mm_path,
+        "Choose three different ROM files."
+    );
+    ensure!(
+        output_path != sm64_path && output_path != oot_path && output_path != mm_path,
+        "The output cannot overwrite an input ROM."
     );
 
     progress("Reading Super Mario 64…");
     let sm64 = read_and_normalize(sm64_path).context("Could not read the Super Mario 64 ROM")?;
     ensure_sha1(&sm64, SM64_SHA1, "Super Mario 64 US")?;
+
+    progress("Reading Ocarina of Time…");
+    let oot = read_and_normalize(oot_path).context("Could not read the Ocarina of Time ROM")?;
+    let oot_source = oot::stone_talon_source(&oot)
+        .context("Ocarina of Time must be the NTSC 1.1 US revision")?;
 
     progress("Reading Majora's Mask…");
     let mm_input = read_and_normalize(mm_path).context("Could not read the Majora's Mask ROM")?;
@@ -93,14 +144,44 @@ where
     };
     ensure_sha1(&mm, MM_DECOMPRESSED_SHA1, "decompressed Majora's Mask US")?;
 
-    progress("Combining both ROMs…");
-    let (output, _) =
-        recipe::apply(PATCH, &mm, &sm64).context("Could not apply the embedded two-ROM recipe")?;
+    progress("Combining all three ROMs…");
+    let (mut output, _) = recipe::apply(PATCH, &mm, &sm64, &oot, &oot_source)
+        .context("Could not apply the embedded three-ROM recipe")?;
     ensure_sha1(&output, OUTPUT_SHA1, "Mario's Mask output")?;
+
+    progress("Applying Mario colour…");
+    apply_mario_color(&mut output, options.mario_color)?;
 
     progress("Writing Mario's Mask…");
     write_atomic(output_path, &output)?;
     progress("Done!");
+    Ok(())
+}
+
+fn apply_mario_color(output: &mut [u8], color: [u8; 3]) -> Result<()> {
+    let mut matches = output
+        .windows(MARIO_COLOR_MAGIC.len())
+        .enumerate()
+        .filter_map(|(offset, bytes)| (bytes == MARIO_COLOR_MAGIC).then_some(offset));
+    let offset = matches
+        .next()
+        .context("This Mario's Mask recipe does not contain the patchable Mario colour record")?;
+    ensure!(
+        matches.next().is_none(),
+        "Mario colour record is not unique in the built ROM"
+    );
+    let color_offset = offset + MARIO_COLOR_MAGIC.len();
+    let guard_offset = color_offset + 3;
+    ensure!(
+        guard_offset + MARIO_COLOR_GUARD.len() <= output.len()
+            && &output[guard_offset..guard_offset + MARIO_COLOR_GUARD.len()] == MARIO_COLOR_GUARD,
+        "Mario colour record has an unsupported version or damaged guard"
+    );
+    let changed = output[color_offset..color_offset + 3] != color;
+    output[color_offset..color_offset + 3].copy_from_slice(&color);
+    if changed && (0x1000..0x101000).contains(&color_offset) {
+        update_x105_checksum(output)?;
+    }
     Ok(())
 }
 
@@ -451,5 +532,33 @@ mod tests {
         writer.write_all(b"macOS metadata").unwrap();
         let archive = writer.finish().unwrap().into_inner();
         assert_eq!(read_zip(&archive).unwrap(), b"\x80\x37\x12\x40rom bytes");
+    }
+
+    #[test]
+    fn patches_only_the_guarded_mario_rgb_bytes() {
+        let mut rom = vec![0u8; 0x200];
+        rom[0x40..0x48].copy_from_slice(MARIO_COLOR_MAGIC);
+        rom[0x48..0x4B].copy_from_slice(&BuildOptions::LINK_IS_REAL);
+        rom[0x4B..0x50].copy_from_slice(MARIO_COLOR_GUARD);
+        let before = rom.clone();
+        apply_mario_color(&mut rom, [12, 34, 56]).unwrap();
+        assert_eq!(&rom[0x48..0x4B], &[12, 34, 56]);
+        assert_eq!(&rom[..0x48], &before[..0x48]);
+        assert_eq!(&rom[0x4B..], &before[0x4B..]);
+    }
+
+    #[test]
+    fn rejects_missing_duplicate_or_unguarded_color_records() {
+        assert!(apply_mario_color(&mut vec![0u8; 64], [1, 2, 3]).is_err());
+
+        let record = [
+            b'D', b'S', b'C', b'E', b'C', b'O', b'L', b'R', 24, 88, 22, 1, 0xA5, 0x1D, 0x5A, 0xE1,
+        ];
+        let mut duplicate = [record, record].concat();
+        assert!(apply_mario_color(&mut duplicate, [1, 2, 3]).is_err());
+
+        let mut damaged = record;
+        damaged[15] = 0;
+        assert!(apply_mario_color(&mut damaged, [1, 2, 3]).is_err());
     }
 }
