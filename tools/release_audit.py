@@ -36,7 +36,7 @@ FORBIDDEN_ROOTS = {
     "state", "test", "toolchain",
 }
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
-EXPECTED_RECIPE_SHA256 = "7709562db8029e314f0839fd96e47433007444bafaa29b94887118f3fb1224ce"
+EXPECTED_RECIPE_SHA256 = "05a6a588d059d0088162d7a2508bb830b311c651b67b10244d18b5dfac7dd9ca"
 REVIEWED_MEDIA_SHA256 = {
     "assets/juno-logo.png":
         "771286cb1173c678d0d6cbaac45653e66d732c92cbc66bb977c8850c6b1e2c95",
@@ -62,6 +62,7 @@ REQUIRED = {
     RECIPE,
     "patcher/src/bin/recipe_tool.rs",
     "patcher/src/lib.rs",
+    "patcher/src/oot.rs",
     "patcher/src/main.rs",
     "patcher/src/recipe.rs",
     "patcher/src/android.rs",
@@ -87,8 +88,10 @@ N64_MAGICS = {
     bytes.fromhex("37804012"),
     bytes.fromhex("40123780"),
 }
-RECIPE_MAGIC = b"MMRECP01"
-HEADER_SIZE = 116
+RECIPE_LAYOUTS = {
+    b"MMRECP01": (116, 112, {0, 1, 3}),
+    b"MMRECP02": (148, 144, {0, 1, 3, 4}),
+}
 MAX_RECIPE_BYTES = 8 * 1024 * 1024
 MAX_OUTPUT_BYTES = 128 * 1024 * 1024
 MAX_COMMANDS = 8_000_000
@@ -123,23 +126,29 @@ def forbidden_path(name: str) -> str | None:
 def parse_recipe(data: bytes) -> str | None:
     if len(data) > MAX_RECIPE_BYTES:
         return f"transparent recipe exceeds {MAX_RECIPE_BYTES} bytes"
-    if len(data) < HEADER_SIZE or data[:8] != RECIPE_MAGIC:
+    layout = RECIPE_LAYOUTS.get(data[:8])
+    if layout is None:
+        return "unsupported transparent recipe header"
+    header_size, command_count_offset, copy_opcodes = layout
+    if len(data) < header_size:
         return "unsupported transparent recipe header"
     output_size = int.from_bytes(data[8:16], "little")
-    command_count = int.from_bytes(data[112:116], "little")
+    command_count = int.from_bytes(
+        data[command_count_offset:command_count_offset + 4], "little"
+    )
     if output_size > MAX_OUTPUT_BYTES:
         return "declared output exceeds size limit"
     if command_count > MAX_COMMANDS:
         return "declared command count exceeds limit"
 
-    cursor = HEADER_SIZE
+    cursor = header_size
     produced = 0
     for index in range(command_count):
         if cursor >= len(data):
             return f"command {index} is truncated"
         opcode = data[cursor]
         cursor += 1
-        if opcode in (0, 1, 3):
+        if opcode in copy_opcodes:
             if cursor + 8 > len(data):
                 return f"command {index} is truncated"
             offset = int.from_bytes(data[cursor:cursor + 4], "little")
@@ -210,9 +219,9 @@ def historical_blobs(tree: Path) -> list[tuple[str, str]]:
 
 def audit(tree: Path) -> list[str]:
     failures: list[str] = []
-    present = set(current_files(tree))
-    for missing in sorted(REQUIRED - present):
-        failures.append(f"{missing}: required file is missing")
+    for required in sorted(REQUIRED):
+        if not (tree / required).is_file():
+            failures.append(f"{required}: required file is missing")
 
     seen: set[str] = set()
     for object_id, name in historical_blobs(tree):
