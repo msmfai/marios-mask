@@ -1,7 +1,7 @@
 # Public-source boundary
 
 This repository contains only the project-authored standalone builder, release
-packaging, documentation, and a transparent two-input recipe.
+packaging, documentation, and a transparent three-input recipe.
 
 It does not contain ROMs, extracted game assets, decompilation source trees,
 Majora's Mask source context, or the private mod-development repository. The
@@ -11,6 +11,7 @@ The recipe format records every operation as one of:
 
 - copy bytes from the user's Majora's Mask input;
 - copy bytes from the user's Super Mario 64 input;
+- copy the Talon source derived locally from the user's Ocarina of Time 1.1 input;
 - emit an explicit literal payload stored in the recipe; or
 - copy bytes already emitted, preserving their original classification.
 

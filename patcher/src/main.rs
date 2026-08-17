@@ -18,26 +18,50 @@ fn run_cli_or_gui() -> Result<()> {
     if arguments.len() == 1 {
         return run_gui();
     }
-    if arguments.len() != 5 || arguments[1] != "--build" {
+    if !matches!(arguments.len(), 6 | 8)
+        || arguments[1] != "--build"
+        || (arguments.len() == 8 && arguments[6] != "--mario-color")
+    {
         bail!(
-            "usage: {} [--build <sm64-rom> <mm-rom> <output.z64>]",
+            "usage: {} [--build <sm64-rom> <oot-1.1-rom> <mm-rom> <output.z64> [--mario-color RRGGBB]]",
             arguments[0]
         );
     }
-    marios_mask_builder::build_from_paths(
+    let options = marios_mask_builder::BuildOptions {
+        mario_color: if arguments.len() == 8 {
+            parse_rgb(&arguments[7])?
+        } else {
+            marios_mask_builder::BuildOptions::LINK_IS_REAL
+        },
+    };
+    marios_mask_builder::build_from_paths_with_options(
         Path::new(&arguments[2]),
         Path::new(&arguments[3]),
         Path::new(&arguments[4]),
+        Path::new(&arguments[5]),
+        options,
         |message| println!("{message}"),
     )
     .context("Mario's Mask build failed")
 }
 
+fn parse_rgb(value: &str) -> Result<[u8; 3]> {
+    let value = value.strip_prefix('#').unwrap_or(value);
+    if value.len() != 6 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        bail!("Mario colour must be six hexadecimal digits, for example FF0000");
+    }
+    Ok([
+        u8::from_str_radix(&value[0..2], 16)?,
+        u8::from_str_radix(&value[2..4], 16)?,
+        u8::from_str_radix(&value[4..6], 16)?,
+    ])
+}
+
 fn run_gui() -> Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([620.0, 330.0])
-            .with_min_inner_size([520.0, 300.0]),
+            .with_inner_size([620.0, 500.0])
+            .with_min_inner_size([520.0, 470.0]),
         ..Default::default()
     };
     eframe::run_native(
@@ -51,14 +75,30 @@ fn run_gui() -> Result<()> {
     .map_err(|error| anyhow::anyhow!(error.to_string()))
 }
 
-#[derive(Default)]
 struct BuilderApp {
     sm64: String,
+    oot: String,
     mm: String,
     output: String,
     status: String,
     error: bool,
     messages: Option<Receiver<BuildMessage>>,
+    mario_color: [u8; 3],
+}
+
+impl Default for BuilderApp {
+    fn default() -> Self {
+        Self {
+            sm64: String::new(),
+            oot: String::new(),
+            mm: String::new(),
+            output: String::new(),
+            status: String::new(),
+            error: false,
+            messages: None,
+            mario_color: marios_mask_builder::BuildOptions::LINK_IS_REAL,
+        }
+    }
 }
 
 enum BuildMessage {
@@ -102,25 +142,39 @@ impl BuilderApp {
     }
 
     fn start_build(&mut self) {
-        if self.sm64.trim().is_empty() || self.mm.trim().is_empty() || self.output.trim().is_empty()
+        if self.sm64.trim().is_empty()
+            || self.oot.trim().is_empty()
+            || self.mm.trim().is_empty()
+            || self.output.trim().is_empty()
         {
-            self.status = "Choose both ROMs and an output file first.".into();
+            self.status = "Choose all three ROMs and an output file first.".into();
             self.error = true;
             return;
         }
 
         let sm64 = PathBuf::from(self.sm64.trim());
+        let oot = PathBuf::from(self.oot.trim());
         let mm = PathBuf::from(self.mm.trim());
         let output = PathBuf::from(self.output.trim());
+        let options = marios_mask_builder::BuildOptions {
+            mario_color: self.mario_color,
+        };
         let (sender, receiver) = mpsc::channel();
         self.messages = Some(receiver);
         self.status = "Starting…".into();
         self.error = false;
         std::thread::spawn(move || {
             let progress_sender = sender.clone();
-            let result = marios_mask_builder::build_from_paths(&sm64, &mm, &output, |message| {
-                let _ = progress_sender.send(BuildMessage::Progress(message.to_owned()));
-            })
+            let result = marios_mask_builder::build_from_paths_with_options(
+                &sm64,
+                &oot,
+                &mm,
+                &output,
+                options,
+                |message| {
+                    let _ = progress_sender.send(BuildMessage::Progress(message.to_owned()));
+                },
+            )
             .map_err(|error| format!("{error:#}"));
             let _ = sender.send(BuildMessage::Finished(result));
         });
@@ -189,6 +243,10 @@ impl eframe::App for BuilderApp {
                 Self::choose_rom(value, "Choose Super Mario 64 (USA)")
             });
             ui.add_space(5.0);
+            Self::path_row(ui, "Ocarina of Time 1.1", &mut self.oot, |value| {
+                Self::choose_rom(value, "Choose Ocarina of Time (USA) 1.1")
+            });
+            ui.add_space(5.0);
             Self::path_row(ui, "Majora's Mask", &mut self.mm, |value| {
                 Self::choose_rom(value, "Choose Majora's Mask (USA)")
             });
@@ -206,6 +264,30 @@ impl eframe::App for BuilderApp {
                 {
                     self.choose_output();
                 }
+            });
+
+            ui.add_space(8.0);
+            ui.label("Mario colour");
+            ui.label(
+                "Mario canonically wears Link's colours in Mario's Mask, and NPCs will refer \
+                 to his green clothes. Original red Mario is available for players who \
+                 would prefer it.",
+            );
+            ui.horizontal(|ui| {
+                if ui.button("L(ink) Is Real (Green Mario)").clicked() {
+                    self.mario_color = marios_mask_builder::BuildOptions::LINK_IS_REAL;
+                }
+                if ui.button("Original (Red Mario)").clicked() {
+                    self.mario_color = marios_mask_builder::BuildOptions::ORIGINAL_MARIO;
+                }
+            });
+            ui.horizontal(|ui| {
+                ui.color_edit_button_srgb(&mut self.mario_color);
+                ui.label("Custom colour wheel");
+                ui.monospace(format!(
+                    "#{:02X}{:02X}{:02X}",
+                    self.mario_color[0], self.mario_color[1], self.mario_color[2]
+                ));
             });
 
             ui.add_space(12.0);

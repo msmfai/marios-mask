@@ -12,6 +12,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,30 +27,42 @@ import java.util.concurrent.Executors;
 
 public final class MainActivity extends Activity {
     private static final int CHOOSE_SM64 = 100;
-    private static final int CHOOSE_MM = 101;
-    private static final int CHOOSE_OUTPUT = 102;
+    private static final int CHOOSE_OOT = 101;
+    private static final int CHOOSE_MM = 102;
+    private static final int CHOOSE_OUTPUT = 103;
     private static final long MAX_INPUT_BYTES = 128L * 1024L * 1024L;
 
     static {
         System.loadLibrary("marios_mask_builder");
     }
 
-    private static native String nativeBuild(String sm64, String mm, String output);
+    private static native String nativeBuild(
+            String sm64, String oot, String mm, String output,
+            int red, int green, int blue);
 
     private final ExecutorService builder = Executors.newSingleThreadExecutor();
     private Uri sm64Uri;
+    private Uri ootUri;
     private Uri mmUri;
     private Button sm64Button;
+    private Button ootButton;
     private Button mmButton;
     private Button buildButton;
     private TextView statusView;
+    private TextView colorValue;
+    private final int[] marioColor = {24, 88, 22};
+    private final SeekBar[] colorSliders = new SeekBar[3];
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         if (state != null) {
             sm64Uri = parseUri(state.getString("sm64"));
+            ootUri = parseUri(state.getString("oot"));
             mmUri = parseUri(state.getString("mm"));
+            marioColor[0] = state.getInt("marioRed", 24);
+            marioColor[1] = state.getInt("marioGreen", 88);
+            marioColor[2] = state.getInt("marioBlue", 22);
         }
         setContentView(createContent());
         refreshSelections();
@@ -59,7 +72,11 @@ public final class MainActivity extends Activity {
     protected void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         state.putString("sm64", sm64Uri == null ? null : sm64Uri.toString());
+        state.putString("oot", ootUri == null ? null : ootUri.toString());
         state.putString("mm", mmUri == null ? null : mmUri.toString());
+        state.putInt("marioRed", marioColor[0]);
+        state.putInt("marioGreen", marioColor[1]);
+        state.putInt("marioBlue", marioColor[2]);
     }
 
     @Override
@@ -79,7 +96,7 @@ public final class MainActivity extends Activity {
         content.addView(title);
 
         TextView intro = text(
-            "Choose your own NTSC-US Super Mario 64 and Majora's Mask ROMs. " +
+            "Choose your own NTSC-US Super Mario 64, Ocarina of Time 1.1, and Majora's Mask ROMs. " +
                 "They stay on this device and are combined locally.",
             16,
             Color.DKGRAY
@@ -91,14 +108,48 @@ public final class MainActivity extends Activity {
         content.addView(sm64Button);
         content.addView(spacer());
 
+        ootButton = button("Choose Ocarina of Time 1.1", view -> chooseRom(CHOOSE_OOT));
+        content.addView(ootButton);
+        content.addView(spacer());
+
         mmButton = button("Choose Majora's Mask", view -> chooseRom(CHOOSE_MM));
         content.addView(mmButton);
+        content.addView(spacer());
+
+        TextView colorTitle = text("Mario colour", 17, Color.DKGRAY);
+        colorTitle.setTypeface(colorTitle.getTypeface(), android.graphics.Typeface.BOLD);
+        content.addView(colorTitle);
+        TextView colorDisclaimer = text(
+            "Mario canonically wears Link's colours in Mario's Mask, and NPCs will refer " +
+                "to his green clothes. Original red Mario is available for players who " +
+                "would prefer it.",
+            14,
+            Color.DKGRAY
+        );
+        colorDisclaimer.setPadding(0, dp(5), 0, dp(8));
+        content.addView(colorDisclaimer);
+        LinearLayout presets = new LinearLayout(this);
+        presets.setOrientation(LinearLayout.HORIZONTAL);
+        Button green = button("L(ink) Is Real", view -> setMarioColor(24, 88, 22));
+        Button red = button("Original", view -> setMarioColor(255, 0, 0));
+        presets.addView(green, new LinearLayout.LayoutParams(0, dp(54), 1));
+        presets.addView(red, new LinearLayout.LayoutParams(0, dp(54), 1));
+        content.addView(presets);
+        TextView customColor = text("Custom colour", 15, Color.DKGRAY);
+        customColor.setPadding(0, dp(8), 0, 0);
+        content.addView(customColor);
+        content.addView(colorChannel("Red", 0));
+        content.addView(colorChannel("Green", 1));
+        content.addView(colorChannel("Blue", 2));
+        colorValue = text("", 15, Color.DKGRAY);
+        content.addView(colorValue);
+        updateColorControls();
         content.addView(spacer());
 
         buildButton = button("Build Mario's Mask", view -> chooseOutput());
         content.addView(buildButton);
 
-        statusView = text("Choose both ROMs to begin.", 15, Color.DKGRAY);
+        statusView = text("Choose all three ROMs to begin.", 15, Color.DKGRAY);
         statusView.setPadding(0, dp(18), 0, dp(8));
         statusView.setGravity(Gravity.START);
         statusView.setTextIsSelectable(true);
@@ -143,6 +194,51 @@ public final class MainActivity extends Activity {
         return view;
     }
 
+    private View colorChannel(String label, int component) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        TextView name = text(label, 14, Color.DKGRAY);
+        name.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(name, new LinearLayout.LayoutParams(dp(58), dp(42)));
+        SeekBar slider = new SeekBar(this);
+        slider.setMax(255);
+        slider.setProgress(marioColor[component]);
+        slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (fromUser) {
+                    marioColor[component] = value;
+                    updateColorControls();
+                }
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) {}
+            @Override public void onStopTrackingTouch(SeekBar bar) {}
+        });
+        colorSliders[component] = slider;
+        row.addView(slider, new LinearLayout.LayoutParams(0, dp(42), 1));
+        return row;
+    }
+
+    private void setMarioColor(int red, int green, int blue) {
+        marioColor[0] = red;
+        marioColor[1] = green;
+        marioColor[2] = blue;
+        updateColorControls();
+    }
+
+    private void updateColorControls() {
+        for (int i = 0; i < colorSliders.length; i++) {
+            if (colorSliders[i] != null && colorSliders[i].getProgress() != marioColor[i]) {
+                colorSliders[i].setProgress(marioColor[i]);
+            }
+        }
+        if (colorValue != null) {
+            colorValue.setText(String.format("Custom  #%02X%02X%02X", marioColor[0], marioColor[1], marioColor[2]));
+            colorValue.setBackgroundColor(Color.rgb(marioColor[0], marioColor[1], marioColor[2]));
+            colorValue.setTextColor((marioColor[0] + marioColor[1] + marioColor[2]) < 360 ? Color.WHITE : Color.BLACK);
+            colorValue.setPadding(dp(10), dp(6), dp(10), dp(6));
+        }
+    }
+
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
@@ -156,8 +252,8 @@ public final class MainActivity extends Activity {
     }
 
     private void chooseOutput() {
-        if (sm64Uri == null || mmUri == null) {
-            setStatus("Choose both ROMs first.", true);
+        if (sm64Uri == null || ootUri == null || mmUri == null) {
+            setStatus("Choose all three ROMs first.", true);
             return;
         }
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -175,10 +271,12 @@ public final class MainActivity extends Activity {
             return;
         }
         Uri uri = data.getData();
-        if (requestCode == CHOOSE_SM64 || requestCode == CHOOSE_MM) {
+        if (requestCode == CHOOSE_SM64 || requestCode == CHOOSE_OOT || requestCode == CHOOSE_MM) {
             persistReadPermission(uri, data.getFlags());
             if (requestCode == CHOOSE_SM64) {
                 sm64Uri = uri;
+            } else if (requestCode == CHOOSE_OOT) {
+                ootUri = uri;
             } else {
                 mmUri = uri;
             }
@@ -202,9 +300,10 @@ public final class MainActivity extends Activity {
             return;
         }
         sm64Button.setText(sm64Uri == null ? "Choose Super Mario 64" : "Super Mario 64: " + displayName(sm64Uri));
+        ootButton.setText(ootUri == null ? "Choose Ocarina of Time 1.1" : "Ocarina of Time 1.1: " + displayName(ootUri));
         mmButton.setText(mmUri == null ? "Choose Majora's Mask" : "Majora's Mask: " + displayName(mmUri));
-        buildButton.setEnabled(sm64Uri != null && mmUri != null);
-        if (sm64Uri != null && mmUri != null) {
+        buildButton.setEnabled(sm64Uri != null && ootUri != null && mmUri != null);
+        if (sm64Uri != null && ootUri != null && mmUri != null) {
             setStatus("Ready. Choose where to save the finished game.", false);
         }
     }
@@ -225,8 +324,11 @@ public final class MainActivity extends Activity {
     }
 
     private void startBuild(Uri outputUri) {
+        final int red = marioColor[0];
+        final int green = marioColor[1];
+        final int blue = marioColor[2];
         setBuilding(true);
-        setStatus("Reading and validating both ROMs…", false);
+        setStatus("Reading and validating all three ROMs…", false);
         builder.execute(() -> {
             File work = new File(getCacheDir(), "build-" + System.nanoTime());
             try {
@@ -234,13 +336,18 @@ public final class MainActivity extends Activity {
                     throw new IOException("Could not create temporary build storage.");
                 }
                 File sm64 = new File(work, "sm64.input");
+                File oot = new File(work, "oot.input");
                 File mm = new File(work, "mm.input");
                 File output = new File(work, "Marios-Mask.z64");
                 copyInput(sm64Uri, sm64);
+                copyInput(ootUri, oot);
                 copyInput(mmUri, mm);
 
                 runOnUiThread(() -> setStatus("Building Mario's Mask locally…", false));
-                String error = nativeBuild(sm64.getAbsolutePath(), mm.getAbsolutePath(), output.getAbsolutePath());
+                String error = nativeBuild(
+                        sm64.getAbsolutePath(), oot.getAbsolutePath(), mm.getAbsolutePath(),
+                        output.getAbsolutePath(),
+                        red, green, blue);
                 if (error == null) {
                     throw new IOException("The native builder could not return a result.");
                 }
@@ -303,8 +410,9 @@ public final class MainActivity extends Activity {
 
     private void setBuilding(boolean active) {
         sm64Button.setEnabled(!active);
+        ootButton.setEnabled(!active);
         mmButton.setEnabled(!active);
-        buildButton.setEnabled(!active && sm64Uri != null && mmUri != null);
+        buildButton.setEnabled(!active && sm64Uri != null && ootUri != null && mmUri != null);
     }
 
     private void setStatus(String message, boolean error) {

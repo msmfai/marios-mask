@@ -2,7 +2,7 @@
 
 The Android app is a thin Storage Access Framework UI over the same Rust recipe
 engine used by the desktop builder. It requests no broad storage permission and
-no network permission. Both source ROMs are copied into the app's private cache,
+no network permission. All three source ROMs are copied into the app's private cache,
 validated and combined locally, then removed after the selected output document
 has been written.
 
