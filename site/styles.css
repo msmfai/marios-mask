@@ -138,7 +138,6 @@ h1 {
 }
 
 .browser-builder,
-.download,
 .description {
   padding: clamp(32px, 6vw, 64px);
   border: 1px solid var(--line);
@@ -350,24 +349,12 @@ button.primary-button:disabled {
   border-radius: 14px;
 }
 
-.download {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 28px 36px;
-  align-items: center;
-}
-
 h2 {
   max-width: 18ch;
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2rem, 5vw, 3.7rem);
   line-height: 1;
-}
-
-.version {
-  margin: 14px 0 0;
-  color: var(--muted);
 }
 
 .primary-button {
@@ -388,36 +375,6 @@ h2 {
 .primary-button:focus-visible {
   transform: translateY(-2px);
   box-shadow: 0 16px 40px rgba(62, 142, 85, 0.4);
-}
-
-.platform-downloads {
-  display: flex;
-  grid-column: 1 / -1;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.platform-downloads a {
-  padding: 9px 12px;
-  color: var(--muted);
-  font-size: 0.9rem;
-  text-decoration: none;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-}
-
-.platform-downloads a:hover,
-.platform-downloads a:focus-visible {
-  color: var(--ink);
-  border-color: rgba(244, 201, 93, 0.6);
-}
-
-.build-note {
-  grid-column: 1 / -1;
-  max-width: 64ch;
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.65;
 }
 
 .description {
@@ -462,17 +419,12 @@ footer {
 
   .trailer-frame,
   .browser-builder,
-  .download,
   .description {
     border-radius: 16px;
   }
 
   .title-lockup {
     padding: 40px 4px 48px;
-  }
-
-  .download {
-    grid-template-columns: 1fr;
   }
 
   .builder-heading,
@@ -484,12 +436,6 @@ footer {
   .build-actions {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .primary-button,
-  .platform-downloads,
-  .build-note {
-    grid-column: 1;
   }
 
   footer {
