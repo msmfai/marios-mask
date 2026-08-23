@@ -1,4 +1,4 @@
-# MMRECP02 transparent recipe format
+# MMRECP03 transparent recipe format
 
 All integers are unsigned little-endian. Commands are applied in order and
 concatenated to form the output.
@@ -7,11 +7,11 @@ concatenated to form the output.
 
 | Offset | Size | Meaning |
 |---:|---:|---|
-| 0 | 8 | ASCII `MMRECP02` |
+| 0 | 8 | ASCII `MMRECP03` |
 | 8 | 8 | Output size |
 | 16 | 32 | SHA-256 of decompressed Majora's Mask input |
 | 48 | 32 | SHA-256 of Super Mario 64 input |
-| 80 | 32 | SHA-256 of Ocarina of Time 1.1 input |
+| 80 | 32 | SHA-256 of the validated Talon source derived from the Ocarina of Time input |
 | 112 | 32 | SHA-256 of output |
 | 144 | 4 | Command count |
 
@@ -39,7 +39,7 @@ From `patcher/`, run:
 
 ```sh
 cargo run --release --features recipe-tool --bin marios-mask-recipe -- \
-  verify <sm64.z64> <oot-1.1.z64> <decompressed-mm.z64> recipe/marios-mask.mmrecipe
+  verify <sm64.z64> <oot.z64> <decompressed-mm.z64> recipe/marios-mask.mmrecipe
 ```
 
 The report gives the transitive MM, SM64, OoT, and literal byte totals, the number of
