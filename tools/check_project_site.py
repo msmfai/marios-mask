@@ -51,8 +51,12 @@ def main(require_built_patcher: bool = False) -> int:
         "browser patcher must clearly require NTSC ROMs",
     )
     require(
-        "Ocarina of Time may be revision 1.0, 1.1, or 1.2." in html,
-        "browser patcher must list supported Ocarina of Time revisions",
+        "NTSC ROM — revision 1.0, 1.1, or 1.2" in html,
+        "Ocarina ROM input must list supported revisions",
+    )
+    require(
+        "Ocarina of Time may be revision 1.0, 1.1, or 1.2." not in html,
+        "supported Ocarina revisions belong on its ROM input, not in the blurb",
     )
     require(html.count('name="mario-colour"') == 3, "all Mario colour options must remain")
     require("build-rom" in html and "download-rom" in html, "build and download controls must remain")
