@@ -13,6 +13,7 @@ default = ["desktop"]
 desktop = ["dep:eframe", "dep:rfd"]
 android-jni = ["dep:jni"]
 recipe-tool = []
+web = ["dep:wasm-bindgen"]
 
 [dependencies]
 anyhow = "1.0"
@@ -22,6 +23,7 @@ rfd = { version = "0.15.4", default-features = false, features = ["async-std", "
 sha1 = "0.10"
 sha2 = "0.10"
 zip = { version = "2.4", default-features = false, features = ["deflate"] }
+wasm-bindgen = { version = "=0.2.121", optional = true }
 
 [target.'cfg(target_os = "android")'.dependencies]
 jni = { version = "0.21.1", optional = true }

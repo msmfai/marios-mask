@@ -1,6 +1,9 @@
 # Project splash page
 
-This directory is the undeployed GitHub Pages source for Mario's Mask.
+This directory is the GitHub Pages source for Mario's Mask. It includes a
+browser-local WebAssembly build of the same three-ROM patcher shipped in the
+desktop downloads. ROM data is read and processed only in the visitor's
+browser.
 
 ## Stable release
 
@@ -16,23 +19,17 @@ then, the page shows the configured poster with a “Trailer coming soon” labe
 The player uses YouTube's privacy-enhanced `youtube-nocookie.com` embed and is
 only created when the visitor asks to play it.
 
-## Preview locally
+## Build and preview locally
 
 From the repository root, run:
 
 ```sh
+cargo build --manifest-path patcher/Cargo.toml --target wasm32-unknown-unknown --release --no-default-features --features web
+wasm-bindgen patcher/target/wasm32-unknown-unknown/release/marios_mask_builder.wasm --target web --out-dir site/pkg --no-typescript
 python3 -m http.server --directory site 8080
 ```
 
 Then open `http://localhost:8080`.
 
-## Enable hosting later
-
-The `project-pages` workflow is deliberately inert until both of these actions
-are taken:
-
-1. In **Settings → Pages**, set the publishing source to **GitHub Actions**.
-2. Create the repository Actions variable `ENABLE_GITHUB_PAGES` with value
-   `true`, then manually run the `project-pages` workflow.
-
-Do not enable the variable until the public site is meant to go live.
+The `project-pages` workflow rebuilds the browser patcher, validates the static
+site, and deploys it whenever relevant files change on `main`.
