@@ -7,6 +7,7 @@ on:
       - .github/workflows/project-pages.yml
       - patcher/**
       - site/**
+      - tools/build_web_release.py
       - tools/check_project_site.py
   workflow_dispatch:
 
@@ -39,7 +40,9 @@ jobs:
           cargo build --manifest-path patcher/Cargo.toml --target wasm32-unknown-unknown --release --no-default-features --features web
           wasm-bindgen patcher/target/wasm32-unknown-unknown/release/marios_mask_builder.wasm --target web --out-dir site/pkg --no-typescript
       - name: Validate project site
-        run: python3 tools/check_project_site.py --require-built-patcher
+        run: |
+          python3 tools/check_project_site.py --require-built-patcher
+          python3 tools/build_web_release.py --output site/MariosMaskBuilder-web.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
