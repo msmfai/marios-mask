@@ -39,7 +39,7 @@ jobs:
           cargo build --manifest-path patcher/Cargo.toml --target wasm32-unknown-unknown --release --no-default-features --features web
           wasm-bindgen patcher/target/wasm32-unknown-unknown/release/marios_mask_builder.wasm --target web --out-dir site/pkg --no-typescript
       - name: Validate project site
-        run: python3 tools/check_project_site.py
+        run: python3 tools/check_project_site.py --require-built-patcher
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
