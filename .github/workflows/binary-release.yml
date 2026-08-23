@@ -148,9 +148,30 @@ jobs:
           path: ${{ runner.temp }}/MariosMaskBuilder-windows-x86_64.zip
           if-no-files-found: error
 
+  web-package:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install pinned WebAssembly bindings tool
+        run: cargo install wasm-bindgen-cli --version 0.2.121 --locked
+      - name: Build self-contained browser patcher
+        run: |
+          cargo test --manifest-path patcher/Cargo.toml --lib --no-default-features
+          cargo build --manifest-path patcher/Cargo.toml --target wasm32-unknown-unknown --release --no-default-features --features web
+          wasm-bindgen patcher/target/wasm32-unknown-unknown/release/marios_mask_builder.wasm --target web --out-dir site/pkg --no-typescript
+          python3 tools/build_web_release.py --output "$RUNNER_TEMP/MariosMaskBuilder-web.html"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MariosMaskBuilder-web.html
+          path: ${{ runner.temp }}/MariosMaskBuilder-web.html
+          if-no-files-found: error
+
   publish:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [android-package, posix-packages, windows-package]
+    needs: [android-package, posix-packages, windows-package, web-package]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
