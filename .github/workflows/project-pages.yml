@@ -17,6 +17,11 @@ on:
       - tools/build_web_release.py
       - tools/check_project_site.py
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag whose exact HTML asset should be deployed
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -45,3 +50,32 @@ jobs:
         run: |
           python3 tools/check_project_site.py --require-built-patcher
           python3 tools/build_web_release.py --output "$RUNNER_TEMP/MariosMaskBuilder-web.html"
+
+  deploy-release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download exact release HTML
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir pages
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern MariosMaskBuilder-web.html --dir pages
+          cp pages/MariosMaskBuilder-web.html pages/index.html
+          cmp pages/MariosMaskBuilder-web.html pages/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+      - name: Deploy exact release HTML
+        id: deployment
+        uses: actions/deploy-pages@v4
