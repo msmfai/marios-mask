@@ -1,6 +1,13 @@
 name: project-pages
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/project-pages.yml
+      - patcher/**
+      - site/**
+      - tools/build_web_release.py
+      - tools/check_project_site.py
   push:
     branches: [main]
     paths:
@@ -13,18 +20,13 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: github-pages
+  group: project-pages-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  validate:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -42,11 +44,4 @@ jobs:
       - name: Validate project site
         run: |
           python3 tools/check_project_site.py --require-built-patcher
-          python3 tools/build_web_release.py --output site/MariosMaskBuilder-web.html
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: site
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          python3 tools/build_web_release.py --output "$RUNNER_TEMP/MariosMaskBuilder-web.html"
