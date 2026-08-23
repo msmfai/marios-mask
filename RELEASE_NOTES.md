@@ -29,8 +29,10 @@ The builder asks for your own USA ROMs for *Super Mario 64*, *The Legend of Zeld
 | Mac with an Intel processor | `MariosMaskBuilder-macos-intel.zip` |
 | 64-bit Linux | `MariosMaskBuilder-linux-x86_64.tar.gz` |
 | Android 8.0 or newer, 64-bit | `MariosMaskBuilder-android.apk` |
+| Any modern desktop browser (single offline file) | `MariosMaskBuilder-web.html` |
 
-Choose the **MariosMaskBuilder** file for your platform under **Assets**, or use the browser builder.
+Choose the **MariosMaskBuilder** file for your platform under **Assets**, or use
+the browser builder at https://msmfai.github.io/marios-mask/.
 
 ## Build Mario's Mask
 
