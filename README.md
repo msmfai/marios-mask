@@ -1,5 +1,13 @@
 # Mario's Mask
 
+> [!IMPORTANT]
+> ### Compile the latest release in your browser
+> **[Open the Mario's Mask web patcher →](https://msmfai.github.io/marios-mask/)**
+>
+> This is the web version of the official patcher. Choose your legally obtained
+> ROMs and it will build the latest Mario's Mask release locally in your browser,
+> ready to download. Your ROMs are never uploaded.
+
 **Play *Majora's Mask* as Mario.**
 
 ![Mario in Termina](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/hero.png)
@@ -8,10 +16,6 @@ Mario's Mask brings Mario's movement, attacks, voice, animations, and playful
 physics from *Super Mario 64* into the world and adventure of *Majora's Mask*.
 Termina, its story, three-day cycle, quests, dungeons, and characters remain at
 the heart of the game—you explore them with a very different hero.
-
-**[Build Mario's Mask in your browser](https://msmfai.github.io/marios-mask/)**
-
-All three ROMs are processed locally in your browser. Nothing is uploaded.
 
 **[Download the standalone builder](https://github.com/msmfai/marios-mask/releases/latest)**
 
