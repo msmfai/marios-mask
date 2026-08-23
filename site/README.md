@@ -12,13 +12,6 @@ Update its version, tag, and asset names only after the corresponding GitHub
 release has all four audited builder packages. This explicit pin prevents an
 experimental prerelease from silently replacing the public download.
 
-## Trailer
-
-Set `trailerYouTubeId` in `site-config.json` to the video's YouTube ID. Until
-then, the page shows the configured poster with a “Trailer coming soon” label.
-The player uses YouTube's privacy-enhanced `youtube-nocookie.com` embed and is
-only created when the visitor asks to play it.
-
 ## Build and preview locally
 
 From the repository root, run:
