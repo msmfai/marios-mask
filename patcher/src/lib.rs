@@ -8,6 +8,9 @@ use std::path::{Path, PathBuf};
 #[cfg(all(target_os = "android", feature = "android-jni"))]
 mod android;
 
+#[cfg(feature = "web")]
+mod web;
+
 pub mod oot;
 pub mod recipe;
 
@@ -123,16 +126,45 @@ where
     );
 
     progress("Reading Super Mario 64…");
-    let sm64 = read_and_normalize(sm64_path).context("Could not read the Super Mario 64 ROM")?;
+    let sm64_input =
+        fs::read(sm64_path).with_context(|| format!("Could not read {}", sm64_path.display()))?;
+    progress("Reading Ocarina of Time…");
+    let oot_input =
+        fs::read(oot_path).with_context(|| format!("Could not read {}", oot_path.display()))?;
+    progress("Reading Majora's Mask…");
+    let mm_input =
+        fs::read(mm_path).with_context(|| format!("Could not read {}", mm_path.display()))?;
+
+    let output =
+        build_from_rom_bytes_with_options(sm64_input, oot_input, mm_input, options, &mut progress)?;
+
+    progress("Writing Mario's Mask…");
+    write_atomic(output_path, &output)?;
+    progress("Done!");
+    Ok(())
+}
+
+pub fn build_from_rom_bytes_with_options<F>(
+    sm64_input: Vec<u8>,
+    oot_input: Vec<u8>,
+    mm_input: Vec<u8>,
+    options: BuildOptions,
+    mut progress: F,
+) -> Result<Vec<u8>>
+where
+    F: FnMut(&str),
+{
+    progress("Checking Super Mario 64…");
+    let sm64 = normalize_rom_input(sm64_input).context("Could not read the Super Mario 64 ROM")?;
     ensure_sha1(&sm64, SM64_SHA1, "Super Mario 64 US")?;
 
-    progress("Reading Ocarina of Time…");
-    let oot = read_and_normalize(oot_path).context("Could not read the Ocarina of Time ROM")?;
+    progress("Checking Ocarina of Time…");
+    let oot = normalize_rom_input(oot_input).context("Could not read the Ocarina of Time ROM")?;
     let oot_source = oot::stone_talon_source(&oot)
         .context("Ocarina of Time must be the NTSC 1.1 US revision")?;
 
-    progress("Reading Majora's Mask…");
-    let mm_input = read_and_normalize(mm_path).context("Could not read the Majora's Mask ROM")?;
+    progress("Checking Majora's Mask…");
+    let mm_input = normalize_rom_input(mm_input).context("Could not read the Majora's Mask ROM")?;
     let mm_hash = sha1_hex(&mm_input);
     let mm = if mm_hash == MM_DECOMPRESSED_SHA1 {
         mm_input
@@ -151,11 +183,7 @@ where
 
     progress("Applying Mario colour…");
     apply_mario_color(&mut output, options.mario_color)?;
-
-    progress("Writing Mario's Mask…");
-    write_atomic(output_path, &output)?;
-    progress("Done!");
-    Ok(())
+    Ok(output)
 }
 
 fn apply_mario_color(output: &mut [u8], color: [u8; 3]) -> Result<()> {
@@ -208,12 +236,10 @@ fn write_atomic(path: &Path, data: &[u8]) -> Result<()> {
     result
 }
 
-fn read_and_normalize(path: &Path) -> Result<Vec<u8>> {
-    let data = fs::read(path).with_context(|| format!("Could not read {}", path.display()))?;
+fn normalize_rom_input(data: Vec<u8>) -> Result<Vec<u8>> {
     ensure!(
         data.len() <= MAX_INPUT_SIZE,
-        "{} is too large to be a ROM",
-        path.display()
+        "Input is too large to be a ROM"
     );
     let unpacked = if data.starts_with(b"PK\x03\x04") {
         read_zip(&data)?

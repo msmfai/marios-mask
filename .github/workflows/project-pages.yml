@@ -1,6 +1,13 @@
 name: project-pages
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/project-pages.yml
+      - patcher/**
+      - site/**
+      - tools/check_project_site.py
   workflow_dispatch:
 
 permissions:
@@ -14,14 +21,24 @@ concurrency:
 
 jobs:
   deploy:
-    if: vars.ENABLE_GITHUB_PAGES == 'true'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Validate splash-page configuration
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install pinned WebAssembly bindings tool
+        run: cargo install wasm-bindgen-cli --version 0.2.121 --locked
+      - name: Test patcher core
+        run: cargo test --manifest-path patcher/Cargo.toml --lib --no-default-features
+      - name: Build browser patcher
+        run: |
+          cargo build --manifest-path patcher/Cargo.toml --target wasm32-unknown-unknown --release --no-default-features --features web
+          wasm-bindgen patcher/target/wasm32-unknown-unknown/release/marios_mask_builder.wasm --target web --out-dir site/pkg --no-typescript
+      - name: Validate project site
         run: python3 tools/check_project_site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
