@@ -1,11 +1,14 @@
-# Mario's Mask Alpha 0.11.3
+# Mario's Mask Alpha 0.11.4
 
-Alpha 0.11.3 corrects the Brother's Mask artwork.
+Alpha 0.11.4 improves Mario's world interactions and fixes soundtrack switching.
 
 ## Changes
 
-- Fixed the Brother's Mask portrait mapping so Mario's cap logo is no longer stretched and his face texture no longer bleeds onto the cap visor.
-- Fixed the mask's rear wood texture bleeding onto front-facing edges.
+- Mario's ground pound now also triggers beneficial interactions that normally require Goron Link's ground pound, including flipping Snappers.
+- Fixed Mario music routing so special Mario cues no longer borrow unrelated Majora's Mask sequence identities.
+- Fixed music sometimes going silent instead of restarting after changing the music or sound-font setting.
+- Fixed the wrong theme playing after defeating the King of Ikana with Mario music and instruments enabled.
+- Added a browser builder at https://msmfai.github.io/marios-mask/ so the three required ROMs can be patched locally without installing an app.
 
 ## Builder requirements
 
@@ -27,17 +30,14 @@ The builder asks for your own USA ROMs for *Super Mario 64*, *The Legend of Zeld
 | 64-bit Linux | `MariosMaskBuilder-linux-x86_64.tar.gz` |
 | Android 8.0 or newer, 64-bit | `MariosMaskBuilder-android.apk` |
 
-Choose the **MariosMaskBuilder** file for your platform under **Assets**.
+Choose the **MariosMaskBuilder** file for your platform under **Assets**, or use the browser builder.
 
 ## Build Mario's Mask
 
-1. Extract the download and open **MariosMaskBuilder**.
+1. Open the browser builder, or extract and open **MariosMaskBuilder**.
 2. Choose your own USA Nintendo 64 ROMs for *Super Mario 64*, *Ocarina of Time* (NTSC 1.1), and *Majora's Mask*.
 3. Choose Mario's outfit colour and where to save the new game.
 4. Click **Build Mario's Mask**.
 5. Open `Marios-Mask.z64` in an N64 emulator or flash cart.
 
-The builder combines your three game files locally on your computer.
-On Android, install the APK, choose the ROMs through Android's document picker,
-and save the finished ROM directly to your device. The app requests no network
-or broad storage permission.
+Both builders combine the three game files locally on your device. On Android, install the APK, choose the ROMs through Android's document picker, and save the finished ROM directly to your device. The app requests no network or broad storage permission.
