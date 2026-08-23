@@ -1,6 +1,6 @@
 # Current recipe report
 
-This recipe was generated from the Mario's Mask Alpha 0.11.4 release candidate.
+This recipe was generated from the Mario's Mask Alpha 0.11.5 release candidate.
 
 | Class | Output bytes |
 |---|---:|

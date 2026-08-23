@@ -23,7 +23,7 @@ fn run_cli_or_gui() -> Result<()> {
         || (arguments.len() == 8 && arguments[6] != "--mario-color")
     {
         bail!(
-            "usage: {} [--build <sm64-rom> <oot-1.1-rom> <mm-rom> <output.z64> [--mario-color RRGGBB]]",
+            "usage: {} [--build <sm64-rom> <oot-rom> <mm-rom> <output.z64> [--mario-color RRGGBB]]",
             arguments[0]
         );
     }
@@ -243,9 +243,12 @@ impl eframe::App for BuilderApp {
                 Self::choose_rom(value, "Choose Super Mario 64 (USA)")
             });
             ui.add_space(5.0);
-            Self::path_row(ui, "Ocarina of Time 1.1", &mut self.oot, |value| {
-                Self::choose_rom(value, "Choose Ocarina of Time (USA) 1.1")
-            });
+            Self::path_row(
+                ui,
+                "Ocarina of Time (any version)",
+                &mut self.oot,
+                |value| Self::choose_rom(value, "Choose Ocarina of Time"),
+            );
             ui.add_space(5.0);
             Self::path_row(ui, "Majora's Mask", &mut self.mm, |value| {
                 Self::choose_rom(value, "Choose Majora's Mask (USA)")
