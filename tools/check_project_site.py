@@ -26,9 +26,7 @@ def require(condition: bool, message: str) -> None:
 
 def main() -> int:
     stable = json.loads((SITE / "stable.json").read_text(encoding="utf-8"))
-    config = json.loads((SITE / "site-config.json").read_text(encoding="utf-8"))
     html = (SITE / "index.html").read_text(encoding="utf-8")
-    script = (SITE / "app.js").read_text(encoding="utf-8")
     patcher_script = (SITE / "patcher.js").read_text(encoding="utf-8")
     worker_script = (SITE / "patcher-worker.js").read_text(encoding="utf-8")
 
@@ -36,12 +34,17 @@ def main() -> int:
     require(re.fullmatch(r"\d+\.\d+\.\d+", stable["version"]) is not None, "invalid stable version")
     require(stable["tag"] == f"v{stable['version']}", "stable version and tag disagree")
     require(stable["assets"] == EXPECTED_ASSETS, "stable asset names disagree with release workflow")
-    require("Make your Mario's Mask ROM" in html, "missing browser patcher heading")
+    require("<h1>Mario's Mask</h1>" in html, "missing project title")
+    require(html.count('class="hero-image"') == 1, "site must contain exactly one hero image")
+    require("Termina, with Mario's movement" not in html, "marketing copy must not appear")
+    require('class="description"' not in html, "description section must not appear")
+    require("<footer" not in html, "footer must not appear")
+    require("app.js" not in html, "marketing-page script must not be loaded")
     require("primary-download" not in html, "site must not link to downloadable builders")
     require("data-platform" not in html, "site must not offer platform builder downloads")
-    require("configureDownloads" not in script, "site must not configure builder downloads")
     require(html.count('type="file"') == 3, "browser patcher must request exactly three ROMs")
-    require("never leave this device" in html, "missing local-processing privacy notice")
+    require(html.count('name="mario-colour"') == 3, "all Mario colour options must remain")
+    require("build-rom" in html and "download-rom" in html, "build and download controls must remain")
     require("Content-Security-Policy" in html, "missing content security policy")
     require("script-src 'self'" in html, "scripts must be restricted to this site")
     require("connect-src 'self'" in html, "network connections must be restricted to this site")
@@ -54,10 +57,7 @@ def main() -> int:
     require('./pkg/marios_mask_builder.js' in worker_script, "worker must load the local WASM patcher")
     require((SITE / "pkg" / "marios_mask_builder.js").is_file(), "generated WASM loader is missing")
     require((SITE / "pkg" / "marios_mask_builder_bg.wasm").is_file(), "generated WASM binary is missing")
-    require("youtube-nocookie.com" in script, "trailer must use privacy-enhanced YouTube")
-    require(isinstance(config["trailerYouTubeId"], str), "trailer ID must be a string")
-
-    print(f"project site: PASS (stable v{stable['version']}, local browser patcher, Pages-ready)")
+    print(f"project site: PASS (stable v{stable['version']}, minimal local patcher, Pages-ready)")
     return 0
 
 
