@@ -36,7 +36,7 @@ FORBIDDEN_ROOTS = {
     "state", "test", "toolchain",
 }
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
-EXPECTED_RECIPE_SHA256 = "92569b6c500cab0f928a7bfe2c8477bc3005de12924bfa2581da29d86dcba44b"
+EXPECTED_RECIPE_SHA256 = "521ed166d9e3a65e39dbe0fc17e6b64038a0c2418f3e2251364f6ff50362c09c"
 REVIEWED_MEDIA_SHA256 = {
     "assets/juno-logo.png":
         "771286cb1173c678d0d6cbaac45653e66d732c92cbc66bb977c8850c6b1e2c95",
@@ -92,6 +92,7 @@ N64_MAGICS = {
 RECIPE_LAYOUTS = {
     b"MMRECP01": (116, 112, {0, 1, 3}),
     b"MMRECP02": (148, 144, {0, 1, 3, 4}),
+    b"MMRECP03": (148, 144, {0, 1, 3, 4}),
 }
 MAX_RECIPE_BYTES = 8 * 1024 * 1024
 MAX_OUTPUT_BYTES = 128 * 1024 * 1024

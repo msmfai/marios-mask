@@ -1,18 +1,15 @@
-# Mario's Mask Alpha 0.11.4
+# Mario's Mask Alpha 0.11.5
 
-Alpha 0.11.4 improves Mario's world interactions and fixes soundtrack switching.
+Alpha 0.11.5 makes the builder much easier to use with Ocarina of Time ROMs.
 
 ## Changes
 
-- Mario's ground pound now also triggers beneficial interactions that normally require Goron Link's ground pound, including flipping Snappers.
-- Fixed Mario music routing so special Mario cues no longer borrow unrelated Majora's Mask sequence identities.
-- Fixed music sometimes going silent instead of restarting after changing the music or sound-font setting.
-- Fixed the wrong theme playing after defeating the King of Ikana with Mario music and instruments enabled.
-- Added a browser builder at https://msmfai.github.io/marios-mask/ so the three required ROMs can be patched locally without installing an app.
+- The builder now accepts compatible retail versions of *Ocarina of Time* instead of requiring the hard-to-find USA 1.1 revision.
+- Ocarina of Time is still used only to derive the required Talon asset locally; no copyrighted game asset is distributed with the patcher.
 
 ## Builder requirements
 
-The builder asks for your own USA ROMs for *Super Mario 64*, *The Legend of Zelda: Ocarina of Time* (NTSC 1.1), and *The Legend of Zelda: Majora's Mask*. The Ocarina of Time input supplies its required assets locally; no copyrighted game asset is distributed with the patcher.
+The builder asks for your own USA ROMs for *Super Mario 64* and *The Legend of Zelda: Majora's Mask*, plus a compatible retail version of *The Legend of Zelda: Ocarina of Time*.
 
 ## Known issues
 
@@ -37,7 +34,7 @@ the browser builder at https://msmfai.github.io/marios-mask/.
 ## Build Mario's Mask
 
 1. Open the browser builder, or extract and open **MariosMaskBuilder**.
-2. Choose your own USA Nintendo 64 ROMs for *Super Mario 64*, *Ocarina of Time* (NTSC 1.1), and *Majora's Mask*.
+2. Choose your own USA Nintendo 64 ROMs for *Super Mario 64* and *Majora's Mask*, plus any compatible retail version of *Ocarina of Time*.
 3. Choose Mario's outfit colour and where to save the new game.
 4. Click **Build Mario's Mask**.
 5. Open `Marios-Mask.z64` in an N64 emulator or flash cart.

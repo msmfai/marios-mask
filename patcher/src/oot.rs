@@ -1,7 +1,8 @@
 use anyhow::{ensure, Context, Result};
 
 const DMADATA_START: usize = 0x7430;
-const OBJECT_TA_DMA_INDEX: usize = 616;
+const MAX_DMA_ENTRIES: usize = 2048;
+const MAX_OBJECT_SIZE: usize = 2 * 1024 * 1024;
 const TALON_PREFIX_SIZE: usize = 0xB7D0;
 const TALON_SKELETON_OFFSET: usize = 0xB7B8;
 const TALON_LIMB_TABLE_OFFSET: usize = 0xB778;
@@ -19,35 +20,66 @@ const RGBA16_RANGES: &[(usize, usize)] = &[
 ];
 
 pub fn stone_talon_source(rom: &[u8]) -> Result<Vec<u8>> {
-    let entry = DMADATA_START + OBJECT_TA_DMA_INDEX * 16;
-    let vrom_start = be32(rom, entry)? as usize;
-    let vrom_end = be32(rom, entry + 4)? as usize;
-    let rom_start = be32(rom, entry + 8)? as usize;
-    let rom_end = be32(rom, entry + 12)? as usize;
-    ensure!(
-        vrom_end >= vrom_start,
-        "OoT object_ta DMA entry is reversed"
-    );
+    let mut match_source = None;
+    let mut table_started = false;
+    for index in 0..MAX_DMA_ENTRIES {
+        let entry = DMADATA_START + index * 16;
+        if entry + 16 > rom.len() {
+            break;
+        }
+        let empty = rom[entry..entry + 16].iter().all(|byte| *byte == 0);
+        if empty {
+            if table_started {
+                break;
+            }
+            continue;
+        }
+        table_started = true;
+        if let Some(source) = talon_source_from_dma_entry(rom, entry) {
+            ensure!(
+                match_source.is_none(),
+                "OoT contains more than one Talon object"
+            );
+            match_source = Some(source);
+        }
+    }
+    match_source.context("could not find a compatible Talon object in this Ocarina of Time ROM")
+}
+
+fn talon_source_from_dma_entry(rom: &[u8], entry: usize) -> Option<Vec<u8>> {
+    let vrom_start = be32(rom, entry).ok()? as usize;
+    let vrom_end = be32(rom, entry + 4).ok()? as usize;
+    let rom_start = be32(rom, entry + 8).ok()? as usize;
+    let rom_end = be32(rom, entry + 12).ok()? as usize;
+    if vrom_start == 0 && vrom_end == 0 && rom_start == 0 && rom_end == 0 {
+        return None;
+    }
+    if vrom_end < vrom_start {
+        return None;
+    }
     let expected = vrom_end - vrom_start;
-    ensure!(expected >= TALON_PREFIX_SIZE, "OoT object_ta is truncated");
+    if !(TALON_PREFIX_SIZE..=MAX_OBJECT_SIZE).contains(&expected) {
+        return None;
+    }
     let object = if rom_end == 0 {
-        rom.get(rom_start..rom_start + expected)
-            .context("OoT object_ta exceeds the ROM")?
+        rom.get(rom_start..rom_start.checked_add(expected)?)?
             .to_vec()
     } else {
-        ensure!(rom_end >= rom_start, "OoT object_ta ROM range is reversed");
-        let compressed = rom
-            .get(rom_start..rom_end)
-            .context("compressed OoT object_ta exceeds the ROM")?;
-        decompress_yaz0(compressed, expected)?
+        if rom_end < rom_start {
+            return None;
+        }
+        let compressed = rom.get(rom_start..rom_end)?;
+        if compressed.get(..4) != Some(b"Yaz0") {
+            return None;
+        }
+        decompress_yaz0(compressed, expected).ok()?
     };
-    validate_talon(&object)?;
+    validate_talon(&object).ok()?;
     let mut output = object[..TALON_PREFIX_SIZE].to_vec();
     for &(offset, length) in RGBA16_RANGES {
-        ensure!(
-            offset + length <= output.len() && length % 2 == 0,
-            "invalid Talon texture range"
-        );
+        if offset + length > output.len() || length % 2 != 0 {
+            return None;
+        }
         for cursor in (offset..offset + length).step_by(2) {
             let value = u16::from_be_bytes([output[cursor], output[cursor + 1]]);
             let red = (value >> 11) & 0x1F;
@@ -59,7 +91,7 @@ pub fn stone_talon_source(rom: &[u8]) -> Result<Vec<u8>> {
                 .copy_from_slice(&((gray << 11) | (gray << 6) | (gray << 1) | alpha).to_be_bytes());
         }
     }
-    Ok(output)
+    Some(output)
 }
 
 fn validate_talon(data: &[u8]) -> Result<()> {
@@ -166,7 +198,9 @@ mod tests {
     fn derives_and_grayscales_talon_from_the_oot_dma_entry() {
         let object_offset = 0x10000usize;
         let mut rom = vec![0u8; object_offset + TALON_PREFIX_SIZE];
-        let entry = DMADATA_START + OBJECT_TA_DMA_INDEX * 16;
+        // Deliberately use an arbitrary slot: retail revisions do not need to
+        // keep object_ta at one hard-coded DMA index.
+        let entry = DMADATA_START + 37 * 16;
         rom[entry..entry + 4].copy_from_slice(&0x0200_0000u32.to_be_bytes());
         rom[entry + 4..entry + 8]
             .copy_from_slice(&(0x0200_0000u32 + TALON_PREFIX_SIZE as u32).to_be_bytes());

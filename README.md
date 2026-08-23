@@ -129,8 +129,9 @@ trying long quest sequences as Mario.
 
 ## Build your game
 
-Bring your own USA Nintendo 64 versions of *Super Mario 64*, *Ocarina of Time*
-1.1, and *Majora's Mask*. The builder combines them locally on your computer.
+Bring your own USA Nintendo 64 versions of *Super Mario 64* and *Majora's Mask*,
+plus any compatible retail version of *Ocarina of Time*. The builder combines
+them locally on your computer.
 
 The simplest option is the **[browser builder](https://msmfai.github.io/marios-mask/)**.
 Choose your three ROMs, select your options, then build and download the patched

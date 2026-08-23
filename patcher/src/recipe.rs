@@ -2,7 +2,7 @@ use anyhow::{bail, ensure, Context, Result};
 use sha2::{Digest, Sha256};
 use std::fmt::Write as _;
 
-pub const MAGIC: &[u8; 8] = b"MMRECP02";
+pub const MAGIC: &[u8; 8] = b"MMRECP03";
 const HEADER_SIZE: usize = 8 + 8 + 32 + 32 + 32 + 32 + 4;
 const COPY_MM: u8 = 0;
 const COPY_SM64: u8 = 1;
@@ -79,11 +79,11 @@ pub fn apply(
     recipe: &[u8],
     mm: &[u8],
     sm64: &[u8],
-    oot: &[u8],
+    _oot: &[u8],
     oot_source: &[u8],
 ) -> Result<(Vec<u8>, RecipeStats)> {
     let header = Header::parse(recipe)?;
-    header.validate_inputs(mm, sm64, oot)?;
+    header.validate_inputs(mm, sm64, oot_source)?;
     let mut cursor = HEADER_SIZE;
     let mut output = Vec::with_capacity(header.output_size);
     let mut origins = Vec::with_capacity(header.output_size);
@@ -236,7 +236,7 @@ impl Command {
 pub fn encode(
     mm: &[u8],
     sm64: &[u8],
-    oot: &[u8],
+    oot_source: &[u8],
     output: &[u8],
     commands: &[Command],
 ) -> Result<Vec<u8>> {
@@ -267,7 +267,7 @@ pub fn encode(
     recipe.extend_from_slice(&(output.len() as u64).to_le_bytes());
     recipe.extend_from_slice(&Sha256::digest(mm));
     recipe.extend_from_slice(&Sha256::digest(sm64));
-    recipe.extend_from_slice(&Sha256::digest(oot));
+    recipe.extend_from_slice(&Sha256::digest(oot_source));
     recipe.extend_from_slice(&Sha256::digest(output));
     recipe.extend_from_slice(&(commands.len() as u32).to_le_bytes());
 
@@ -311,7 +311,7 @@ struct Header {
     output_size: usize,
     mm_sha256: [u8; 32],
     sm64_sha256: [u8; 32],
-    oot_sha256: [u8; 32],
+    oot_source_sha256: [u8; 32],
     output_sha256: [u8; 32],
     command_count: usize,
 }
@@ -334,13 +334,13 @@ impl Header {
             output_size,
             mm_sha256: recipe[16..48].try_into().unwrap(),
             sm64_sha256: recipe[48..80].try_into().unwrap(),
-            oot_sha256: recipe[80..112].try_into().unwrap(),
+            oot_source_sha256: recipe[80..112].try_into().unwrap(),
             output_sha256: recipe[112..144].try_into().unwrap(),
             command_count,
         })
     }
 
-    fn validate_inputs(&self, mm: &[u8], sm64: &[u8], oot: &[u8]) -> Result<()> {
+    fn validate_inputs(&self, mm: &[u8], sm64: &[u8], oot_source: &[u8]) -> Result<()> {
         ensure!(
             Sha256::digest(mm).as_slice() == self.mm_sha256,
             "Majora's Mask SHA-256 does not match the recipe"
@@ -350,8 +350,8 @@ impl Header {
             "Super Mario 64 SHA-256 does not match the recipe"
         );
         ensure!(
-            Sha256::digest(oot).as_slice() == self.oot_sha256,
-            "Ocarina of Time SHA-256 does not match the recipe"
+            Sha256::digest(oot_source).as_slice() == self.oot_source_sha256,
+            "Ocarina of Time Talon asset SHA-256 does not match the recipe"
         );
         Ok(())
     }
@@ -383,6 +383,7 @@ mod tests {
         let mm = b"abcdefgh";
         let sm64 = b"01234567";
         let oot = b"oot-rom";
+        let oot_source = b"talon-source";
         let output = b"abc123!gh";
         let commands = vec![
             Command::CopyMm {
@@ -399,8 +400,8 @@ mod tests {
                 length: 2,
             },
         ];
-        let encoded = encode(mm, sm64, oot, output, &commands).unwrap();
-        let (actual, stats) = apply(&encoded, mm, sm64, oot, b"").unwrap();
+        let encoded = encode(mm, sm64, oot_source, output, &commands).unwrap();
+        let (actual, stats) = apply(&encoded, mm, sm64, oot, oot_source).unwrap();
         assert_eq!(actual, output);
         assert_eq!(stats.mm_bytes, 5);
         assert_eq!(stats.sm64_bytes, 3);
@@ -414,6 +415,7 @@ mod tests {
         let mm = b"abcdefgh";
         let sm64 = b"01234567";
         let oot = b"oot-rom";
+        let oot_source = b"talon-source";
         let output = b"ab!ab!ab!";
         let commands = vec![
             Command::CopyMm {
@@ -426,8 +428,8 @@ mod tests {
                 length: 6,
             },
         ];
-        let encoded = encode(mm, sm64, oot, output, &commands).unwrap();
-        let (actual, stats) = apply(&encoded, mm, sm64, oot, b"").unwrap();
+        let encoded = encode(mm, sm64, oot_source, output, &commands).unwrap();
+        let (actual, stats) = apply(&encoded, mm, sm64, oot, oot_source).unwrap();
         assert_eq!(actual, output);
         assert_eq!(stats.mm_bytes, 6);
         assert_eq!(stats.literal_origin_bytes, 3);
@@ -440,11 +442,12 @@ mod tests {
         let mm = b"abcdefgh";
         let sm64 = b"01234567";
         let oot = b"oot-rom";
+        let oot_source = b"talon-source";
         let output = b"abc";
         let mut encoded = encode(
             mm,
             sm64,
-            oot,
+            oot_source,
             output,
             &[Command::CopyMm {
                 offset: 0,
@@ -453,9 +456,30 @@ mod tests {
         )
         .unwrap();
         encoded.push(0);
-        assert!(apply(&encoded, mm, sm64, oot, b"")
+        assert!(apply(&encoded, mm, sm64, oot, oot_source)
             .unwrap_err()
             .to_string()
             .contains("trailing"));
+    }
+
+    #[test]
+    fn recipe_accepts_a_different_oot_rom_with_the_same_derived_asset() {
+        let mm = b"abcdefgh";
+        let sm64 = b"01234567";
+        let oot_source = b"same-talon-source";
+        let output = b"abc";
+        let encoded = encode(
+            mm,
+            sm64,
+            oot_source,
+            output,
+            &[Command::CopyMm {
+                offset: 0,
+                length: 3,
+            }],
+        )
+        .unwrap();
+        assert!(apply(&encoded, mm, sm64, b"oot-revision-1.0", oot_source).is_ok());
+        assert!(apply(&encoded, mm, sm64, b"oot-revision-1.2", oot_source).is_ok());
     }
 }
