@@ -9,7 +9,11 @@ physics from *Super Mario 64* into the world and adventure of *Majora's Mask*.
 Termina, its story, three-day cycle, quests, dungeons, and characters remain at
 the heart of the game—you explore them with a very different hero.
 
-**[Download Mario's Mask](https://github.com/msmfai/marios-mask/releases/latest)**
+**[Build Mario's Mask in your browser](https://msmfai.github.io/marios-mask/)**
+
+All three ROMs are processed locally in your browser. Nothing is uploaded.
+
+**[Download the standalone builder](https://github.com/msmfai/marios-mask/releases/latest)**
 
 > **Early alpha:** back up your saves and expect some rough edges.
 
@@ -123,6 +127,12 @@ trying long quest sequences as Mario.
 
 Bring your own USA Nintendo 64 versions of *Super Mario 64*, *Ocarina of Time*
 1.1, and *Majora's Mask*. The builder combines them locally on your computer.
+
+The simplest option is the **[browser builder](https://msmfai.github.io/marios-mask/)**.
+Choose your three ROMs, select your options, then build and download the patched
+ROM. The files never leave your device.
+
+Alternatively, use the standalone builder:
 
 1. [Open the latest release](https://github.com/msmfai/marios-mask/releases/latest).
 2. Under **Assets**, download **MariosMaskBuilder** for Windows, macOS, Linux,
