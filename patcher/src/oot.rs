@@ -1,6 +1,14 @@
 use anyhow::{ensure, Context, Result};
 
-const DMADATA_START: usize = 0x7430;
+// Retail N64 revisions move dmadata when the boot segment changes. Try the
+// documented locations first, then retain a structural fallback for compatible
+// layouts that we have not enumerated here.
+const KNOWN_DMADATA_STARTS: &[usize] = &[
+    0x7430, // NTSC 1.0 and NTSC 1.1
+    0x7950, // PAL 1.0 and PAL 1.1
+    0x7960, // NTSC 1.2
+];
+const DMADATA_FALLBACK_END: usize = 0x40000;
 const MAX_DMA_ENTRIES: usize = 2048;
 const MAX_OBJECT_SIZE: usize = 2 * 1024 * 1024;
 const TALON_PREFIX_SIZE: usize = 0xB7D0;
@@ -21,29 +29,78 @@ const RGBA16_RANGES: &[(usize, usize)] = &[
 
 pub fn stone_talon_source(rom: &[u8]) -> Result<Vec<u8>> {
     let mut match_source = None;
-    let mut table_started = false;
-    for index in 0..MAX_DMA_ENTRIES {
-        let entry = DMADATA_START + index * 16;
-        if entry + 16 > rom.len() {
-            break;
-        }
-        let empty = rom[entry..entry + 16].iter().all(|byte| *byte == 0);
-        if empty {
-            if table_started {
+    let starts = dmadata_starts(rom);
+    ensure!(
+        !starts.is_empty(),
+        "could not locate a structurally valid Ocarina of Time DMA table"
+    );
+    for dmadata_start in starts {
+        for index in 0..MAX_DMA_ENTRIES {
+            let entry = dmadata_start + index * 16;
+            if entry + 16 > rom.len() {
                 break;
             }
-            continue;
-        }
-        table_started = true;
-        if let Some(source) = talon_source_from_dma_entry(rom, entry) {
-            ensure!(
-                match_source.is_none(),
-                "OoT contains more than one Talon object"
-            );
-            match_source = Some(source);
+            if rom[entry..entry + 16].iter().all(|byte| *byte == 0) {
+                break;
+            }
+            if let Some(source) = talon_source_from_dma_entry(rom, entry) {
+                ensure!(
+                    match_source.is_none(),
+                    "OoT contains more than one Talon object"
+                );
+                match_source = Some(source);
+            }
         }
     }
     match_source.context("could not find a compatible Talon object in this Ocarina of Time ROM")
+}
+
+fn dmadata_starts(rom: &[u8]) -> Vec<usize> {
+    let mut starts = Vec::new();
+    for &start in KNOWN_DMADATA_STARTS {
+        if is_dmadata_start(rom, start) {
+            starts.push(start);
+        }
+    }
+
+    // A retail dmadata table describes the ROM header, boot segment, and
+    // itself in its first three entries. In other words, a candidate table
+    // carries its own address twice and joins exactly onto the standard N64
+    // header/boot boundary. That signature is much stronger than treating
+    // arbitrary non-zero boot data as a table. Scan only the small boot/file-
+    // table region and only at the format's 16-byte alignment.
+    let end = rom.len().min(DMADATA_FALLBACK_END);
+    if end >= 48 {
+        for start in (0..=end - 48).step_by(16) {
+            if !starts.contains(&start) && is_dmadata_start(rom, start) {
+                starts.push(start);
+            }
+        }
+    }
+    starts
+}
+
+fn is_dmadata_start(rom: &[u8], start: usize) -> bool {
+    let Some(entries) = rom.get(start..start.saturating_add(48)) else {
+        return false;
+    };
+    let words = |entry: usize| -> Option<[u32; 4]> {
+        let offset = entry * 16;
+        Some([
+            be32(entries, offset).ok()?,
+            be32(entries, offset + 4).ok()?,
+            be32(entries, offset + 8).ok()?,
+            be32(entries, offset + 12).ok()?,
+        ])
+    };
+    words(0) == Some([0, 0x1060, 0, 0])
+        && words(1) == Some([0x1060, start as u32, 0x1060, 0])
+        && words(2).is_some_and(|entry| {
+            entry[0] == start as u32
+                && entry[1] > entry[0]
+                && entry[2] == start as u32
+                && entry[3] == 0
+        })
 }
 
 fn talon_source_from_dma_entry(rom: &[u8], entry: usize) -> Option<Vec<u8>> {
@@ -194,13 +251,32 @@ fn be32(data: &[u8], offset: usize) -> Result<u32> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn derives_and_grayscales_talon_from_the_oot_dma_entry() {
+    fn synthetic_rom(dmadata_start: usize, object_entry: usize) -> Vec<u8> {
         let object_offset = 0x10000usize;
         let mut rom = vec![0u8; object_offset + TALON_PREFIX_SIZE];
-        // Deliberately use an arbitrary slot: retail revisions do not need to
-        // keep object_ta at one hard-coded DMA index.
-        let entry = DMADATA_START + 37 * 16;
+        rom[dmadata_start..dmadata_start + 16]
+            .copy_from_slice(&[0, 0, 0, 0, 0, 0, 0x10, 0x60, 0, 0, 0, 0, 0, 0, 0, 0]);
+        let boot = dmadata_start + 16;
+        rom[boot..boot + 4].copy_from_slice(&0x1060u32.to_be_bytes());
+        rom[boot + 4..boot + 8].copy_from_slice(&(dmadata_start as u32).to_be_bytes());
+        rom[boot + 8..boot + 12].copy_from_slice(&0x1060u32.to_be_bytes());
+        let table = dmadata_start + 32;
+        rom[table..table + 4].copy_from_slice(&(dmadata_start as u32).to_be_bytes());
+        rom[table + 4..table + 8].copy_from_slice(&(dmadata_start as u32 + 0x1000).to_be_bytes());
+        rom[table + 8..table + 12].copy_from_slice(&(dmadata_start as u32).to_be_bytes());
+
+        // Real DMA tables are contiguous until their terminator. Populate
+        // harmless short entries so the Talon object can exercise an arbitrary
+        // table slot without making the synthetic table malformed.
+        for index in 3..object_entry {
+            let entry = dmadata_start + index * 16;
+            let vrom_start = 0x0100_0000u32 + index as u32 * 0x1000;
+            rom[entry..entry + 4].copy_from_slice(&vrom_start.to_be_bytes());
+            rom[entry + 4..entry + 8].copy_from_slice(&(vrom_start + 0x1000).to_be_bytes());
+            rom[entry + 8..entry + 12].copy_from_slice(&0x2000u32.to_be_bytes());
+        }
+
+        let entry = dmadata_start + object_entry * 16;
         rom[entry..entry + 4].copy_from_slice(&0x0200_0000u32.to_be_bytes());
         rom[entry + 4..entry + 8]
             .copy_from_slice(&(0x0200_0000u32 + TALON_PREFIX_SIZE as u32).to_be_bytes());
@@ -218,7 +294,11 @@ mod tests {
         let pixel = object_offset + RGBA16_RANGES[0].0;
         rom[pixel..pixel + 2].copy_from_slice(&0xF801u16.to_be_bytes());
 
-        let source = stone_talon_source(&rom).unwrap();
+        rom
+    }
+
+    fn assert_extracts_talon(rom: &[u8]) {
+        let source = stone_talon_source(rom).unwrap();
         assert_eq!(source.len(), TALON_PREFIX_SIZE);
         assert_eq!(
             u16::from_be_bytes(
@@ -228,5 +308,32 @@ mod tests {
             ),
             0x4A53
         );
+    }
+
+    #[test]
+    fn derives_talon_from_each_known_ntsc_dmadata_location() {
+        for start in [0x7430, 0x7960] {
+            assert_extracts_talon(&synthetic_rom(start, 37));
+        }
+    }
+
+    #[test]
+    fn later_revision_boot_data_cannot_end_the_scan_before_dmadata() {
+        let mut rom = synthetic_rom(0x7960, 37);
+        rom[0x7430..0x7440].fill(0xA5);
+        rom[0x7440..0x7450].fill(0);
+        assert_extracts_talon(&rom);
+    }
+
+    #[test]
+    fn structurally_finds_an_unlisted_dmadata_location() {
+        assert_extracts_talon(&synthetic_rom(0x9AB0, 37));
+    }
+
+    #[test]
+    fn rejects_an_unstructured_early_rom_region() {
+        let mut rom = synthetic_rom(0x7960, 37);
+        rom[0x7430..0x7440].fill(0xA5);
+        assert!(!is_dmadata_start(&rom, 0x7430));
     }
 }
