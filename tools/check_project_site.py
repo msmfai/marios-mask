@@ -17,6 +17,7 @@ EXPECTED_ASSETS = {
     "macIntel": "MariosMaskBuilder-macos-intel.zip",
     "linux": "MariosMaskBuilder-linux-x86_64.tar.gz",
     "android": "MariosMaskBuilder-android.apk",
+    "web": "MariosMaskBuilder-web.html",
 }
 
 

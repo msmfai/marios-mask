@@ -144,6 +144,9 @@ Alternatively, use the standalone builder:
 
 Raw `.z64`, `.v64`, and `.n64` files work, as do `.zip` and `.gz` archives.
 
+For an offline copy of the browser interface, download
+`MariosMaskBuilder-web.html` from the latest release and open it directly.
+
 Having trouble opening the builder?
 
 - **Android:** Download `MariosMaskBuilder-android.apk`, allow installation from
