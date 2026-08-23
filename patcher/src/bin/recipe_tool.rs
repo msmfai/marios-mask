@@ -37,7 +37,7 @@ fn run() -> Result<()> {
             )
         }
         _ => bail!(
-            "usage:\n  {} create <sm64.z64> <oot-1.1.z64> <decompressed-mm.z64> <output.z64> <recipe.mmrecipe>\n  {} verify <sm64.z64> <oot-1.1.z64> <decompressed-mm.z64> <recipe.mmrecipe>",
+            "usage:\n  {} create <sm64.z64> <oot.z64> <decompressed-mm.z64> <output.z64> <recipe.mmrecipe>\n  {} verify <sm64.z64> <oot.z64> <decompressed-mm.z64> <recipe.mmrecipe>",
             arguments.first().map(String::as_str).unwrap_or("marios-mask-recipe"),
             arguments.first().map(String::as_str).unwrap_or("marios-mask-recipe"),
         ),
@@ -76,7 +76,7 @@ fn create(
     let mut index = SourceIndex::new(&mm, &sm64, &oot_source);
     eprintln!("Matching {} output bytes…", output.len());
     let commands = index.commands_for(&output);
-    let encoded = recipe::encode(&mm, &sm64, &oot, &output, &commands)?;
+    let encoded = recipe::encode(&mm, &sm64, &oot_source, &output, &commands)?;
     let parent = recipe_path.parent().unwrap_or_else(|| Path::new("."));
     fs::create_dir_all(parent)?;
     fs::write(recipe_path, &encoded)

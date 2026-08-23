@@ -11,11 +11,12 @@ The recipe format records every operation as one of:
 
 - copy bytes from the user's Majora's Mask input;
 - copy bytes from the user's Super Mario 64 input;
-- copy the Talon source derived locally from the user's Ocarina of Time 1.1 input;
+- copy the validated Talon source derived locally from the user's Ocarina of Time input;
 - emit an explicit literal payload stored in the recipe; or
 - copy bytes already emitted, preserving their original classification.
 
-Input and output SHA-256 digests are part of the recipe header. The verifier
+The recipe pins the SHA-256 of each fixed input, the revision-independent Talon
+source derived from Ocarina of Time, and the output. The verifier
 reports byte totals for each origin class and a digest of the complete stored
 literal payload. See [`patcher/recipe/FORMAT.md`](patcher/recipe/FORMAT.md).
 
