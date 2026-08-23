@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 from pathlib import Path
@@ -24,7 +25,7 @@ def require(condition: bool, message: str) -> None:
         raise SystemExit(f"project site: FAIL: {message}")
 
 
-def main() -> int:
+def main(require_built_patcher: bool = False) -> int:
     stable = json.loads((SITE / "stable.json").read_text(encoding="utf-8"))
     html = (SITE / "index.html").read_text(encoding="utf-8")
     patcher_script = (SITE / "patcher.js").read_text(encoding="utf-8")
@@ -55,11 +56,24 @@ def main() -> int:
     require('fetch("stable.json")' in patcher_script, "patcher may only fetch local release metadata")
     require("fetch(" not in worker_script, "ROM worker must make no network requests")
     require('./pkg/marios_mask_builder.js' in worker_script, "worker must load the local WASM patcher")
-    require((SITE / "pkg" / "marios_mask_builder.js").is_file(), "generated WASM loader is missing")
-    require((SITE / "pkg" / "marios_mask_builder_bg.wasm").is_file(), "generated WASM binary is missing")
-    print(f"project site: PASS (stable v{stable['version']}, minimal local patcher, Pages-ready)")
+    loader_exists = (SITE / "pkg" / "marios_mask_builder.js").is_file()
+    wasm_exists = (SITE / "pkg" / "marios_mask_builder_bg.wasm").is_file()
+    require(loader_exists == wasm_exists, "generated browser patcher is incomplete")
+    if require_built_patcher:
+        require(loader_exists, "generated WASM loader is missing")
+        require(wasm_exists, "generated WASM binary is missing")
+
+    mode = "built" if require_built_patcher else "source"
+    print(f"project site: PASS (stable v{stable['version']}, minimal local patcher, {mode} check)")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--require-built-patcher",
+        action="store_true",
+        help="require the generated JavaScript loader and WebAssembly binary",
+    )
+    arguments = parser.parse_args()
+    raise SystemExit(main(arguments.require_built_patcher))
