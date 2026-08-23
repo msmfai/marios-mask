@@ -28,6 +28,7 @@ def require(condition: bool, message: str) -> None:
 def main(require_built_patcher: bool = False) -> int:
     stable = json.loads((SITE / "stable.json").read_text(encoding="utf-8"))
     html = (SITE / "index.html").read_text(encoding="utf-8")
+    styles = (SITE / "styles.css").read_text(encoding="utf-8")
     patcher_script = (SITE / "patcher.js").read_text(encoding="utf-8")
     worker_script = (SITE / "patcher-worker.js").read_text(encoding="utf-8")
 
@@ -46,6 +47,8 @@ def main(require_built_patcher: bool = False) -> int:
     require(html.count('type="file"') == 3, "browser patcher must request exactly three ROMs")
     require(html.count('name="mario-colour"') == 3, "all Mario colour options must remain")
     require("build-rom" in html and "download-rom" in html, "build and download controls must remain")
+    require("background: var(--surface)" not in styles, "patcher must not use a card background")
+    require("border: 1px solid var(--line)" not in styles, "options must not use card borders")
     require("Content-Security-Policy" in html, "missing content security policy")
     require("script-src 'self'" in html, "scripts must be restricted to this site")
     require("connect-src 'self'" in html, "network connections must be restricted to this site")

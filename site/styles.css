@@ -2,8 +2,6 @@
   color-scheme: dark;
   --ink: #f8f3e8;
   --muted: #c9bdac;
-  --surface: #221a14;
-  --line: rgba(255, 255, 255, 0.14);
   --gold: #f4c95d;
   --green: #3e8e55;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -36,7 +34,6 @@ main {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 18px;
 }
 
 h1 {
@@ -48,18 +45,11 @@ h1 {
   text-align: center;
 }
 
-.patcher {
-  padding: 28px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
-}
-
 .rom-inputs,
 .colour-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 28px;
 }
 
 .rom-input,
@@ -68,21 +58,18 @@ h1 {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding: 16px;
+  padding: 0;
   cursor: pointer;
-  border: 1px solid var(--line);
-  border-radius: 12px;
 }
 
 .rom-input {
-  min-height: 116px;
   align-items: flex-start;
 }
 
-.rom-input:hover,
-.rom-input:focus-within,
-.colour-option:has(input[type="radio"]:checked) {
-  border-color: var(--gold);
+.rom-input:hover .file-name,
+.rom-input:focus-within .file-name,
+.colour-option:has(input[type="radio"]:checked) strong {
+  color: var(--gold);
 }
 
 .rom-input input {
@@ -182,6 +169,10 @@ small {
   margin-top: 24px;
 }
 
+.build-actions:has(.download-button[hidden]) {
+  grid-template-columns: 1fr;
+}
+
 .build-button,
 .download-button {
   display: flex;
@@ -230,10 +221,6 @@ small {
 
   h1 {
     margin: 28px 0;
-  }
-
-  .patcher {
-    padding: 18px;
   }
 
   .rom-inputs,
