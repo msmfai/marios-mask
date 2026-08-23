@@ -46,6 +46,14 @@ def main(require_built_patcher: bool = False) -> int:
     require("primary-download" not in html, "site must not link to downloadable builders")
     require("data-platform" not in html, "site must not offer platform builder downloads")
     require(html.count('type="file"') == 3, "browser patcher must request exactly three ROMs")
+    require(
+        "Use NTSC Nintendo 64 ROMs for all three games." in html,
+        "browser patcher must clearly require NTSC ROMs",
+    )
+    require(
+        "Ocarina of Time may be revision 1.0, 1.1, or 1.2." in html,
+        "browser patcher must list supported Ocarina of Time revisions",
+    )
     require(html.count('name="mario-colour"') == 3, "all Mario colour options must remain")
     require("build-rom" in html and "download-rom" in html, "build and download controls must remain")
     require("background: var(--surface)" not in styles, "patcher must not use a card background")

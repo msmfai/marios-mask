@@ -160,8 +160,8 @@ where
 
     progress("Checking Ocarina of Time…");
     let oot = normalize_rom_input(oot_input).context("Could not read the Ocarina of Time ROM")?;
-    let oot_source =
-        oot::stone_talon_source(&oot).context("Ocarina of Time must be a compatible retail ROM")?;
+    let oot_source = oot::stone_talon_source(&oot)
+        .context("Ocarina of Time must be a compatible NTSC Nintendo 64 ROM")?;
 
     progress("Checking Majora's Mask…");
     let mm_input = normalize_rom_input(mm_input).context("Could not read the Majora's Mask ROM")?;

@@ -96,7 +96,7 @@ public final class MainActivity extends Activity {
         content.addView(title);
 
         TextView intro = text(
-            "Choose your own NTSC-US Super Mario 64 and Majora's Mask ROMs, plus any compatible retail Ocarina of Time ROM. " +
+            "Choose your own NTSC-US Super Mario 64 and Majora's Mask ROMs, plus any NTSC Nintendo 64 revision of Ocarina of Time. " +
                 "They stay on this device and are combined locally.",
             16,
             Color.DKGRAY
@@ -108,7 +108,7 @@ public final class MainActivity extends Activity {
         content.addView(sm64Button);
         content.addView(spacer());
 
-        ootButton = button("Choose Ocarina of Time (any version)", view -> chooseRom(CHOOSE_OOT));
+        ootButton = button("Choose Ocarina of Time (any NTSC N64 revision)", view -> chooseRom(CHOOSE_OOT));
         content.addView(ootButton);
         content.addView(spacer());
 
@@ -300,7 +300,7 @@ public final class MainActivity extends Activity {
             return;
         }
         sm64Button.setText(sm64Uri == null ? "Choose Super Mario 64" : "Super Mario 64: " + displayName(sm64Uri));
-        ootButton.setText(ootUri == null ? "Choose Ocarina of Time (any version)" : "Ocarina of Time: " + displayName(ootUri));
+        ootButton.setText(ootUri == null ? "Choose Ocarina of Time (any NTSC N64 revision)" : "Ocarina of Time: " + displayName(ootUri));
         mmButton.setText(mmUri == null ? "Choose Majora's Mask" : "Majora's Mask: " + displayName(mmUri));
         buildButton.setEnabled(sm64Uri != null && ootUri != null && mmUri != null);
         if (sm64Uri != null && ootUri != null && mmUri != null) {
