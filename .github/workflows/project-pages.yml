@@ -19,8 +19,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Release tag whose exact HTML asset should be deployed
-        required: true
+        description: Optional release tag whose exact HTML asset should be deployed; leave empty to deploy current source
+        required: false
         type: string
 
 permissions:
@@ -50,9 +50,14 @@ jobs:
         run: |
           python3 tools/check_project_site.py --require-built-patcher
           python3 tools/build_web_release.py --output "$RUNNER_TEMP/MariosMaskBuilder-web.html"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-pages-source-html
+          path: ${{ runner.temp }}/MariosMaskBuilder-web.html
+          if-no-files-found: error
 
   deploy-release:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
     needs: validate
     runs-on: ubuntu-22.04
     permissions:
@@ -77,5 +82,33 @@ jobs:
         with:
           path: pages
       - name: Deploy exact release HTML
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  deploy-source:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag == ''
+    needs: validate
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: project-pages-source-html
+          path: pages
+      - name: Stage current source HTML
+        run: |
+          cp pages/MariosMaskBuilder-web.html pages/index.html
+          cmp pages/MariosMaskBuilder-web.html pages/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages
+      - name: Deploy current source HTML
         id: deployment
         uses: actions/deploy-pages@v4

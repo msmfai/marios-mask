@@ -245,7 +245,7 @@ impl eframe::App for BuilderApp {
             ui.add_space(5.0);
             Self::path_row(
                 ui,
-                "Ocarina of Time (any version)",
+                "Ocarina of Time (any NTSC N64 revision)",
                 &mut self.oot,
                 |value| Self::choose_rom(value, "Choose Ocarina of Time"),
             );
