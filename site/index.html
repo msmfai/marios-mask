@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#17120e">
     <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; worker-src 'self'; img-src 'self' https: data:; frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'none'; form-action 'none'"
+    >
+    <meta
       name="description"
       content="Play Majora's Mask as Mario. Download the latest stable Mario's Mask builder."
     >
     <title>Mario's Mask</title>
     <link rel="stylesheet" href="styles.css">
     <script src="app.js" defer></script>
+    <script src="patcher.js" type="module"></script>
   </head>
   <body>
     <main>
@@ -36,6 +41,85 @@
         </div>
       </section>
 
+      <section class="browser-builder" aria-labelledby="browser-builder-title">
+        <div class="builder-heading">
+          <div>
+            <p class="eyebrow">Build it in your browser</p>
+            <h2 id="browser-builder-title">Make your Mario's Mask ROM</h2>
+          </div>
+          <p class="privacy-note">
+            Your ROMs never leave this device. Patching happens entirely in
+            your browser, with no uploads.
+          </p>
+        </div>
+
+        <div class="rom-inputs">
+          <label class="rom-input" for="sm64-rom">
+            <span class="rom-number" aria-hidden="true">1</span>
+            <span>
+              <strong>Super Mario 64</strong>
+              <small>USA ROM</small>
+              <span id="sm64-name" class="file-name">Select local ROM</span>
+            </span>
+            <input id="sm64-rom" type="file" accept=".z64,.v64,.n64,.rom,.zip,.gz">
+          </label>
+          <label class="rom-input" for="oot-rom">
+            <span class="rom-number" aria-hidden="true">2</span>
+            <span>
+              <strong>Ocarina of Time</strong>
+              <small>NTSC-USA 1.1 ROM</small>
+              <span id="oot-name" class="file-name">Select local ROM</span>
+            </span>
+            <input id="oot-rom" type="file" accept=".z64,.v64,.n64,.rom,.zip,.gz">
+          </label>
+          <label class="rom-input" for="mm-rom">
+            <span class="rom-number" aria-hidden="true">3</span>
+            <span>
+              <strong>Majora's Mask</strong>
+              <small>NTSC-USA ROM</small>
+              <span id="mm-name" class="file-name">Select local ROM</span>
+            </span>
+            <input id="mm-rom" type="file" accept=".z64,.v64,.n64,.rom,.zip,.gz">
+          </label>
+        </div>
+
+        <fieldset class="mario-colour">
+          <legend>Mario's clothes</legend>
+          <div class="colour-options">
+            <label class="colour-option">
+              <input type="radio" name="mario-colour" value="green" checked>
+              <span class="colour-swatch green-swatch" aria-hidden="true"></span>
+              <span><strong>L(ink) Is Real</strong><small>Canonical green Mario</small></span>
+            </label>
+            <label class="colour-option">
+              <input type="radio" name="mario-colour" value="red">
+              <span class="colour-swatch red-swatch" aria-hidden="true"></span>
+              <span><strong>Original</strong><small>Classic red Mario</small></span>
+            </label>
+            <label class="colour-option custom-colour-option">
+              <input type="radio" name="mario-colour" value="custom">
+              <input id="custom-colour" type="color" value="#185816" aria-label="Custom Mario colour">
+              <span><strong>Custom</strong><small>Choose any colour</small></span>
+            </label>
+          </div>
+          <p class="colour-note">
+            Mario canonically wears Link's colours in <em>Mario's Mask</em>,
+            and NPCs may refer to his green clothes. Red and custom colours
+            are available if you prefer them. His cap keeps its Triforce.
+          </p>
+        </fieldset>
+
+        <div class="build-actions">
+          <button id="build-rom" class="primary-button" type="button" disabled>
+            Build Mario's Mask
+          </button>
+          <a id="download-rom" class="secondary-button" href="#" hidden>Download patched ROM</a>
+          <p id="patcher-status" class="patcher-status" role="status" aria-live="polite">
+            Loading browser patcher…
+          </p>
+        </div>
+      </section>
+
       <section class="download" aria-labelledby="download-title">
         <div>
           <p class="eyebrow">Current public build</p>
@@ -53,8 +137,9 @@
           <a data-platform="android" href="https://github.com/msmfai/marios-mask/releases">Android</a>
         </div>
         <p class="build-note">
-          Bring your own USA copies of <em>Super Mario 64</em> and
-          <em>Majora's Mask</em>. The builder combines them locally.
+          The downloadable builder also requires your own USA copies of
+          <em>Super Mario 64</em>, <em>Ocarina of Time</em> 1.1, and
+          <em>Majora's Mask</em>.
         </p>
       </section>
 

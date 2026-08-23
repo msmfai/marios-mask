@@ -8,6 +8,7 @@ __pycache__/
 *.v64
 *.z64
 patcher/target/
+site/pkg/
 android/.gradle/
 android/local.properties
 android/**/build/
