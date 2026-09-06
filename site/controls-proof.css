@@ -95,17 +95,19 @@ header p,
   align-items: center;
   gap: 6px;
   max-width: 170px;
-  padding: 5px 8px 5px 5px;
+  padding: 0;
   color: var(--ink);
   font: inherit;
   font-size: 0.76rem;
   font-weight: 750;
+  text-align: left;
   white-space: nowrap;
   cursor: grab;
-  border: 1px solid rgba(244, 201, 93, 0.72);
-  border-radius: 999px;
-  background: rgba(23, 18, 14, 0.9);
-  transform: translate(-50%, -50%);
+  border: 0;
+  background: transparent;
+  /* The saved coordinate is the centre of the yellow marker, not the
+     combined marker-and-caption width. */
+  transform: translate(-10px, -50%);
 }
 
 .drag-label:active {
@@ -122,6 +124,13 @@ header p,
   font-size: 0.7rem;
   border-radius: 50%;
   background: var(--gold);
+}
+
+.drag-label span {
+  padding: 5px 8px;
+  border: 1px solid rgba(244, 201, 93, 0.72);
+  border-radius: 999px;
+  background: rgba(23, 18, 14, 0.9);
 }
 
 .proof-status {
