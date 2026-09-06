@@ -15,7 +15,7 @@ self.addEventListener("message", ({ data }) => {
       new Uint8Array(data.sm64),
       new Uint8Array(data.oot),
       new Uint8Array(data.mm),
-      ...data.colour,
+      new Uint8Array(data.palette.flat()),
     );
     const rom = output.buffer.slice(output.byteOffset, output.byteOffset + output.byteLength);
     self.postMessage({ type: "complete", rom }, [rom]);
