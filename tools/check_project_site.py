@@ -40,6 +40,7 @@ def main(require_built_patcher: bool = False) -> int:
     require(stable["assets"] == EXPECTED_ASSETS, "stable asset names disagree with release workflow")
     require("<h1>Mario's Mask</h1>" in html, "missing project title")
     require(html.count('class="hero-image"') == 1, "site must contain exactly one hero image")
+    require('src="hero.png"' in html and (SITE / "hero.png").is_file(), "hero image must be local")
     require("Termina, with Mario's movement" not in html, "marketing copy must not appear")
     require('class="description"' not in html, "description section must not appear")
     require("<footer" not in html, "footer must not appear")
@@ -102,6 +103,12 @@ def main(require_built_patcher: bool = False) -> int:
     )
     for label in ("Player 1", "Player 2", "D-pad", "Camera orbit / zoom", "Alt camera"):
         require(label in html, f"controls diagram is missing {label}")
+    require(
+        '<div><dt><b>3</b>C-Up</dt><dd>Enhanced Mode</dd></div>' in html
+        and '<div><dt><b>10</b>C-Left / Down / Right</dt><dd>Items</dd></div>' in html
+        and '<div><dt><b>8</b>R</dt><dd>Z-target</dd></div>' in html,
+        "controls diagram must show the current C-Up enhanced-mode and R target scheme",
+    )
     for song in ("Song of Mushroom Melodies", "Song of Borrowed Voices"):
         require(song in html, f"soundtrack controls are missing {song}")
     for sequence in ("R + C←", "Stick↓ + A", "Z + C↓", "Stick↑ + C↑"):

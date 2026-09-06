@@ -4,12 +4,13 @@ const defaults = {
   player1: {
     1: [50, 55],
     2: [19.35, 31.22],
-    3: [82.18, 28.77],
+    3: [82.6576, 22.9543],
     4: [75, 42],
     5: [68.56, 35.18],
     6: [50, 36],
     7: [50, 83],
     8: [81.09, 12.56],
+    10: [82.6576, 34.5159],
   },
   player2: {
     9: [50, 55],
@@ -26,7 +27,11 @@ function cloneDefaults() {
 function loadPositions() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return saved?.player1 && saved?.player2 ? saved : cloneDefaults();
+    if (!saved?.player1 || !saved?.player2) return cloneDefaults();
+    return {
+      player1: { ...defaults.player1, ...saved.player1 },
+      player2: { ...defaults.player2, ...saved.player2 },
+    };
   } catch {
     return cloneDefaults();
   }
