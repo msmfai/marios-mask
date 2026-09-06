@@ -64,10 +64,12 @@ These controls apply while wearing the Brother's Mask:
 |---|---|
 | D-pad left / right | Rotate the camera around Mario |
 | D-pad up / down | Zoom the camera in or out |
-| R | Toggle Enhanced Mode |
+| C-Up | Toggle Enhanced Mode |
+| C-Left / Down / Right | Use equipped items |
+| R | Z-target |
 
 Enhanced Mode consumes magic while active and gives Mario his more extreme
-movement and strength abilities. Press R again to turn it off.
+movement and strength abilities. Press C-Up again to turn it off.
 
 ## Discover a classic power-up
 
