@@ -1,23 +1,48 @@
 # Mario's Mask Alpha 0.12.0
 
-Alpha 0.12.0 is a substantial Mario gameplay and stability release.
+Alpha 0.12.0 is the largest Mario gameplay update since the mask was introduced. It makes Mario a more complete fifth transformation, adds several new ways to play, and substantially improves progression and stability throughout Majora's Mask.
 
-## Changes
+## Major changes
 
-- Mario now behaves as a compact fifth transformation form, improving mask removal, re-equipping, scene changes, and memory use without replacing Link.
-- Water recovery has been rebuilt across normal swimming, poison water, enemy knockback, Deku-flower entries, and room transitions.
-- Death now returns you as Mario when appropriate, plays only the short Mario death jingle, and no longer stalls the game-over flow across music configurations.
-- Hole and grotto transitions, block pushing, carried-object throws, climbing recovery, stairs, and several native-player handoffs now work correctly as Mario.
-- Mario can fight the Gekko and Snapper miniboss more reliably, receives stronger Big Octo knockback, and retains his intended attack behavior around world objects.
-- Major rewards use Mario's star celebration; minor chest rewards no longer sink him into the floor.
-- Mario-specific dialogue and presentation have been expanded in shops, Southern Swamp, Deku Palace, owl-statue saves, the Pictograph interaction, and other form-sensitive scenes.
-- The Deku Palace monkey performance now shows Mario's instrument and uses the intended sounds.
-- Camera handoffs at doors and difficult rooms are more stable.
-- Mario music routing, the short death sequence, Hoot Hoot arrangement, Deku Palace and Woodfall soundfonts, credits, and post-credits audio have been corrected.
-- Canonical red Mario is preserved in the bridge, Song of Healing, Peach, and Lens of Truth presentations instead of inheriting the playable outfit palette.
-- Owl statues now support reusable persistent saves during the alpha, can be activated by Mario's attacks, and recognize the bearer of the fist beyond this world.
-- The builder now offers six independent Mario colour controls for his cap and shirt, overalls, gloves, shoes, skin, and hair. The canonical green and original red presets remain one-click choices.
-- The browser builder now includes labelled Player 1 and Player 2 N64 controller diagrams, alternate-camera guidance, and the four music/instrument combinations.
+- Mario is now integrated as a compact fifth transformation form. Link remains fully playable, while Mario now follows the game's native rules for loading, mask changes, conversations, doors, items, cutscenes, shops, deaths, scene changes, and other shared actions.
+- Mario's appearance is now configurable. Choose the canonical **L(ink) Is Real** green palette, classic red Mario, or independently customise his cap and shirt, overalls, gloves, shoes, skin, and hair.
+- Mario's controls have been reorganised: **R** now Z-targets, **C-Up** activates Enhanced Mode, **Z** keeps Mario's crouch and ground-pound controls, the other C buttons remain items, and the D-pad controls the camera. A second controller's stick also works as an alternate analogue camera.
+- Enhanced Mode now surrounds Mario with gold sparkles and uses pipe-appearance and pipe-disappearance sounds when switched on and off, replacing the old green glow. Enhanced Mode remains focused on traversal rather than extra combat damage.
+- Mario can now use Deku Sticks as throwable weapons. They preserve momentum, can be lit from either end, ignite torches and webs, and burst on impact while burning.
+- Town and Swamp Shooting Galleries now have a dedicated Mario mode. Mario aims from a fixed third-person position and uses unlimited thrown Deku Sticks, fireballs, and light balls while the original targets, timers, scoring, and rewards remain intact.
+- Riding Epona as Mario now has its own deliberately ridiculous solution: Mario ties himself to the horse and becomes a ragdolling, X-eyed, six-damage projectile. Tatl comments the first time it happens.
+- Mario can now wear ordinary masks without leaving Mario form, create the three persistent heavy Mario/Talon statues needed for the Elegy of Emptiness, complete the Swordsman's School with Mario moves, and activate the large Gossip Stones with the appropriate transformation songs.
+- Major rewards now use Mario's SM64 star dance and peace sign, with corrected positioning and recovery afterwards.
+- Owl Statues now provide reusable persistent saves during the alpha instead of forcing a return to the title screen. Mario can activate them with his attacks and receives Mario-specific “bearer of the fist beyond this world” dialogue.
+
+## Progression, combat, and interaction
+
+- Mario can enter and complete more Deku Palace progression, including form-aware guard conversations and the captive monkey's Sonata of Awakening sequence.
+- Mario can damage the mounted Gekko without making the Snapper itself universally vulnerable; defeating Gekko on the turtle now completes the encounter correctly.
+- Giant Octoroks now throw Mario far enough clear of the water to prevent repeated-hit softlocks.
+- Mario once again pushes and pulls puzzle blocks through the native block solver.
+- Carrying and throwing grass, Cuccos, jars, and other held actors now uses the native item lifecycle with Mario presentation, including moving and airborne throws.
+- Water ownership and recovery have been rebuilt for ordinary swimming, poison water, enemy knockback, Deku-flower water entries, surfacing, and room transitions.
+- Falling through holes and entering or leaving grottos no longer strands Mario in an invalid Link state.
+- Mario now recovers correctly after being hit while climbing, animates on stairs, and retains the proper form across death and respawn.
+- Shops, doors, bottles, Deku Nuts, the Hookshot, Pictograph interactions, ocarina use, item rewards, and other native actions now hand control to and from Mario more reliably.
+- The Southern Swamp guide can give Mario the Pictograph Box before Koume is rescued, supporting Mario's existing Pictograph interactions and Giant Octorok route.
+
+## Presentation, dialogue, and audio
+
+- Canonical red Mario is now kept separate from the playable palette for the bridge encounter, Song of Healing, Peach scenes, and other story appearances. The Lens of Truth also reveals Mario's original colours regardless of the selected outfit.
+- Mario-specific dialogue has been expanded and rewritten across shops, Southern Swamp, Deku Palace, the Pictograph guide, Swordsman's School, Owl Statues, and other form-sensitive conversations.
+- Mario now visibly performs with his instrument during the captive monkey's Sonata lesson, and the scene uses the intended instrument dialogue and sounds.
+- Music routing has been corrected across rewards, bosses, shells, deaths, scene changes, and credits. Death uses only the short Mario jingle; the Hoot Hoot melody is restored; and the Deku Palace and Woodfall Mario-instrument arrangements have been refined.
+- The ending and post-credits sequence now advance correctly with alternate music settings. Mario receives his own final run, footsteps, and jump presentation, followed by Peach's Castle exterior ambience and “Thank you so much for playing my game” at **THE END**.
+- Peach's Castle and the Metal Cap Course now use the same SM64-to-Majora's-Mask scale as Mario, while preserving their established placement in the world.
+- Camera ownership is more stable around doors, native cutscenes, combat, and troublesome rooms.
+
+## Builder and documentation
+
+- The browser builder has been redesigned as a minimal self-contained page with the complete six-part Mario palette editor.
+- The builder now includes labelled Player 1 and Player 2 N64 controller diagrams, the alternate-camera controls, both soundtrack-toggle songs, and all four Zelda/Mario music and instrument combinations.
+- The downloadable `MariosMaskBuilder-web.html` is the same self-contained patcher used by the project website and performs all ROM processing locally.
 
 ## Builder requirements
 
