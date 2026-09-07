@@ -10,7 +10,7 @@
 
 **Play *Majora's Mask* as Mario.**
 
-![Mario in Termina](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/hero.png)
+![Mario waving on Great Bay Coast](site/hero.png)
 
 Mario's Mask brings Mario's movement, attacks, voice, animations, and playful
 physics from *Super Mario 64* into the world and adventure of *Majora's Mask*.
