@@ -113,9 +113,17 @@ def main(require_built_patcher: bool = False) -> int:
             isinstance(run, dict)
             and set(run) == {"username", "time", "version"}
             and all(isinstance(value, str) and value.strip() for value in run.values())
+            and re.fullmatch(r"\d+:\d{2}:\d{2}(?:\.\d+)?", run["time"]) is not None
+            and re.fullmatch(r"\d+\.\d+\.\d+", run["version"]) is not None
             for run in speedruns
         ),
-        "every speedrun must have a non-empty username, time and version",
+        "every speedrun must have a username and valid time/version",
+    )
+    require(
+        "newer versions always rank above" in speedruns_html
+        and "compareVersionsDescending" in speedruns_script
+        and "timeInSeconds(left.time) - timeInSeconds(right.time)" in speedruns_script,
+        "leaderboard must rank newer versions first and then faster times",
     )
     require(
         'fetch("speedruns.json")' in speedruns_script and "textContent = value" in speedruns_script,
