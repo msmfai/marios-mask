@@ -38,11 +38,14 @@ FORBIDDEN_ROOTS = {
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
 EXPECTED_RECIPE_SHA256 = "085869ee0203c90bc01245609e6401e6bc58e37bce4dd870d6f05f228975f09b"
 REVIEWED_MEDIA_SHA256 = {
-    "assets/juno-logo.png":
+    "assets/juno-logo.png": (
         "771286cb1173c678d0d6cbaac45653e66d732c92cbc66bb977c8850c6b1e2c95",
-    # Small public-page presentation asset; it contains no ROM-derived data.
-    "site/hero.png":
+    ),
+    # Reviewed public-page presentation screenshot; pin every replacement.
+    "site/hero.png": (
         "a9f21543124d61b09840bf05fffe78e8261399d87ae8f8e1c496fc511337c315",
+        "e459880a0305c977c0e1cae562b1bb82f157e0f4b6bcc769c3b94ab86f5f7353",
+    ),
 }
 REQUIRED = {
     ".github/workflows/android-release.yml",
@@ -189,7 +192,7 @@ def inspect_blob(name: str, data: bytes) -> str | None:
     expected_media = REVIEWED_MEDIA_SHA256.get(name)
     if expected_media is not None:
         digest = hashlib.sha256(data).hexdigest()
-        if digest != expected_media:
+        if digest not in expected_media:
             return f"reviewed media SHA-256 changed to {digest}"
         return None
     if name.endswith(".mmrecipe"):
@@ -228,6 +231,18 @@ def audit(tree: Path) -> list[str]:
     for required in sorted(REQUIRED):
         if not (tree / required).is_file():
             failures.append(f"{required}: required file is missing")
+
+    # Every previously reviewed presentation blob remains valid history, but
+    # the final digest in each tuple is the only version allowed in HEAD.
+    for name, reviewed_digests in REVIEWED_MEDIA_SHA256.items():
+        current_media = tree / name
+        if current_media.is_file():
+            digest = hashlib.sha256(current_media.read_bytes()).hexdigest()
+            if digest != reviewed_digests[-1]:
+                failures.append(
+                    f"{name}: current SHA-256 {digest} does not match "
+                    f"reviewed HEAD pin {reviewed_digests[-1]}"
+                )
 
     seen: set[str] = set()
     for object_id, name in historical_blobs(tree):
