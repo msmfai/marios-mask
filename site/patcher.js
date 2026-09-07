@@ -15,6 +15,7 @@ const customPalette = [...document.querySelectorAll("[data-mario-part]")];
 const paletteRadios = [...document.querySelectorAll('input[name="mario-colour"]')];
 const paletteConfirmation = document.querySelector("#palette-confirmation");
 const confirmPalette = document.querySelector("#confirm-palette");
+const cancelPalette = document.querySelector("#cancel-palette");
 const palettes = {
   green: [[133, 56, 37], [30, 105, 27], [255, 255, 236], [71, 51, 42], [248, 191, 153], [222, 164, 69]],
   red: [[0, 0, 255], [255, 0, 0], [255, 255, 255], [114, 28, 14], [254, 193, 121], [115, 6, 0]],
@@ -87,18 +88,26 @@ for (const radio of paletteRadios) {
 }
 
 paletteConfirmation.addEventListener("close", () => {
-  if (paletteConfirmation.returnValue === "confirm" && pendingPalette) {
-    paletteAcknowledged = true;
-    try {
-      localStorage.setItem(PALETTE_ACKNOWLEDGEMENT_KEY, "yes");
-    } catch {
-      // The in-memory acknowledgement remains valid for this page visit.
-    }
-    selectPalette(pendingPalette);
-  } else {
-    selectPalette(activePalette);
-  }
+  selectPalette(activePalette);
   pendingPalette = null;
+});
+
+confirmPalette.addEventListener("click", () => {
+  if (!pendingPalette) return;
+  paletteAcknowledged = true;
+  try {
+    localStorage.setItem(PALETTE_ACKNOWLEDGEMENT_KEY, "yes");
+  } catch {
+    // The in-memory acknowledgement remains valid for this page visit.
+  }
+  selectPalette(pendingPalette);
+  pendingPalette = null;
+  paletteConfirmation.close("confirm");
+});
+
+cancelPalette.addEventListener("click", () => {
+  pendingPalette = null;
+  paletteConfirmation.close("cancel");
 });
 
 selectPalette("green");
