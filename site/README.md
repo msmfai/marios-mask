@@ -24,5 +24,19 @@ python3 -m http.server --directory site 8080
 
 Then open `http://localhost:8080`.
 
-The `project-pages` workflow rebuilds the browser patcher, validates the static
-site, and deploys it whenever relevant files change on `main`.
+The `project-pages` workflow rebuilds and validates the browser patcher when
+relevant files change. Its manual deployment jobs publish either an exact
+release patcher or the currently checked-in source.
+
+## Speedrun leaderboard
+
+The Pages deployment also publishes `speedruns.html`. Add accepted runs to
+`speedruns.json` in leaderboard order. Each entry has exactly three strings:
+
+```json
+{
+  "username": "RunnerName",
+  "time": "1:23:45",
+  "version": "0.12.1"
+}
+```

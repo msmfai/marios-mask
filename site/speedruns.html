@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17120e">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    >
+    <meta name="description" content="Mario's Mask speedrun leaderboard.">
+    <title>Speedrun Leaderboard — Mario's Mask</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="speedruns.js" defer></script>
+  </head>
+  <body>
+    <main class="leaderboard-page">
+      <p class="back-link"><a href="index.html">← Mario's Mask builder</a></p>
+      <h1>Speedrun Leaderboard</h1>
+      <table class="speedrun-table">
+        <thead>
+          <tr>
+            <th scope="col">Username</th>
+            <th scope="col">Time</th>
+            <th scope="col">Version</th>
+          </tr>
+        </thead>
+        <tbody id="speedrun-results"></tbody>
+      </table>
+      <p id="speedrun-empty" class="speedrun-empty" hidden>No runs have been submitted yet.</p>
+      <p id="speedrun-status" class="speedrun-status" role="status" aria-live="polite"></p>
+    </main>
+  </body>
+</html>
