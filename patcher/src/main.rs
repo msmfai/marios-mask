@@ -27,13 +27,11 @@ fn run_cli_or_gui() -> Result<()> {
             arguments[0]
         );
     }
-    let options = marios_mask_builder::BuildOptions {
-        mario_color: if arguments.len() == 8 {
-            parse_rgb(&arguments[7])?
-        } else {
-            marios_mask_builder::BuildOptions::LINK_IS_REAL
-        },
-    };
+    let mut mario_palette = marios_mask_builder::BuildOptions::LINK_IS_REAL;
+    if arguments.len() == 8 {
+        mario_palette[1] = parse_rgb(&arguments[7])?;
+    }
+    let options = marios_mask_builder::BuildOptions { mario_palette };
     marios_mask_builder::build_from_paths_with_options(
         Path::new(&arguments[2]),
         Path::new(&arguments[3]),
@@ -60,8 +58,8 @@ fn parse_rgb(value: &str) -> Result<[u8; 3]> {
 fn run_gui() -> Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([620.0, 500.0])
-            .with_min_inner_size([520.0, 470.0]),
+            .with_inner_size([660.0, 620.0])
+            .with_min_inner_size([540.0, 540.0]),
         ..Default::default()
     };
     eframe::run_native(
@@ -83,7 +81,7 @@ struct BuilderApp {
     status: String,
     error: bool,
     messages: Option<Receiver<BuildMessage>>,
-    mario_color: [u8; 3],
+    mario_palette: marios_mask_builder::MarioPalette,
 }
 
 impl Default for BuilderApp {
@@ -96,7 +94,7 @@ impl Default for BuilderApp {
             status: String::new(),
             error: false,
             messages: None,
-            mario_color: marios_mask_builder::BuildOptions::LINK_IS_REAL,
+            mario_palette: marios_mask_builder::BuildOptions::LINK_IS_REAL,
         }
     }
 }
@@ -157,7 +155,7 @@ impl BuilderApp {
         let mm = PathBuf::from(self.mm.trim());
         let output = PathBuf::from(self.output.trim());
         let options = marios_mask_builder::BuildOptions {
-            mario_color: self.mario_color,
+            mario_palette: self.mario_palette,
         };
         let (sender, receiver) = mpsc::channel();
         self.messages = Some(receiver);
@@ -278,20 +276,34 @@ impl eframe::App for BuilderApp {
             );
             ui.horizontal(|ui| {
                 if ui.button("L(ink) Is Real (Green Mario)").clicked() {
-                    self.mario_color = marios_mask_builder::BuildOptions::LINK_IS_REAL;
+                    self.mario_palette = marios_mask_builder::BuildOptions::LINK_IS_REAL;
                 }
                 if ui.button("Original (Red Mario)").clicked() {
-                    self.mario_color = marios_mask_builder::BuildOptions::ORIGINAL_MARIO;
+                    self.mario_palette = marios_mask_builder::BuildOptions::ORIGINAL_MARIO;
                 }
             });
-            ui.horizontal(|ui| {
-                ui.color_edit_button_srgb(&mut self.mario_color);
-                ui.label("Custom colour wheel");
-                ui.monospace(format!(
-                    "#{:02X}{:02X}{:02X}",
-                    self.mario_color[0], self.mario_color[1], self.mario_color[2]
-                ));
-            });
+            for (index, label) in [
+                "Overalls",
+                "Cap and shirt",
+                "Gloves",
+                "Shoes",
+                "Skin",
+                "Hair and moustache",
+            ]
+            .iter()
+            .enumerate()
+            {
+                ui.horizontal(|ui| {
+                    ui.label(*label);
+                    ui.color_edit_button_srgb(&mut self.mario_palette[index]);
+                    ui.monospace(format!(
+                        "#{:02X}{:02X}{:02X}",
+                        self.mario_palette[index][0],
+                        self.mario_palette[index][1],
+                        self.mario_palette[index][2]
+                    ));
+                });
+            }
 
             ui.add_space(12.0);
             let building = self.messages.is_some();

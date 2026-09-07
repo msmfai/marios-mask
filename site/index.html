@@ -17,16 +17,18 @@
     <main>
       <img
         class="hero-image"
-        src="https://github.com/msmfai/marios-mask/releases/download/v0.8.0/hero.png"
+        src="hero.png"
         alt="Mario standing in Termina"
       >
       <h1>Mario's Mask</h1>
 
       <section class="patcher" aria-label="Mario's Mask patcher options">
-        <p class="rom-requirements">
-          <strong>Use NTSC Nintendo 64 ROMs for all three games.</strong>
-        </p>
-        <div class="rom-inputs">
+        <section class="patcher-section rom-section" aria-labelledby="rom-section-title">
+          <h2 id="rom-section-title">Game ROMs</h2>
+          <p class="rom-requirements">
+            <strong>Use NTSC Nintendo 64 ROMs for all three games.</strong>
+          </p>
+          <div class="rom-inputs">
           <label class="rom-input" for="sm64-rom">
             <span class="rom-number" aria-hidden="true">1</span>
             <span>
@@ -54,41 +56,179 @@
             </span>
             <input id="mm-rom" type="file" accept=".z64,.v64,.n64,.rom,.zip,.gz">
           </label>
-        </div>
-
-        <fieldset class="mario-colour">
-          <legend>Mario's clothes</legend>
-          <div class="colour-options">
-            <label class="colour-option">
-              <input type="radio" name="mario-colour" value="green" checked>
-              <span class="colour-swatch green-swatch" aria-hidden="true"></span>
-              <span><strong>L(ink) Is Real</strong><small>Canonical green Mario</small></span>
-            </label>
-            <label class="colour-option">
-              <input type="radio" name="mario-colour" value="red">
-              <span class="colour-swatch red-swatch" aria-hidden="true"></span>
-              <span><strong>Original</strong><small>Classic red Mario</small></span>
-            </label>
-            <label class="colour-option">
-              <input type="radio" name="mario-colour" value="custom">
-              <input id="custom-colour" type="color" value="#185816" aria-label="Custom Mario colour">
-              <span><strong>Custom</strong><small>Choose any colour</small></span>
-            </label>
           </div>
-          <small class="colour-note">
-            Mario canonically wears green and NPCs may refer to his green clothes.
-          </small>
-        </fieldset>
+        </section>
 
-        <div class="build-actions">
-          <button id="build-rom" class="build-button" type="button" disabled>
-            Build Mario's Mask
-          </button>
-          <a id="download-rom" class="download-button" href="#" hidden>Download patched ROM</a>
-          <p id="patcher-status" class="patcher-status" role="status" aria-live="polite">
-            Loading patcher…
+        <section class="mario-colour patcher-section" aria-labelledby="appearance-section-title">
+          <h2 id="appearance-section-title">Mario's appearance</h2>
+          <div class="colour-options">
+            <section class="colour-choice">
+              <label class="colour-option">
+                <input type="radio" name="mario-colour" value="green" checked>
+                <span class="colour-swatch green-swatch" aria-hidden="true"></span>
+                <span><strong>L(ink) Is Real</strong><small>Canonical green Mario</small></span>
+              </label>
+              <div class="palette-list green-palette" aria-label="L(ink) Is Real palette">
+                <span><i></i>Overalls</span>
+                <span><i></i>Cap &amp; shirt</span>
+                <span><i></i>Gloves</span>
+                <span><i></i>Shoes</span>
+                <span><i></i>Skin</span>
+                <span><i></i>Hair &amp; moustache</span>
+              </div>
+            </section>
+
+            <section class="colour-choice">
+              <label class="colour-option">
+                <input type="radio" name="mario-colour" value="red">
+                <span class="colour-swatch red-swatch" aria-hidden="true"></span>
+                <span><strong>Original</strong><small>Classic red Mario</small></span>
+              </label>
+              <div class="palette-list red-palette" aria-label="Original Mario palette">
+                <span><i></i>Overalls</span>
+                <span><i></i>Cap &amp; shirt</span>
+                <span><i></i>Gloves</span>
+                <span><i></i>Shoes</span>
+                <span><i></i>Skin</span>
+                <span><i></i>Hair &amp; moustache</span>
+              </div>
+            </section>
+
+            <section class="colour-choice">
+              <label class="colour-option">
+                <input type="radio" name="mario-colour" value="custom">
+                <span class="colour-swatch custom-swatch" aria-hidden="true"></span>
+                <span><strong>Custom</strong><small>Choose every colour</small></span>
+              </label>
+              <div id="custom-palette" class="palette-list custom-palette">
+                <label><span>Overalls</span><input type="color" data-mario-part="overalls" value="#853825" disabled></label>
+                <label><span>Cap &amp; shirt</span><input type="color" data-mario-part="cap-shirt" value="#1e691b" disabled></label>
+                <label><span>Gloves</span><input type="color" data-mario-part="gloves" value="#ffffec" disabled></label>
+                <label><span>Shoes</span><input type="color" data-mario-part="shoes" value="#47332a" disabled></label>
+                <label><span>Skin</span><input type="color" data-mario-part="skin" value="#f8bf99" disabled></label>
+                <label><span>Hair &amp; moustache</span><input type="color" data-mario-part="hair" value="#dea445" disabled></label>
+              </div>
+            </section>
+          </div>
+          <p class="canonical-note">
+            <strong>Canonical appearance</strong>
+            <span>Mario wears Link's green colours in Mario's Mask, and NPCs may refer to his green clothes.</span>
           </p>
-        </div>
+        </section>
+
+        <figure class="controls-diagram patcher-section">
+          <figcaption>Mario controls</figcaption>
+          <div class="controller-layouts">
+            <section class="controller-layout" aria-labelledby="player-one-controls">
+              <h2 id="player-one-controls">Player 1</h2>
+              <div class="controller-art">
+                <img src="n64-controller.svg" alt="Nintendo 64 controller">
+                <i class="control-marker marker-move">1</i>
+                <i class="control-marker marker-camera">2</i>
+                <i class="control-marker marker-enhanced">3</i>
+                <i class="control-marker marker-items">10</i>
+                <i class="control-marker marker-jump">4</i>
+                <i class="control-marker marker-action">5</i>
+                <i class="control-marker marker-start">6</i>
+                <i class="control-marker marker-z">7</i>
+                <i class="control-marker marker-r">8</i>
+              </div>
+              <dl class="control-key">
+                <div><dt><b>1</b>Control stick</dt><dd>Move</dd></div>
+                <div><dt><b>2</b>D-pad</dt><dd>Camera orbit / zoom</dd></div>
+                <div><dt><b>3</b>C-Up</dt><dd>Enhanced Mode</dd></div>
+                <div><dt><b>10</b>C-Left / Down / Right</dt><dd>Items</dd></div>
+                <div><dt><b>4</b>A</dt><dd>Jump</dd></div>
+                <div><dt><b>5</b>B</dt><dd>Attack / carry / throw</dd></div>
+                <div><dt><b>6</b>Start</dt><dd>Pause</dd></div>
+                <div><dt><b>7</b>Z</dt><dd>Crouch / ground-pound</dd></div>
+                <div><dt><b>8</b>R</dt><dd>Z-target</dd></div>
+              </dl>
+            </section>
+
+            <section class="controller-layout" aria-labelledby="player-two-controls">
+              <h2 id="player-two-controls">Player 2</h2>
+              <div class="controller-art">
+                <img src="n64-controller.svg" alt="Nintendo 64 controller">
+                <i class="control-marker marker-move">9</i>
+              </div>
+              <dl class="control-key">
+                <div><dt><b>9</b>Control stick</dt><dd>Alt camera</dd></div>
+              </dl>
+            </section>
+          </div>
+
+          <section class="song-controls" aria-labelledby="song-controls-title">
+            <h3 id="song-controls-title">Soundtrack songs</h3>
+            <p class="song-intro">Play either sequence during free instrument play. Each song toggles one soundtrack setting and leaves the other unchanged.</p>
+            <div class="song-grid">
+              <article>
+                <h4>Song of Mushroom Melodies</h4>
+                <p>Switches between Majora's Mask music and mapped Super Mario 64 compositions.</p>
+                <p class="song-input" aria-label="C Right, C Right, C Right, C Down, C Right, then R plus C Left, then Stick Down plus A">
+                  <kbd>C→</kbd><kbd>C→</kbd><kbd>C→</kbd><kbd>C↓</kbd><kbd>C→</kbd>
+                  <span>then</span><kbd>R + C←</kbd><span>then</span><kbd>Stick↓ + A</kbd>
+                </p>
+              </article>
+              <article>
+                <h4>Song of Borrowed Voices</h4>
+                <p>Switches between Majora's Mask instruments and Super Mario 64 instruments.</p>
+                <p class="song-input" aria-label="Z plus A, Z plus C Down, Z plus C Up, C Right, C Left, then Stick Up plus C Up">
+                  <kbd>Z + A</kbd><kbd>Z + C↓</kbd><kbd>Z + C↑</kbd><kbd>C→</kbd><kbd>C←</kbd>
+                  <span>then</span><kbd>Stick↑ + C↑</kbd>
+                </p>
+              </article>
+            </div>
+
+            <table class="soundtrack-matrix">
+              <thead>
+                <tr>
+                  <th scope="col">Music ↓ &nbsp; Instruments →</th>
+                  <th scope="col">Zelda</th>
+                  <th scope="col">Mario</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Zelda</th>
+                  <td><strong>Zelda music</strong><span>Zelda instruments</span></td>
+                  <td><strong>Zelda music</strong><span>Mario instruments</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Mario</th>
+                  <td><strong>Mario music</strong><span>Zelda instruments</span></td>
+                  <td><strong>Mario music</strong><span>Mario instruments</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </figure>
+
+        <section class="build-section patcher-section" aria-labelledby="build-section-title">
+          <h2 id="build-section-title">Build your ROM</h2>
+          <div class="build-actions">
+            <button id="build-rom" class="build-button" type="button" disabled>
+              Build Mario's Mask
+            </button>
+            <a id="download-rom" class="download-button" href="#" hidden>Download patched ROM</a>
+            <p id="patcher-status" class="patcher-status" role="status" aria-live="polite">
+              Loading patcher…
+            </p>
+          </div>
+        </section>
+
+        <dialog id="palette-confirmation">
+          <form method="dialog">
+            <h2>Use a non-canonical palette?</h2>
+            <p>
+              Mario canonically wears Link's green colours in Mario's Mask, and NPCs may refer to his green clothes.
+            </p>
+            <div class="dialog-actions">
+              <button value="cancel" type="submit">Keep canonical green</button>
+              <button id="confirm-palette" value="confirm" type="submit">I understand</button>
+            </div>
+          </form>
+        </dialog>
       </section>
     </main>
   </body>

@@ -11,11 +11,27 @@ const names = {
 const buildButton = document.querySelector("#build-rom");
 const downloadRom = document.querySelector("#download-rom");
 const status = document.querySelector("#patcher-status");
-const customColour = document.querySelector("#custom-colour");
+const customPalette = [...document.querySelectorAll("[data-mario-part]")];
+const paletteRadios = [...document.querySelectorAll('input[name="mario-colour"]')];
+const paletteConfirmation = document.querySelector("#palette-confirmation");
+const confirmPalette = document.querySelector("#confirm-palette");
+const palettes = {
+  green: [[133, 56, 37], [30, 105, 27], [255, 255, 236], [71, 51, 42], [248, 191, 153], [222, 164, 69]],
+  red: [[0, 0, 255], [255, 0, 0], [255, 255, 255], [114, 28, 14], [254, 193, 121], [115, 6, 0]],
+};
+const PALETTE_ACKNOWLEDGEMENT_KEY = "marios-mask-noncanonical-palette-understood";
 
 let workerReady = false;
 let building = false;
 let downloadUrl = null;
+let activePalette = "green";
+let pendingPalette = null;
+let paletteAcknowledged = false;
+try {
+  paletteAcknowledged = localStorage.getItem(PALETTE_ACKNOWLEDGEMENT_KEY) === "yes";
+} catch {
+  // Private browsing or locked-down storage still gets a one-time page acknowledgement.
+}
 const stableVersion = fetch("stable.json")
   .then((response) => response.json())
   .then((stable) => stable.version)
@@ -39,16 +55,61 @@ for (const [key, input] of Object.entries(inputs)) {
   });
 }
 
-customColour.addEventListener("input", () => {
-  document.querySelector('input[name="mario-colour"][value="custom"]').checked = true;
+function selectPalette(name) {
+  document.querySelector(`input[name="mario-colour"][value="${name}"]`).checked = true;
+  activePalette = name;
+  for (const input of customPalette) input.disabled = name !== "custom";
+}
+
+function confirmNonCanonicalPalette(name) {
+  if (paletteAcknowledged) {
+    selectPalette(name);
+    return;
+  }
+  const label = name === "red" ? "Original" : "Custom";
+  pendingPalette = name;
+  selectPalette(activePalette);
+  confirmPalette.textContent = `I understand — use ${label}`;
+  paletteConfirmation.returnValue = "";
+  paletteConfirmation.showModal();
+}
+
+for (const radio of paletteRadios) {
+  radio.addEventListener("change", () => {
+    if (!radio.checked) return;
+    if (radio.value === "green") {
+      pendingPalette = null;
+      selectPalette("green");
+      return;
+    }
+    confirmNonCanonicalPalette(radio.value);
+  });
+}
+
+paletteConfirmation.addEventListener("close", () => {
+  if (paletteConfirmation.returnValue === "confirm" && pendingPalette) {
+    paletteAcknowledged = true;
+    try {
+      localStorage.setItem(PALETTE_ACKNOWLEDGEMENT_KEY, "yes");
+    } catch {
+      // The in-memory acknowledgement remains valid for this page visit.
+    }
+    selectPalette(pendingPalette);
+  } else {
+    selectPalette(activePalette);
+  }
+  pendingPalette = null;
 });
 
-function selectedColour() {
-  const preset = document.querySelector('input[name="mario-colour"]:checked').value;
-  if (preset === "green") return [24, 88, 22];
-  if (preset === "red") return [255, 0, 0];
-  const value = customColour.value;
+selectPalette("green");
+
+function rgbFromHex(value) {
   return [1, 3, 5].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16));
+}
+
+function selectedPalette() {
+  const preset = document.querySelector('input[name="mario-colour"]:checked').value;
+  return palettes[preset] || customPalette.map((input) => rgbFromHex(input.value));
 }
 
 worker.addEventListener("message", async ({ data }) => {
@@ -91,7 +152,7 @@ buildButton.addEventListener("click", async () => {
       Object.values(inputs).map((input) => input.files[0].arrayBuffer()),
     );
     worker.postMessage(
-      { type: "build", sm64, oot, mm, colour: selectedColour() },
+      { type: "build", sm64, oot, mm, palette: selectedPalette() },
       [sm64, oot, mm],
     );
   } catch (error) {
