@@ -105,10 +105,11 @@ def build(output: Path) -> None:
         f'src="{hero_uri}"',
         "hero image",
     )
-    if html.count('src="n64-controller.svg"') != 2:
+    controller_image_count = html.count('src="n64-controller.svg"')
+    if controller_image_count != 2:
         raise SystemExit(
             "web release: expected two controller images, found "
-            f"{html.count('src=\"n64-controller.svg\"')}"
+            f"{controller_image_count}"
         )
     html = html.replace('src="n64-controller.svg"', f'src="{controller_uri}"')
     html = require_replace(
