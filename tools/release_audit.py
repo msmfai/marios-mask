@@ -40,9 +40,9 @@ EXPECTED_RECIPE_SHA256 = "085869ee0203c90bc01245609e6401e6bc58e37bce4dd870d6f05f
 REVIEWED_MEDIA_SHA256 = {
     "assets/juno-logo.png":
         "771286cb1173c678d0d6cbaac45653e66d732c92cbc66bb977c8850c6b1e2c95",
-    # Small public-page presentation asset; it contains no ROM-derived data.
+    # Reviewed public-page presentation screenshot; pin every replacement.
     "site/hero.png":
-        "a9f21543124d61b09840bf05fffe78e8261399d87ae8f8e1c496fc511337c315",
+        "e459880a0305c977c0e1cae562b1bb82f157e0f4b6bcc769c3b94ab86f5f7353",
 }
 REQUIRED = {
     ".github/workflows/android-release.yml",
