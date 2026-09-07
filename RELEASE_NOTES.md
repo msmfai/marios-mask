@@ -1,15 +1,27 @@
-# Mario's Mask Alpha 0.11.5
+# Mario's Mask Alpha 0.12.0
 
-Alpha 0.11.5 makes the builder much easier to use with Ocarina of Time ROMs.
+Alpha 0.12.0 is a substantial Mario gameplay and stability release.
 
 ## Changes
 
-- The builder now accepts compatible retail versions of *Ocarina of Time* instead of requiring the hard-to-find USA 1.1 revision.
-- Ocarina of Time is still used only to derive the required Talon asset locally; no copyrighted game asset is distributed with the patcher.
+- Mario now behaves as a compact fifth transformation form, improving mask removal, re-equipping, scene changes, and memory use without replacing Link.
+- Water recovery has been rebuilt across normal swimming, poison water, enemy knockback, Deku-flower entries, and room transitions.
+- Death now returns you as Mario when appropriate, plays only the short Mario death jingle, and no longer stalls the game-over flow across music configurations.
+- Hole and grotto transitions, block pushing, carried-object throws, climbing recovery, stairs, and several native-player handoffs now work correctly as Mario.
+- Mario can fight the Gekko and Snapper miniboss more reliably, receives stronger Big Octo knockback, and retains his intended attack behavior around world objects.
+- Major rewards use Mario's star celebration; minor chest rewards no longer sink him into the floor.
+- Mario-specific dialogue and presentation have been expanded in shops, Southern Swamp, Deku Palace, owl-statue saves, the Pictograph interaction, and other form-sensitive scenes.
+- The Deku Palace monkey performance now shows Mario's instrument and uses the intended sounds.
+- Camera handoffs at doors and difficult rooms are more stable.
+- Mario music routing, the short death sequence, Hoot Hoot arrangement, Deku Palace and Woodfall soundfonts, credits, and post-credits audio have been corrected.
+- Canonical red Mario is preserved in the bridge, Song of Healing, Peach, and Lens of Truth presentations instead of inheriting the playable outfit palette.
+- Owl statues now support reusable persistent saves during the alpha, can be activated by Mario's attacks, and recognize the bearer of the fist beyond this world.
+- The builder now offers six independent Mario colour controls for his cap and shirt, overalls, gloves, shoes, skin, and hair. The canonical green and original red presets remain one-click choices.
+- The browser builder now includes labelled Player 1 and Player 2 N64 controller diagrams, alternate-camera guidance, and the four music/instrument combinations.
 
 ## Builder requirements
 
-The builder asks for your own USA ROMs for *Super Mario 64* and *The Legend of Zelda: Majora's Mask*, plus a compatible retail version of *The Legend of Zelda: Ocarina of Time*.
+The builder asks for your own NTSC Nintendo 64 ROMs for *Super Mario 64*, *The Legend of Zelda: Majora's Mask*, and *The Legend of Zelda: Ocarina of Time*. Any NTSC revision of *Ocarina of Time* may be used.
 
 ## Known issues
 
@@ -34,9 +46,9 @@ the browser builder at https://msmfai.github.io/marios-mask/.
 ## Build Mario's Mask
 
 1. Open the browser builder, or extract and open **MariosMaskBuilder**.
-2. Choose your own USA Nintendo 64 ROMs for *Super Mario 64* and *Majora's Mask*, plus any compatible retail version of *Ocarina of Time*.
-3. Choose Mario's outfit colour and where to save the new game.
+2. Choose your own NTSC Nintendo 64 ROMs for *Super Mario 64*, *Ocarina of Time*, and *Majora's Mask*.
+3. Choose Mario's colours and where to save the new game.
 4. Click **Build Mario's Mask**.
 5. Open `Marios-Mask.z64` in an N64 emulator or flash cart.
 
-Both builders combine the three game files locally on your device. On Android, install the APK, choose the ROMs through Android's document picker, and save the finished ROM directly to your device. The app requests no network or broad storage permission.
+All builders combine the three game files locally on your device. No copyrighted game asset is distributed with the patcher. On Android, install the APK, choose the ROMs through Android's document picker, and save the finished ROM directly to your device. The app requests no network or broad storage permission.

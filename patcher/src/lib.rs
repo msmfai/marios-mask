@@ -19,25 +19,44 @@ const DMADATA_START: usize = 0x1A500;
 const SM64_SHA1: &str = "9bef1128717f958171a4afac3ed78ee2bb4e86ce";
 const MM_COMPRESSED_SHA1: &str = "d6133ace5afaa0882cf214cf88daba39e266c078";
 const MM_DECOMPRESSED_SHA1: &str = "7f5630dbc4d5d61d6276213210c4d5cdd83a47d6";
-const OUTPUT_SHA1: &str = "061d3822656948695f5762da465e8812657e374a";
+const OUTPUT_SHA1: &str = "731cccf7a91f0f1ebbd19d611fe89259c80d3dc4";
 const PATCH: &[u8] = include_bytes!("../recipe/marios-mask.mmrecipe");
 const MARIO_COLOR_MAGIC: &[u8; 8] = b"DSCECOLR";
-const MARIO_COLOR_GUARD: &[u8; 5] = &[1, 0xA5, 0x1D, 0x5A, 0xE1];
+const MARIO_COLOR_VERSION: u8 = 2;
+const MARIO_COLOR_GUARD: &[u8; 4] = &[0xA5, 0x1D, 0x5A, 0xE1];
+const MARIO_COLOR_V1_TRAILER: &[u8; 5] = &[1, 0xA5, 0x1D, 0x5A, 0xE1];
+
+pub type MarioPalette = [[u8; 3]; 6];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BuildOptions {
-    pub mario_color: [u8; 3],
+    pub mario_palette: MarioPalette,
 }
 
 impl BuildOptions {
-    pub const LINK_IS_REAL: [u8; 3] = [24, 88, 22];
-    pub const ORIGINAL_MARIO: [u8; 3] = [255, 0, 0];
+    // Model light-group order: overalls, cap/shirt, gloves, shoes, skin, hair.
+    pub const LINK_IS_REAL: MarioPalette = [
+        [133, 56, 37],
+        [30, 105, 27],
+        [255, 255, 236],
+        [71, 51, 42],
+        [248, 191, 153],
+        [222, 164, 69],
+    ];
+    pub const ORIGINAL_MARIO: MarioPalette = [
+        [0, 0, 255],
+        [255, 0, 0],
+        [255, 255, 255],
+        [114, 28, 14],
+        [254, 193, 121],
+        [115, 6, 0],
+    ];
 }
 
 impl Default for BuildOptions {
     fn default() -> Self {
         Self {
-            mario_color: Self::LINK_IS_REAL,
+            mario_palette: Self::LINK_IS_REAL,
         }
     }
 }
@@ -181,12 +200,12 @@ where
         .context("Could not apply the embedded three-ROM recipe")?;
     ensure_sha1(&output, OUTPUT_SHA1, "Mario's Mask output")?;
 
-    progress("Applying Mario colour…");
-    apply_mario_color(&mut output, options.mario_color)?;
+    progress("Applying Mario colours…");
+    apply_mario_palette(&mut output, options.mario_palette)?;
     Ok(output)
 }
 
-fn apply_mario_color(output: &mut [u8], color: [u8; 3]) -> Result<()> {
+fn apply_mario_palette(output: &mut [u8], palette: MarioPalette) -> Result<()> {
     let mut matches = output
         .windows(MARIO_COLOR_MAGIC.len())
         .enumerate()
@@ -198,16 +217,34 @@ fn apply_mario_color(output: &mut [u8], color: [u8; 3]) -> Result<()> {
         matches.next().is_none(),
         "Mario colour record is not unique in the built ROM"
     );
-    let color_offset = offset + MARIO_COLOR_MAGIC.len();
-    let guard_offset = color_offset + 3;
-    ensure!(
-        guard_offset + MARIO_COLOR_GUARD.len() <= output.len()
-            && &output[guard_offset..guard_offset + MARIO_COLOR_GUARD.len()] == MARIO_COLOR_GUARD,
-        "Mario colour record has an unsupported version or damaged guard"
-    );
-    let changed = output[color_offset..color_offset + 3] != color;
-    output[color_offset..color_offset + 3].copy_from_slice(&color);
-    if changed && (0x1000..0x101000).contains(&color_offset) {
+    let palette_offset = offset + MARIO_COLOR_MAGIC.len();
+    let palette_bytes: Vec<u8> = palette.into_iter().flatten().collect();
+    let version_offset = palette_offset + palette_bytes.len();
+    let guard_offset = version_offset + 1;
+    let changed = if guard_offset + MARIO_COLOR_GUARD.len() <= output.len()
+        && output[version_offset] == MARIO_COLOR_VERSION
+        && &output[guard_offset..guard_offset + MARIO_COLOR_GUARD.len()] == MARIO_COLOR_GUARD
+    {
+        let changed = output[palette_offset..version_offset] != palette_bytes;
+        output[palette_offset..version_offset].copy_from_slice(&palette_bytes);
+        changed
+    } else {
+        // Development compatibility for the Alpha 0.11.5 recipe. Version 1
+        // exposed only cap/shirt RGB; no released builder ever pairs this
+        // source with that recipe, but accepting it keeps recipe regeneration
+        // and old-fixture tests possible while the next release is staged.
+        let v1_trailer = palette_offset + 3;
+        ensure!(
+            v1_trailer + MARIO_COLOR_V1_TRAILER.len() <= output.len()
+                && &output[v1_trailer..v1_trailer + MARIO_COLOR_V1_TRAILER.len()]
+                    == MARIO_COLOR_V1_TRAILER,
+            "Mario colour record has an unsupported version or damaged guard"
+        );
+        let changed = output[palette_offset..palette_offset + 3] != palette[1];
+        output[palette_offset..palette_offset + 3].copy_from_slice(&palette[1]);
+        changed
+    };
+    if changed && (0x1000..0x101000).contains(&palette_offset) {
         update_x105_checksum(output)?;
     }
     Ok(())
@@ -561,30 +598,50 @@ mod tests {
     }
 
     #[test]
-    fn patches_only_the_guarded_mario_rgb_bytes() {
+    fn patches_only_the_guarded_mario_palette_bytes() {
         let mut rom = vec![0u8; 0x200];
         rom[0x40..0x48].copy_from_slice(MARIO_COLOR_MAGIC);
-        rom[0x48..0x4B].copy_from_slice(&BuildOptions::LINK_IS_REAL);
-        rom[0x4B..0x50].copy_from_slice(MARIO_COLOR_GUARD);
+        let default: Vec<u8> = BuildOptions::LINK_IS_REAL.into_iter().flatten().collect();
+        rom[0x48..0x5A].copy_from_slice(&default);
+        rom[0x5A] = MARIO_COLOR_VERSION;
+        rom[0x5B..0x5F].copy_from_slice(MARIO_COLOR_GUARD);
         let before = rom.clone();
-        apply_mario_color(&mut rom, [12, 34, 56]).unwrap();
-        assert_eq!(&rom[0x48..0x4B], &[12, 34, 56]);
+        let mut custom = BuildOptions::LINK_IS_REAL;
+        custom[0] = [12, 34, 56];
+        custom[5] = [65, 43, 21];
+        apply_mario_palette(&mut rom, custom).unwrap();
+        let custom: Vec<u8> = custom.into_iter().flatten().collect();
+        assert_eq!(&rom[0x48..0x5A], custom.as_slice());
         assert_eq!(&rom[..0x48], &before[..0x48]);
-        assert_eq!(&rom[0x4B..], &before[0x4B..]);
+        assert_eq!(&rom[0x5A..], &before[0x5A..]);
+    }
+
+    #[test]
+    fn version_one_recipe_fallback_changes_only_cap_and_shirt() {
+        let mut rom = vec![0u8; 0x80];
+        rom[0x20..0x28].copy_from_slice(MARIO_COLOR_MAGIC);
+        rom[0x28..0x2B].copy_from_slice(&[24, 88, 22]);
+        rom[0x2B..0x30].copy_from_slice(MARIO_COLOR_V1_TRAILER);
+        let before = rom.clone();
+        apply_mario_palette(&mut rom, BuildOptions::ORIGINAL_MARIO).unwrap();
+        assert_eq!(&rom[0x28..0x2B], &[255, 0, 0]);
+        assert_eq!(&rom[..0x28], &before[..0x28]);
+        assert_eq!(&rom[0x2B..], &before[0x2B..]);
     }
 
     #[test]
     fn rejects_missing_duplicate_or_unguarded_color_records() {
-        assert!(apply_mario_color(&mut vec![0u8; 64], [1, 2, 3]).is_err());
+        assert!(apply_mario_palette(&mut vec![0u8; 64], BuildOptions::LINK_IS_REAL).is_err());
 
-        let record = [
-            b'D', b'S', b'C', b'E', b'C', b'O', b'L', b'R', 24, 88, 22, 1, 0xA5, 0x1D, 0x5A, 0xE1,
-        ];
-        let mut duplicate = [record, record].concat();
-        assert!(apply_mario_color(&mut duplicate, [1, 2, 3]).is_err());
+        let mut record = Vec::from(*MARIO_COLOR_MAGIC);
+        record.extend(BuildOptions::LINK_IS_REAL.into_iter().flatten());
+        record.push(MARIO_COLOR_VERSION);
+        record.extend_from_slice(MARIO_COLOR_GUARD);
+        let mut duplicate = [record.as_slice(), record.as_slice()].concat();
+        assert!(apply_mario_palette(&mut duplicate, BuildOptions::LINK_IS_REAL).is_err());
 
         let mut damaged = record;
-        damaged[15] = 0;
-        assert!(apply_mario_color(&mut damaged, [1, 2, 3]).is_err());
+        *damaged.last_mut().unwrap() = 0;
+        assert!(apply_mario_palette(&mut damaged, BuildOptions::LINK_IS_REAL).is_err());
     }
 }

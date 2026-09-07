@@ -24,6 +24,8 @@ def require_replace(document: str, old: str, new: str, label: str) -> str:
 def build(output: Path) -> None:
     html = (SITE / "index.html").read_text(encoding="utf-8")
     styles = (SITE / "styles.css").read_text(encoding="utf-8")
+    hero = (SITE / "hero.png").read_bytes()
+    controller = (SITE / "n64-controller.svg").read_bytes()
     main = (SITE / "patcher.js").read_text(encoding="utf-8")
     worker = (SITE / "patcher-worker.js").read_text(encoding="utf-8")
     loader = (SITE / "pkg/marios_mask_builder.js").read_text(encoding="utf-8")
@@ -89,12 +91,27 @@ def build(output: Path) -> None:
     standalone_csp = (
         '<meta http-equiv="Content-Security-Policy" '
         'content="default-src \'none\'; script-src \'unsafe-inline\' \'wasm-unsafe-eval\'; '
-        "style-src 'unsafe-inline'; worker-src blob:; img-src data: https:; "
+        "style-src 'unsafe-inline'; worker-src blob:; img-src data:; "
         "object-src 'none'; base-uri 'none'; form-action 'none'\">"
     )
     html, changes = csp_pattern.subn(standalone_csp, html)
     if changes != 1:
         raise SystemExit(f"web release: expected one CSP declaration, found {changes}")
+    hero_uri = "data:image/png;base64," + base64.b64encode(hero).decode("ascii")
+    controller_uri = "data:image/svg+xml;base64," + base64.b64encode(controller).decode("ascii")
+    html = require_replace(
+        html,
+        'src="hero.png"',
+        f'src="{hero_uri}"',
+        "hero image",
+    )
+    controller_image_count = html.count('src="n64-controller.svg"')
+    if controller_image_count != 2:
+        raise SystemExit(
+            "web release: expected two controller images, found "
+            f"{controller_image_count}"
+        )
+    html = html.replace('src="n64-controller.svg"', f'src="{controller_uri}"')
     html = require_replace(
         html,
         '    <link rel="stylesheet" href="styles.css">',
@@ -120,6 +137,8 @@ def check(path: Path) -> None:
         "marios_mask_builder",
         "Build Mario's Mask",
         "wasm-unsafe-eval",
+        "data:image/png;base64,",
+        "data:image/svg+xml;base64,",
     )
     for marker in required:
         if marker not in document:
@@ -130,10 +149,14 @@ def check(path: Path) -> None:
         'fetch("stable.json")',
         'new URL("patcher-worker.js"',
         'marios_mask_builder_bg.wasm\'',
+        'src="hero.png"',
+        'src="n64-controller.svg"',
     )
     for marker in forbidden:
         if marker in document:
             raise SystemExit(f"web release: retained external dependency {marker!r}")
+    if re.search(r'(?:src|href)="(?:https?:)?//', document):
+        raise SystemExit("web release: retained an external asset URL")
     if path.stat().st_size > 16 * 1024 * 1024:
         raise SystemExit("web release: standalone HTML exceeds 16 MiB")
     print(f"web release: PASS ({path.stat().st_size} bytes)")

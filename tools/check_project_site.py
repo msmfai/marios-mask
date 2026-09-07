@@ -32,6 +32,7 @@ def main(require_built_patcher: bool = False) -> int:
     styles = (SITE / "styles.css").read_text(encoding="utf-8")
     patcher_script = (SITE / "patcher.js").read_text(encoding="utf-8")
     worker_script = (SITE / "patcher-worker.js").read_text(encoding="utf-8")
+    controls_diagram = (SITE / "n64-controller.svg").read_text(encoding="iso-8859-1")
 
     require(stable["repository"] == "msmfai/marios-mask", "unexpected repository")
     require(re.fullmatch(r"\d+\.\d+\.\d+", stable["version"]) is not None, "invalid stable version")
@@ -39,6 +40,7 @@ def main(require_built_patcher: bool = False) -> int:
     require(stable["assets"] == EXPECTED_ASSETS, "stable asset names disagree with release workflow")
     require("<h1>Mario's Mask</h1>" in html, "missing project title")
     require(html.count('class="hero-image"') == 1, "site must contain exactly one hero image")
+    require('src="hero.png"' in html and (SITE / "hero.png").is_file(), "hero image must be local")
     require("Termina, with Mario's movement" not in html, "marketing copy must not appear")
     require('class="description"' not in html, "description section must not appear")
     require("<footer" not in html, "footer must not appear")
@@ -59,7 +61,80 @@ def main(require_built_patcher: bool = False) -> int:
         "supported Ocarina revisions belong on its ROM input, not in the blurb",
     )
     require(html.count('name="mario-colour"') == 3, "all Mario colour options must remain")
+    for title in ("Game ROMs", "Mario's appearance", "Mario controls", "Build your ROM"):
+        require(title in html, f"patcher section is missing title {title}")
+    require(
+        'class="canonical-note"' in html and "Canonical appearance" in html,
+        "canonical-green notice must remain prominent",
+    )
+    require(
+        html.count('data-mario-part=') == 6,
+        "custom Mario palette must expose all six model material groups",
+    )
+    require(
+        html.count('type="color"') == 6,
+        "only the six Custom palette entries may be editable",
+    )
+    require(
+        html.count('disabled></label>') == 6,
+        "custom colour inputs must remain disabled until Custom is confirmed",
+    )
+    require(
+        'class="palette-list green-palette"' in html
+        and 'class="palette-list red-palette"' in html,
+        "both presets must show their complete read-only palettes",
+    )
+    for part in ("Overalls", "Cap &amp; shirt", "Gloves", "Shoes", "Skin", "Hair &amp; moustache"):
+        require(part in html, f"custom Mario palette is missing {part}")
+    require("selectedPalette()" in patcher_script, "builder must submit the complete Mario palette")
+    require(
+        'id="palette-confirmation"' in html
+        and "confirmNonCanonicalPalette" in patcher_script
+        and 'paletteConfirmation.showModal()' in patcher_script
+        and "PALETTE_ACKNOWLEDGEMENT_KEY" in patcher_script
+        and "localStorage.setItem(PALETTE_ACKNOWLEDGEMENT_KEY" in patcher_script,
+        "non-canonical palettes must require explicit confirmation",
+    )
+    require("data.palette.flat()" in worker_script, "worker must forward all six RGB colours")
     require("build-rom" in html and "download-rom" in html, "build and download controls must remain")
+    require(
+        html.count('src="n64-controller.svg"') == 2,
+        "Mario controls diagram must be shown on the patcher",
+    )
+    for label in ("Player 1", "Player 2", "D-pad", "Camera orbit / zoom", "Alt camera"):
+        require(label in html, f"controls diagram is missing {label}")
+    require(
+        '<div><dt><b>3</b>C-Up</dt><dd>Enhanced Mode</dd></div>' in html
+        and '<div><dt><b>10</b>C-Left / Down / Right</dt><dd>Items</dd></div>' in html
+        and '<div><dt><b>8</b>R</dt><dd>Z-target</dd></div>' in html,
+        "controls diagram must show the current C-Up enhanced-mode and R target scheme",
+    )
+    for song in ("Song of Mushroom Melodies", "Song of Borrowed Voices"):
+        require(song in html, f"soundtrack controls are missing {song}")
+    for sequence in ("R + C←", "Stick↓ + A", "Z + C↓", "Stick↑ + C↑"):
+        require(sequence in html, f"soundtrack controls are missing input {sequence}")
+    require(
+        html.count('class="soundtrack-matrix"') == 1
+        and "<caption>" not in html
+        and html.count("Zelda instruments") == 2
+        and html.count("Mario instruments") == 2,
+        "soundtrack matrix must show all four music and instrument states",
+    )
+    require(
+        "https://www.svgrepo.com/svg/84805/n64-game-control" in controls_diagram
+        and "CC0 1.0" in controls_diagram,
+        "N64 controller asset must retain its CC0 provenance",
+    )
+    require(
+        '<div><dt><b>9</b>Control stick</dt><dd>Alt camera</dd></div>' in html,
+        "Player 2 alternate camera must use control marker 9",
+    )
+    require(
+        (SITE / "controls-proof.html").is_file()
+        and (SITE / "controls-proof.js").is_file()
+        and (SITE / "controls-proof.css").is_file(),
+        "draggable controls proof must remain available",
+    )
     require("background: var(--surface)" not in styles, "patcher must not use a card background")
     require("border: 1px solid var(--line)" not in styles, "options must not use card borders")
     require("Content-Security-Policy" in html, "missing content security policy")

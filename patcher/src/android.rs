@@ -28,14 +28,14 @@ fn build(
     if components.iter().any(|value| !(0..=255).contains(value)) {
         return Err("Mario colour components must be between 0 and 255.".to_owned());
     }
+    let mut mario_palette = crate::BuildOptions::LINK_IS_REAL;
+    mario_palette[1] = [red as u8, green as u8, blue as u8];
     crate::build_from_paths_with_options(
         Path::new(&sm64),
         Path::new(&oot),
         Path::new(&mm),
         Path::new(&output),
-        crate::BuildOptions {
-            mario_color: [red as u8, green as u8, blue as u8],
-        },
+        crate::BuildOptions { mario_palette },
         |_| {},
     )
     .map_err(|error| format!("{error:#}"))
