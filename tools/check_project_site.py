@@ -33,6 +33,9 @@ def main(require_built_patcher: bool = False) -> int:
     patcher_script = (SITE / "patcher.js").read_text(encoding="utf-8")
     worker_script = (SITE / "patcher-worker.js").read_text(encoding="utf-8")
     controls_diagram = (SITE / "n64-controller.svg").read_text(encoding="iso-8859-1")
+    speedruns_html = (SITE / "speedruns.html").read_text(encoding="utf-8")
+    speedruns_script = (SITE / "speedruns.js").read_text(encoding="utf-8")
+    speedruns = json.loads((SITE / "speedruns.json").read_text(encoding="utf-8"))
 
     require(stable["repository"] == "msmfai/marios-mask", "unexpected repository")
     require(re.fullmatch(r"\d+\.\d+\.\d+", stable["version"]) is not None, "invalid stable version")
@@ -91,12 +94,33 @@ def main(require_built_patcher: bool = False) -> int:
         'id="palette-confirmation"' in html
         and "confirmNonCanonicalPalette" in patcher_script
         and 'paletteConfirmation.showModal()' in patcher_script
+        and 'confirmPalette.addEventListener("click"' in patcher_script
+        and 'paletteConfirmation.close("confirm")' in patcher_script
         and "PALETTE_ACKNOWLEDGEMENT_KEY" in patcher_script
         and "localStorage.setItem(PALETTE_ACKNOWLEDGEMENT_KEY" in patcher_script,
         "non-canonical palettes must require explicit confirmation",
     )
     require("data.palette.flat()" in worker_script, "worker must forward all six RGB colours")
     require("build-rom" in html and "download-rom" in html, "build and download controls must remain")
+    require('href="speedruns.html"' in html, "patcher must link to the speedrun leaderboard")
+    require(
+        all(f'<th scope="col">{heading}</th>' in speedruns_html for heading in ("Username", "Time", "Version")),
+        "speedrun leaderboard must show username, time and version",
+    )
+    require(isinstance(speedruns, list), "speedrun leaderboard data must be a list")
+    require(
+        all(
+            isinstance(run, dict)
+            and set(run) == {"username", "time", "version"}
+            and all(isinstance(value, str) and value.strip() for value in run.values())
+            for run in speedruns
+        ),
+        "every speedrun must have a non-empty username, time and version",
+    )
+    require(
+        'fetch("speedruns.json")' in speedruns_script and "textContent = value" in speedruns_script,
+        "leaderboard must load local data without injecting markup",
+    )
     require(
         html.count('src="n64-controller.svg"') == 2,
         "Mario controls diagram must be shown on the patcher",

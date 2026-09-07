@@ -199,6 +199,7 @@ jobs:
           cp release-assets/MariosMaskBuilder-web.html pages/MariosMaskBuilder-web.html
           cmp release-assets/MariosMaskBuilder-web.html pages/index.html
           cmp release-assets/MariosMaskBuilder-web.html pages/MariosMaskBuilder-web.html
+          cp site/speedruns.html site/speedruns.js site/speedruns.json site/styles.css pages/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
