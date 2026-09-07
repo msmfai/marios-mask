@@ -36,10 +36,13 @@ FORBIDDEN_ROOTS = {
     "state", "test", "toolchain",
 }
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
-EXPECTED_RECIPE_SHA256 = "521ed166d9e3a65e39dbe0fc17e6b64038a0c2418f3e2251364f6ff50362c09c"
+EXPECTED_RECIPE_SHA256 = "085869ee0203c90bc01245609e6401e6bc58e37bce4dd870d6f05f228975f09b"
 REVIEWED_MEDIA_SHA256 = {
     "assets/juno-logo.png":
         "771286cb1173c678d0d6cbaac45653e66d732c92cbc66bb977c8850c6b1e2c95",
+    # Small public-page presentation asset; it contains no ROM-derived data.
+    "site/hero.png":
+        "a9f21543124d61b09840bf05fffe78e8261399d87ae8f8e1c496fc511337c315",
 }
 REQUIRED = {
     ".github/workflows/android-release.yml",
@@ -76,6 +79,7 @@ REQUIRED = {
     "android/settings.gradle",
     "assets/juno-logo.png",
     "site/README.md",
+    "site/hero.png",
     "site/index.html",
     "site/patcher-worker.js",
     "site/patcher.js",
