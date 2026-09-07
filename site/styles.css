@@ -528,6 +528,52 @@ dialog p {
   opacity: 0.5;
 }
 
+.speedrun-link {
+  margin: 18px 0 0;
+  text-align: center;
+}
+
+.speedrun-link a,
+.back-link a {
+  color: var(--gold);
+  font-weight: 750;
+}
+
+.leaderboard-page {
+  width: min(760px, calc(100% - 32px));
+  padding-top: 54px;
+}
+
+.leaderboard-page h1 {
+  margin-bottom: 36px;
+}
+
+.back-link {
+  margin: 0 0 28px;
+}
+
+.speedrun-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.speedrun-table th,
+.speedrun-table td {
+  padding: 14px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.speedrun-table th {
+  color: var(--gold);
+}
+
+.speedrun-empty,
+.speedrun-status {
+  color: var(--muted);
+}
+
 .download-button {
   border: 1px solid var(--gold);
 }

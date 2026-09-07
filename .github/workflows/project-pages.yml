@@ -49,11 +49,13 @@ jobs:
       - name: Validate project site
         run: |
           python3 tools/check_project_site.py --require-built-patcher
-          python3 tools/build_web_release.py --output "$RUNNER_TEMP/MariosMaskBuilder-web.html"
+          mkdir "$RUNNER_TEMP/project-pages"
+          python3 tools/build_web_release.py --output "$RUNNER_TEMP/project-pages/MariosMaskBuilder-web.html"
+          cp site/speedruns.html site/speedruns.js site/speedruns.json site/styles.css "$RUNNER_TEMP/project-pages/"
       - uses: actions/upload-artifact@v4
         with:
           name: project-pages-source-html
-          path: ${{ runner.temp }}/MariosMaskBuilder-web.html
+          path: ${{ runner.temp }}/project-pages
           if-no-files-found: error
 
   deploy-release:
@@ -68,6 +70,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
       - name: Download exact release HTML
         env:
           GH_TOKEN: ${{ github.token }}
@@ -77,6 +80,7 @@ jobs:
           gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern MariosMaskBuilder-web.html --dir pages
           cp pages/MariosMaskBuilder-web.html pages/index.html
           cmp pages/MariosMaskBuilder-web.html pages/index.html
+          cp site/speedruns.html site/speedruns.js site/speedruns.json site/styles.css pages/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
