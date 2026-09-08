@@ -1,12 +1,12 @@
-# Mario's Mask Alpha 0.12.1
+# Mario's Mask Alpha 0.12.2
 
-Alpha 0.12.1 is a focused bug-fix release for progression and Enhanced Mode.
+Alpha 0.12.2 adds minor camera fixes in the early game.
 
-## Fixes
+## Improvements
 
-- Drinking Chateau Romani no longer makes Mario's elemental powers stop working after their first three-shot charge. Fire, ice, and light powers can now be activated repeatedly while Chateau's unlimited magic is active.
-- Mario can once again grab and push Mikau to shore, allowing the Zora Mask quest to be completed while wearing the Brother's Mask.
-- The Enhanced Mode sign in Peach's Castle now correctly tells players to press **C-Up** instead of the old **R** control.
+- Mario now starts with the native *Majora's Mask* camera in compact indoor locations such as shops, houses, the Clock Tower interior, and other small rooms where the closer Mario camera could become awkward.
+- Leaving the Clock Tower for South Clock Town as Mario now starts with the native camera. Other entrances retain their existing camera defaults.
+- Zora Hall's Mario-instrument arrangement now uses a bass voice in place of the previous guitar voice.
 
 ## Browser builder
 
@@ -15,7 +15,7 @@ Build locally in your browser at https://msmfai.github.io/marios-mask/. A self-c
 ## Validation
 
 - The uninstrumented 8 MiB release build passed the exhaustive vanilla-*Majora's Mask* area-memory comparison.
-- The release runtime suite covers Mikau's native push interaction and repeated elemental-power activation after drinking Chateau Romani.
+- The complete release test and invariant suites passed against the published candidate.
 - The downloaded builder must reproduce the approved release ROM byte-for-byte from both supported *Majora's Mask* input forms.
 
 ## Builder requirements
