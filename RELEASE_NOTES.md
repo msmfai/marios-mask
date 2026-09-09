@@ -1,12 +1,12 @@
-# Mario's Mask Alpha 0.12.2
+# Mario's Mask Alpha 0.12.3
 
-Alpha 0.12.2 adds minor camera fixes in the early game.
+Alpha 0.12.3 fixes a Mario movement lock near the Swamp Potion Shop and other affected transition surfaces.
 
-## Improvements
+## Fixes
 
-- Mario now starts with the native *Majora's Mask* camera in compact indoor locations such as shops, houses, the Clock Tower interior, and other small rooms where the closer Mario camera could become awkward.
-- Leaving the Clock Tower for South Clock Town as Mario now starts with the native camera. Other entrances retain their existing camera defaults.
-- Zora Hall's Mario-instrument arrangement now uses a bass voice in place of the previous guitar voice.
+- Mario no longer loses his ability to jump after approaching the ladder and surrounding ground outside the Swamp Potion Shop.
+- Ordinary floor metadata can no longer incorrectly force Mario into Link's falling state.
+- Authored holes and grottos continue to use their normal scene transitions.
 
 ## Browser builder
 
@@ -15,7 +15,7 @@ Build locally in your browser at https://msmfai.github.io/marios-mask/. A self-c
 ## Validation
 
 - The uninstrumented 8 MiB release build passed the exhaustive vanilla-*Majora's Mask* area-memory comparison.
-- The complete release test and invariant suites passed against the published candidate.
+- Mario's gameplay, state-transition, fusion, bottle, Zora Egg, and minigame suites passed against the release candidate.
 - The downloaded builder must reproduce the approved release ROM byte-for-byte from both supported *Majora's Mask* input forms.
 
 ## Builder requirements
