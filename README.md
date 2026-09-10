@@ -38,8 +38,6 @@ included for convenience—you can still play the introduction whenever you want
 
 ## Move through Termina like Mario
 
-![Mario running through Clock Town](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/clock-town.png)
-
 Mario can run, punch, kick, crouch, crawl, swim, climb ledges, long-jump,
 side-flip, triple-jump, wall-jump, and ground-pound. His momentum, aerial
 control, rebounds, falls, voice, and animation make familiar places feel new and
