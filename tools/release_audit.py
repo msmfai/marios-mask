@@ -46,6 +46,15 @@ REVIEWED_MEDIA_SHA256 = {
         "a9f21543124d61b09840bf05fffe78e8261399d87ae8f8e1c496fc511337c315",
         "e459880a0305c977c0e1cae562b1bb82f157e0f4b6bcc769c3b94ab86f5f7353",
     ),
+    "site/readme-screenshots/brothers-mask-inventory.png": (
+        "8f2333e07fd11a9a56f9cdb039073a4f05028512f34cd1bfd73d3213c6864bd1",
+    ),
+    "site/readme-screenshots/mario-bomb.png": (
+        "5e9d30f61173a861f9d079e1ff035e43a0692d64f5345b3333ac2613528f219a",
+    ),
+    "site/readme-screenshots/mario-swimming.png": (
+        "dd469a2fc9ce08c6306236a1d5ab398e7d66be2dfcd7f5d496eef2cbffe7f45c",
+    ),
 }
 REQUIRED = {
     ".github/workflows/android-release.yml",

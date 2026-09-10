@@ -40,3 +40,15 @@ The Pages deployment also publishes `speedruns.html`. Add accepted runs to
   "version": "0.12.1"
 }
 ```
+
+## README screenshot refresh
+
+The hero, Brother's Mask inventory, underwater swimming, and bomb screenshots
+reflect the current build.
+
+The remaining legacy screenshots to replace are:
+
+- the mysterious stone door wobbling;
+- the area beyond the door in Peach's Castle;
+- Mario traversing Clock Town;
+- Mario reacting to Dinolfos fire breath.
