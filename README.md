@@ -30,7 +30,7 @@ approach.
 
 ![Beyond the mysterious door](https://github.com/msmfai/marios-mask/releases/download/v0.9.0/peaches-castle.png)
 
-![The Brother's Mask in the inventory](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/brothers-mask.png)
+![The Brother's Mask in the inventory](assets/screenshots/brothers-mask-inventory.png)
 
 With fresh save data, File 1 is named `Link` and begins on Day 1 just after the
 opening tutorial. File 2 begins a completely new game. The prepared file is
@@ -50,7 +50,7 @@ Mario respects the world's walls, floors, voids, water, hazards, moving actors,
 and scene transitions while retaining the expressive movement that defines
 *Super Mario 64*.
 
-![Mario swimming underwater](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/mario-swimming.png)
+![Mario swimming underwater](assets/screenshots/mario-swimming.png)
 
 Mario's camera has three zoom levels, including a close native-style view. His
 magic ability opens up exaggerated movement, wall climbing, and the strength to
@@ -113,7 +113,7 @@ switches, open chests, pick up and throw objects, and carry creatures such as
 Cuccos. Handle-operated and automatic doors preserve their different behavior
 while using Mario-appropriate movement.
 
-![Mario carrying a bomb in Termina Field](https://github.com/msmfai/marios-mask/releases/download/v0.8.0/selected-mario-bomb-jump.png)
+![Mario using a bomb](assets/screenshots/mario-bomb.png)
 
 Usable items are adapted to Mario's controls. Bombs and other throwables can be
 carried and thrown. The bow and Hookshot fire in the direction Mario faces, with
