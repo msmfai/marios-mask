@@ -50,5 +50,7 @@ The remaining legacy screenshots to replace are:
 
 - the mysterious stone door wobbling;
 - the area beyond the door in Peach's Castle;
-- Mario traversing Clock Town;
 - Mario reacting to Dinolfos fire breath.
+
+The outdated Clock Town traversal image has been removed from the public README;
+that section still needs a fresh current-build screenshot.
