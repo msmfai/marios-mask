@@ -1,20 +1,19 @@
-# Mario's Mask Alpha 0.13.0
+# Mario's Mask Alpha 0.14.0
 
-## What's new
+## What's changed
 
-- **A Vanish Cap switch is now hidden somewhere in Southern Swamp.** Find and press it to unlock Vanish Cap boxes. Its exact location is yours to discover!
-- **Mario's eyes, cap emblem, and overall buttons now respond to the scene's lighting**, rather than appearing to glow in dark areas. Texture edges blend with his chosen skin and cap colours.
-- Mario can freely explore the swamp shooting arena without its invisible boundary interfering with interactions.
+- **Brother's Mask now follows the game's native transformation flow more closely.** Removed extra cutscene-waiting behavior and stale transformation state that could interfere with changing forms.
+- **Switch directly between Mario and your other transformation forms.** Using Brother's Mask as Goron, Zora or Deku Link now selects Mario correctly. Using it as Mario removes it correctly, even when he is wearing another mask.
+- **More consistent mask controls and pause-menu behavior.** Brother's Mask now follows transformation-mask availability rules, including greyed-out C-buttons, underwater restrictions and the Moon. The pause menu also correctly protects the button assigned to your current Mario form.
+- Mario's transformation now has its own first-use/skip tracking, without sharing unrelated dialogue progress flags. Existing saves may show the full transformation once before it becomes skippable again.
+- Corrected which form's ceiling clearance is checked when using Brother's Mask. Interrupted transformations no longer leave a delayed Mario scream queued after the transformation has ended.
+- Cap boxes use normal visibility culling again, avoiding unnecessary drawing when they are out of view.
 
-## Existing saves
+Mario still stays equipped after death. His movement, abilities, appearance and ordinary wearable-mask support are unchanged.
 
-Vanish Cap boxes are no longer automatically unlocked. Older saves that received the automatic unlock will need to find the new switch. Once pressed, the switch stays unlocked in your saved progress.
+## Get the game
 
-## Play in your browser's patcher
-
-Use the [web patcher](https://msmfai.github.io/marios-mask/) to build the game from your own ROMs. All ROM processing happens locally on your device. You can also download the self-contained `MariosMaskBuilder-web.html` below for offline use.
-
-## Builder requirements
+Use the [web patcher](https://msmfai.github.io/marios-mask/) with your own ROMs. All processing happens locally on your device. The self-contained `MariosMaskBuilder-web.html` is also available below for offline use.
 
 Bring your own NTSC Nintendo 64 ROMs for *Super Mario 64*, *The Legend of Zelda: Majora's Mask*, and *The Legend of Zelda: Ocarina of Time*. Any NTSC revision of *Ocarina of Time* may be used.
 
