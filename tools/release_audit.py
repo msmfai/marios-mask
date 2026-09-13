@@ -36,7 +36,7 @@ FORBIDDEN_ROOTS = {
     "state", "test", "toolchain",
 }
 RECIPE = "patcher/recipe/marios-mask.mmrecipe"
-EXPECTED_RECIPE_SHA256 = "0ff9d95218fa8b3efc787937495c942a1e780ba987c6ff6238fe149a6e58288b"
+EXPECTED_RECIPE_SHA256 = "8a224d642ed188f3f28e20ea42ee0ca428fee85d6359c0db5f83a0eab5c0717c"
 REVIEWED_MEDIA_SHA256 = {
     "assets/juno-logo.png": (
         "771286cb1173c678d0d6cbaac45653e66d732c92cbc66bb977c8850c6b1e2c95",
