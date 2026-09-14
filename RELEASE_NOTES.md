@@ -1,19 +1,18 @@
-# Mario's Mask Alpha 0.14.0
+# Mario's Mask Alpha 0.15.0
 
 ## What's changed
 
-- **Brother's Mask now follows the game's native transformation flow more closely.** Removed extra cutscene-waiting behavior and stale transformation state that could interfere with changing forms.
-- **Switch directly between Mario and your other transformation forms.** Using Brother's Mask as Goron, Zora or Deku Link now selects Mario correctly. Using it as Mario removes it correctly, even when he is wearing another mask.
-- **More consistent mask controls and pause-menu behavior.** Brother's Mask now follows transformation-mask availability rules, including greyed-out C-buttons, underwater restrictions and the Moon. The pause menu also correctly protects the button assigned to your current Mario form.
-- Mario's transformation now has its own first-use/skip tracking, without sharing unrelated dialogue progress flags. Existing saves may show the full transformation once before it becomes skippable again.
-- Corrected which form's ceiling clearance is checked when using Brother's Mask. Interrupted transformations no longer leave a delayed Mario scream queued after the transformation has ended.
-- Cap boxes use normal visibility culling again, avoiding unnecessary drawing when they are out of view.
+- **Choose your music before you start playing.** On file select, press **L** to switch between Zelda and Mario music, and **R** to switch instruments. All four combinations are available, including Mario's save-menu music with either instrument set.
+- **Your music preferences now belong to the cartridge, not an individual save.** They carry across save files and game sessions. The two in-game selector songs update these same preferences.
+- **More reliable music switching and restoration.** Changing music or instruments keeps the current track's role instead of replacing it with the area's default music. Music stops, rapid changes and pending loads are handled more consistently, and background music no longer resumes prematurely while a fanfare is still loading.
+- **A refreshed title screen:** the new Mario's Mask logo and corner artwork have animated energy halos, with updated credits and Mario's “Press Start to Play” greeting when the logo appears.
+- File-select music controls now sit clear of the save-selection window. Cucco-flight music waits until playback begins before applying its tempo change.
 
-Mario still stays equipped after death. His movement, abilities, appearance and ordinary wearable-mask support are unchanged.
+The two music selector songs and their controls are unchanged. Your cap and shell music still work as before.
 
 ## Get the game
 
-Use the [web patcher](https://msmfai.github.io/marios-mask/) with your own ROMs. All processing happens locally on your device. The self-contained `MariosMaskBuilder-web.html` is also available below for offline use.
+Use the [web patcher](https://msmfai.github.io/marios-mask/) with your own ROMs. All processing happens locally on your device. Download `MariosMaskBuilder-web.html` below to use the same patcher offline.
 
 Bring your own NTSC Nintendo 64 ROMs for *Super Mario 64*, *The Legend of Zelda: Majora's Mask*, and *The Legend of Zelda: Ocarina of Time*. Any NTSC revision of *Ocarina of Time* may be used.
 
@@ -31,5 +30,3 @@ Bring your own NTSC Nintendo 64 ROMs for *Super Mario 64*, *The Legend of Zelda:
 ## Known issues
 
 - Some unusual Mario dialogue, quest, and cutscene combinations remain early alpha paths. Keep save states as well as normal in-game saves.
-- Many opposite-game instrument arrangements are still automatically converted rather than fully hand-authored.
-- Save compatibility is not yet guaranteed between alpha releases.
