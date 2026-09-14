@@ -8,6 +8,14 @@ body:
     attributes:
       value: |
         Thanks for helping test the alpha. Keep both ROMs private when reporting bugs.
+  - type: input
+    id: mod_version
+    attributes:
+      label: Mario's Mask version
+      description: Enter the version of the ROM where this happened, not your emulator version. Check the ROM filename or the release you downloaded; write "Unknown" if you cannot find it.
+      placeholder: "e.g. 0.15.0"
+    validations:
+      required: true
   - type: dropdown
     id: problem_area
     attributes:
