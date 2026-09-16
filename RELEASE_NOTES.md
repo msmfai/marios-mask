@@ -1,8 +1,11 @@
-# Mario's Mask Alpha 0.15.1
+# Mario's Mask Alpha 0.16.0
 
 ## What's changed
 
-- Fixed a respawn bug where voiding out or being crushed as Mario could bring you back with Link's controls and physics but Mario's model. Mario now stays Mario through these respawns.
+- **A new shared camera based on Super Mario 64's original Lakitu camera.** The two zoomed-out views now use its core following, rotation, look-ahead and wall-avoidance logic, adapted to Termina. The closest setting remains Majora's Mask's native camera.
+- **The same D-pad camera controls across every transformation.** Use up/down to select the view and left/right to rotate in the Lakitu views, with the original Super Mario 64 camera sound effects. Native targeting, conversations and scripted cameras still take over when needed.
+- **Keep sight of your landing after flower launches and other rapid ascents.** Mario's camera follows his height through the apex and descent, then eases back after landing. The familiar normal and far viewing distances are retained.
+- Improved transitions between native and Lakitu views: the custom view starts from the visible camera when you return to it. The optional second-controller analogue camera remains available.
 
 ## Get the game
 
