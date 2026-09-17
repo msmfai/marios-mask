@@ -1,10 +1,10 @@
-# Mario's Mask Alpha 0.16.1
+# Mario's Mask Alpha 0.16.2
 
 ## What's changed
 
-- Fixed Mario returning from boss blue warps and giant cutscenes with Link's controls and physics. Scripted transformations now restore Mario properly when gameplay resumes.
-- Fixed pressing the ocarina button while Mario is airborne disabling subsequent C-button items. Airborne ocarina presses now do nothing, and cancelled item requests no longer leave items blocked.
-- Stopped attacks from unexpectedly zooming in the two Lakitu camera views, for Mario and all of Link's forms. Native aiming and targeting cameras still work normally.
+- Refined the original Super Mario 64 Lakitu camera for Majora's Mask's flatter world. Its two Mario camera distances now sit one Mario-height higher and look down toward him, providing a clearer view of the ground ahead.
+- Restored Super Mario 64's authentic vertical camera behaviour during ordinary jumps and falls instead of making the camera climb with every ascent.
+- Kept bespoke vertical tracking for Deku-flower launches, so the camera follows Mario through the launch, apex and descent until he lands.
 
 ## Get the game
 
