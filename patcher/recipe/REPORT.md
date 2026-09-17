@@ -1,19 +1,19 @@
 # Current recipe report
 
-This recipe was generated from the Mario's Mask Alpha 0.16.1 release candidate.
+This recipe was generated from the Mario's Mask Alpha 0.16.2 release candidate.
 
 | Class | Output bytes |
 |---|---:|
-| Majora's Mask origin | 49,858,879 |
-| Super Mario 64 origin | 1,039,124 |
-| Ocarina of Time origin | 87,976 |
-| Literal origin | 7,603,205 |
+| Majora's Mask origin | 49,859,598 |
+| Super Mario 64 origin | 1,039,580 |
+| Ocarina of Time origin | 88,004 |
+| Literal origin | 7,602,002 |
 | Total output | 58,589,184 |
 
-The recipe stores 4,601,850 literal payload bytes and emits 4,727,981 bytes
+The recipe stores 4,601,139 literal payload bytes and emits 4,726,805 bytes
 through transparent output back-references. Its literal payload SHA-256 is
-`b5adacfd80fadbcc15c1a90ab6814cfca7ef7797e3af6a41e53290b94039ba6a`.
+`ce16e1cd0ee9f545478df2fb2c131c49d1d53609ce96f4858fbc9c02126b6177`.
 
-The complete recipe is 6,857,585 bytes. The reconstructed ROM SHA-1 is
-`03b18aa2f6acef782aa74b19b1602e3f49f0a6f8`, and its SHA-256 is
-`69f9a1b8042f19e72c1f6b79ce61ff5612162d72959d2bc47ee969e89d565e3e`.
+The complete recipe is 6,857,513 bytes. The reconstructed ROM SHA-1 is
+`034308c6588e67e6fd07acd54be92df638706d1d`, and its SHA-256 is
+`5425ed592e12d5ba4b34e97cf42d6e5e8fbd1c902be293846a1004dd68975f8b`.
