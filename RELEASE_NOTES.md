@@ -1,11 +1,16 @@
-# Mario's Mask Alpha 0.16.3
+# Mario's Mask Alpha 0.16.4
 
 ## What's changed
 
-- Restored Mario's complete post-credits scene: Epona is hidden and silent, Mario runs into the distance with his footsteps and jump voice, and "Thank you so much for playing my game" plays at the final stump scene.
-- Raised the Vanish Cap box at Romani Ranch to its intended height above the ground.
+- FINALLY FIXED THAT LAB FREEZE BUG HOLY SHIT
+- Fixed scene-transition memory corruption that could freeze the game when Mario left the Marine Research Lab after delivering Zora eggs.
+- Fixed Mario getting stuck when disembarking from the swamp boat.
 
-Build the patch in your browser with the [Mario's Mask web patcher](https://msmfai.github.io/marios-mask/).
+## Get the game
+
+Use the [web patcher](https://msmfai.github.io/marios-mask/) with your own ROMs. All processing happens locally on your device. Download `MariosMaskBuilder-web.html` below for the same patcher offline.
+
+Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocarina of Time. Any NTSC revision of Ocarina of Time may be used.
 
 ## Downloads
 
@@ -17,3 +22,7 @@ Build the patch in your browser with the [Mario's Mask web patcher](https://msmf
 | Intel Mac | `MariosMaskBuilder-macos-intel.zip` |
 | Linux | `MariosMaskBuilder-linux-x86_64.tar.gz` |
 | Android | `MariosMaskBuilder-android.apk` |
+
+## Known issues
+
+This is still an alpha. Please include your mod version when reporting bugs.
