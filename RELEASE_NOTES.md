@@ -1,13 +1,13 @@
-# Mario's Mask Alpha 0.17.0
+# Mario's Mask Alpha 0.18.0
 
 ## What's changed
 
-- Mario can now visibly wear ordinary masks. Each mask gives him its own outfit colours and puts the mask's icon inside the white circle on his cap.
-- Masks combine with fire, ice and light arrows, the Metal Cap and the Vanish Cap. Those still change Mario's look, and the mask icon stays on his cap, so combinations like Bunny Hood fire Mario are easy to recognise.
-- Putting a mask on or taking it off now plays Mario's power-up transition, with a power-down sound when you take it off.
-- The Bunny Hood now gives Mario the same movement as magic mode: faster running and floatier jumps, without using any magic. Using magic mode while wearing it changes nothing.
-- Riding Epona as Mario is friendlier. Mario still tumbles along behind her, but with cheerful voices instead of pain, a lighter bounce and new lines from Tatl. He still hurts enemies he bumps into.
-- The "Try" prompt for mounting Epona now only appears when Mario is close to her.
+- Mario no longer tiptoes or turns on the spot with an original N64 controller whose stick doesn't rest exactly in the centre. His stick now gets the same deadzone as Super Mario 64 (GitHub #60).
+- Taking off the Brother's Mask while wearing the Blast Mask no longer freezes the game.
+- Taking off the Brother's Mask after wearing the Great Fairy's Mask no longer crashes the game.
+- Music no longer cuts out when the background music, a second track and a fanfare all need their instruments at the same time.
+- The retired Peach statue in the Laundry Pool, left over from an early alpha, has been removed.
+- Mario now uses much less memory when you are not playing as him: his movement code, drawing code and animations are loaded only while he is around, and his animations and power-up textures stream from the cartridge the way Link's do. This is a large change under the hood. If you see a crash, freeze or missing animation that wasn't there in 0.17.0, please report it.
 
 ## Get the game
 
