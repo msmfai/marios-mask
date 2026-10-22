@@ -1,13 +1,8 @@
-# Mario's Mask Alpha 0.18.0
+# Mario's Mask Alpha 0.18.1
 
 ## What's changed
 
-- Mario no longer tiptoes or turns on the spot with an original N64 controller whose stick doesn't rest exactly in the centre. His stick now gets the same deadzone as Super Mario 64 (GitHub #60).
-- Taking off the Brother's Mask while wearing the Blast Mask no longer freezes the game.
-- Taking off the Brother's Mask after wearing the Great Fairy's Mask no longer crashes the game.
-- Music no longer cuts out when the background music, a second track and a fanfare all need their instruments at the same time.
-- The retired Peach statue in the Laundry Pool, left over from an early alpha, has been removed.
-- Mario now uses much less memory when you are not playing as him: his movement code, drawing code and animations are loaded only while he is around, and his animations and power-up textures stream from the cartridge the way Link's do. This is a large change under the hood. If you see a crash, freeze or missing animation that wasn't there in 0.17.0, please report it.
+- Lit torches no longer burn Mario, the same as Link. He can still light Deku Sticks from them.
 
 ## Get the game
 
