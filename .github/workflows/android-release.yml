@@ -6,7 +6,7 @@ on:
       release_tag:
         description: Existing GitHub release tag to receive the APK
         required: true
-        default: v0.9.0
+        default: beta-v0.1.0
 
 permissions:
   contents: write
@@ -22,7 +22,17 @@ jobs:
       - name: Match source version to requested release
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
-        run: test "v$(cat VERSION)" = "$RELEASE_TAG"
+        # Stable tags are beta-vVERSION; experimental VERSIONs are
+        # X.Y.Z-experimental.DATE.gCOMMIT, tagged experimental-DATE-gCOMMIT.
+        run: |
+          version="$(cat VERSION)"
+          case "$version" in
+            *-experimental.*)
+              rest="${version#*-experimental.}"
+              expected="experimental-${rest%%.*}-${rest#*.}" ;;
+            *) expected="beta-v${version}" ;;
+          esac
+          test "$expected" = "$RELEASE_TAG"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

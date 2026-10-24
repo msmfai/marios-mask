@@ -39,7 +39,7 @@ def main(require_built_patcher: bool = False) -> int:
 
     require(stable["repository"] == "msmfai/marios-mask", "unexpected repository")
     require(re.fullmatch(r"\d+\.\d+\.\d+", stable["version"]) is not None, "invalid stable version")
-    require(stable["tag"] == f"v{stable['version']}", "stable version and tag disagree")
+    require(stable["tag"] == f"beta-v{stable['version']}", "stable version and tag disagree")
     require(stable["assets"] == EXPECTED_ASSETS, "stable asset names disagree with release workflow")
     require("<h1>Mario's Mask</h1>" in html, "missing project title")
     require(html.count('class="hero-image"') == 1, "site must contain exactly one hero image")
