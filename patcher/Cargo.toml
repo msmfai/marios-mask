@@ -1,6 +1,6 @@
 [package]
 name = "marios-mask-builder"
-version = "0.2.0"
+version = "0.2.1-experimental.20261024.g99c44f3"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "Standalone three-ROM builder for Mario's Mask"
