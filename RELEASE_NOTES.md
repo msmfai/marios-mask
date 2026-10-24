@@ -1,9 +1,10 @@
-# Mario's Mask Beta 0.1.0
+# Mario's Mask Beta 0.2.0
 
-Mario's Mask is moving to beta. From now on, releases are split into two channels:
+## What's new
 
-- **Stable** releases, like this one, are tested before they are published.
-- **Experimental** releases are published as new features land, without testing, and are marked as pre-releases.
+- **Peach's Castle opening.** The first time you enter Peach's Castle on a save, an
+  opening cutscene plays: Zelda's letter, Tatl's flight over the castle grounds,
+  then the pipe. It plays once per save, in every form.
 
 ## Get the game
 
@@ -24,4 +25,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.1.0") when reporting bugs.
+Please include the exact release name (for example "Beta 0.2.0") when reporting bugs.
