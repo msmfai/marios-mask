@@ -7,13 +7,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping test the alpha. Keep both ROMs private when reporting bugs.
+        Thanks for helping test Mario's Mask. Keep both ROMs private when reporting bugs.
   - type: input
     id: mod_version
     attributes:
       label: Mario's Mask version
       description: Enter the version of the ROM where this happened, not your emulator version. Check the ROM filename or the release you downloaded; write "Unknown" if you cannot find it.
-      placeholder: "e.g. 0.15.0"
+      placeholder: "e.g. Beta 0.1.0, or Experimental 0.1.1-experimental.20261024.g0123abc"
     validations:
       required: true
   - type: dropdown
