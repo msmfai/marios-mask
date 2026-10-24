@@ -30,7 +30,7 @@ def build(output: Path) -> None:
     worker = (SITE / "patcher-worker.js").read_text(encoding="utf-8")
     loader = (SITE / "pkg/marios_mask_builder.js").read_text(encoding="utf-8")
     wasm = (SITE / "pkg/marios_mask_builder_bg.wasm").read_bytes()
-    version = json.loads((SITE / "stable.json").read_text(encoding="utf-8"))["version"]
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 
     loader = require_replace(
         loader,

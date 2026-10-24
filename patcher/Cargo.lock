@@ -1623,7 +1623,7 @@ dependencies = [
 
 [[package]]
 name = "marios-mask-builder"
-version = "0.18.1"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "eframe",

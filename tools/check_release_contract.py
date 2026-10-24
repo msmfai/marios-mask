@@ -74,8 +74,11 @@ def main() -> int:
         macos["CFBundleShortVersionString"] == version,
         "VERSION and macOS CFBundleShortVersionString disagree",
     )
+    # Stable releases are "Beta X.Y.Z"; experimental releases carry an
+    # "-experimental.DATE.COMMIT" VERSION and their own title.
+    channel = "Experimental" if "-experimental." in version else "Beta"
     require(
-        notes.startswith(f"# Mario's Mask Alpha {version}\n"),
+        notes.startswith(f"# Mario's Mask {channel} {version}\n"),
         "release notes title does not match VERSION",
     )
     require(

@@ -1,8 +1,9 @@
-# Mario's Mask Alpha 0.18.1
+# Mario's Mask Beta 0.1.0
 
-## What's changed
+Mario's Mask is moving to beta. From now on, releases are split into two channels:
 
-- Lit torches no longer burn Mario, the same as Link. He can still light Deku Sticks from them.
+- **Stable** releases, like this one, are tested before they are published.
+- **Experimental** releases are published as new features land, without testing, and are marked as pre-releases.
 
 ## Get the game
 
@@ -23,4 +24,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-This is still an alpha. Please include your mod version when reporting bugs.
+Please include the exact release name (for example "Beta 0.1.0") when reporting bugs.

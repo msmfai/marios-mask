@@ -85,7 +85,7 @@ Signs beyond the mysterious door teach two secret songs. One switches between
 switches the instrument palette. The settings are independent, giving each save
 file four persistent soundtrack configurations.
 
-The alpha uses a mixture of hand-authored arrangements and automatic instrument
+Mario's Mask uses a mixture of hand-authored arrangements and automatic instrument
 conversions. More arrangements will be refined as development continues.
 
 ## Fight the creatures of Majora's Mask
@@ -101,7 +101,7 @@ Fire can send Mario running with smoke trailing behind him. Ice traps him in a
 block. Underwater, air drains his health and surfacing restores it a little at a
 time. When Mario loses his last heart, his own defeat sequence replaces Link's.
 
-This is still an alpha, so unusual encounters and scripted fights may need more
+This is still a beta, so unusual encounters and scripted fights may need more
 play-testing.
 
 ## Use the world and its items
@@ -172,26 +172,25 @@ the standalone builder, not a playable game. Its documented
 three files you select. Nintendo-derived content is read from those files; it is
 not embedded in the builder.
 
-## What alpha means
+## Stable and experimental releases
 
-Mario's Mask will remain in alpha until it is ready for stronger stability and
-compatibility promises.
+Mario's Mask is in beta. Releases come in two separate channels:
 
-- New versions may be released without extensive testing.
-- Save compatibility between alpha versions is not guaranteed.
-- Soft-locks are expected. Keep save states as you play, in addition to normal
-  in-game saves.
-- Some content is placeholder or procedurally generated.
-- Features, controls, and balance may change between versions.
+- **Stable** releases (for example `Beta 0.1.0`, tagged `beta-v0.1.0`) are
+  QA'd: each one passes the full gameplay, memory and reconstruction checks
+  before it is published. The latest stable release is the one shown at the top
+  of the Releases page and the one the web builder uses. Start here.
+- **Experimental** releases (tagged `experimental-DATE-COMMIT`) are published as
+  new features land, without testing or QA. They are marked as pre-releases, may
+  be broken in ways a stable release is not, and only the most recent few are
+  kept. Use them to try new features early, and keep save states as you play.
 
-When the project reaches beta, development will split into stable and nightly
-releases. Save games will remain compatible or receive a conversion path, and
-procedurally generated content will be restricted to local development builds.
+Features, controls and balance may still change between versions. Please
+include the exact release name when reporting a bug.
 
 > [!NOTE]
-> Due to the rapidly changing features of the mod during alpha, the README and
-> release notes are machine-generated directly from the code to ensure they stay
-> up to date.
+> Because the mod changes quickly, the README and release notes are
+> machine-generated directly from the code to ensure they stay up to date.
 >
 > Rest assured, this is a human-led project.
 
