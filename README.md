@@ -19,8 +19,6 @@ the heart of the game—you explore them with a very different hero.
 
 **[Download the standalone builder](https://github.com/msmfai/marios-mask/releases/latest)**
 
-> **Early alpha:** back up your saves and expect some rough edges.
-
 ## Find the Brother's Mask
 
 Find the mysterious stone door inside the Clock Tower. Its face wobbles as you
@@ -122,10 +120,6 @@ Mario can play songs and participate in the conversations and quest systems
 needed to continue the adventure. Where the original game expects Link's form,
 the mod aims to provide a Mario-compatible route without changing how ordinary
 Link plays.
-
-Version 0.8.0 expands Mario-aware conversation and quest routing across Termina.
-Some of these paths remain experimental and can still soft-lock, so save before
-trying long quest sequences as Mario.
 
 ## Build your game
 
