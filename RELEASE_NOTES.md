@@ -1,10 +1,16 @@
-# Mario's Mask Beta 0.2.0
+# Mario's Mask Beta 0.2.1
 
-## What's new
+## Fixes
 
-- **Peach's Castle opening.** The first time you enter Peach's Castle on a save, an
-  opening cutscene plays: Zelda's letter, Tatl's flight over the castle grounds,
-  then the pipe. It plays once per save, in every form.
+- **Hair colour now reaches the moustache and sideburns.** The builder's
+  "Hair & moustache" colour previously only changed the hair at the back of
+  Mario's head; the moustache and sideburns stayed blond. Choosing the Original
+  Mario palette now gives his classic dark moustache, and custom hair colours
+  apply to the whole look. ([#66](https://github.com/msmfai/marios-mask/issues/66))
+
+## Changes
+
+- **Music:** with Mario music on, the Final Hours now play the Endless Stairs theme.
 
 ## Get the game
 
@@ -25,4 +31,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.2.0") when reporting bugs.
+Please include the exact release name (for example "Beta 0.2.1") when reporting bugs.
