@@ -1,16 +1,12 @@
-# Mario's Mask Beta 0.2.1
+# Mario's Mask Beta 0.2.2
 
 ## Fixes
 
-- **Hair colour now reaches the moustache and sideburns.** The builder's
-  "Hair & moustache" colour previously only changed the hair at the back of
-  Mario's head; the moustache and sideburns stayed blond. Choosing the Original
-  Mario palette now gives his classic dark moustache, and custom hair colours
-  apply to the whole look. ([#66](https://github.com/msmfai/marios-mask/issues/66))
-
-## Changes
-
-- **Music:** with Mario music on, the Final Hours now play the Endless Stairs theme.
+- **Moustache and sideburns no longer turn white.** Since Beta 0.2.1 they could
+  occasionally lose their colour (for example after putting on a mask) until the
+  lighting changed. Mario's colours are now reapplied every time his model is
+  loaded, which also keeps custom outfit colours from reverting to the defaults.
+  ([#68](https://github.com/msmfai/marios-mask/issues/68))
 
 ## Get the game
 
@@ -31,4 +27,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.2.1") when reporting bugs.
+Please include the exact release name (for example "Beta 0.2.2") when reporting bugs.
