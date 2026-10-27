@@ -202,6 +202,13 @@ jobs:
           esac
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
             gh release create "$GITHUB_REF_NAME" "${channel[@]}" --title "$title" --notes-file RELEASE_NOTES.md
+          # The web patcher requests this file once per built ROM, so GitHub
+          # counts browser builds of the stable release (site/patcher.js).
+          if [[ "$GITHUB_REF_NAME" == beta-v* ]]; then
+            printf '%s\n' dummywebpatchertrackerfile \
+              "The Mario's Mask web patcher requests this file once per built ROM so GitHub counts web downloads." \
+              > release-assets/web-patcher-download-tracker.txt
+          fi
           gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber
 
   # The website and web builder always serve the stable release.
