@@ -112,6 +112,20 @@ cancelPalette.addEventListener("click", () => {
 
 selectPalette("green");
 
+// The ROM never leaves the browser, so GitHub cannot see it being downloaded.
+// Each stable release carries a tiny tracker asset; requesting it once per
+// built ROM adds the build to that release's download count. The response is
+// opaque and ignored, and a failure never affects the patcher. GitHub counts
+// the request at its redirect, so the count holds even if the file host moves.
+function countWebDownload(version) {
+  fetch(`https://github.com/msmfai/marios-mask/releases/download/beta-v${version}/web-patcher-download-tracker.txt`, {
+    mode: "no-cors",
+    cache: "no-store",
+    credentials: "omit",
+    keepalive: true,
+  }).catch(() => {});
+}
+
 function rgbFromHex(value) {
   return [1, 3, 5].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16));
 }
@@ -133,6 +147,7 @@ worker.addEventListener("message", async ({ data }) => {
     downloadRom.download = `Marios-Mask-v${await stableVersion}.z64`;
     downloadRom.hidden = false;
     downloadRom.click();
+    countWebDownload(await stableVersion);
     building = false;
     setStatus("Complete. Your patched ROM has been downloaded.");
     updateButton();
