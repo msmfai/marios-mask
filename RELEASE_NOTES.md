@@ -1,12 +1,12 @@
-# Mario's Mask Beta 0.2.2
+# Mario's Mask Beta 0.2.3
 
 ## Fixes
 
-- **Moustache and sideburns no longer turn white.** Since Beta 0.2.1 they could
-  occasionally lose their colour (for example after putting on a mask) until the
-  lighting changed. Mario's colours are now reapplied every time his model is
-  loaded, which also keeps custom outfit colours from reverting to the defaults.
-  ([#68](https://github.com/msmfai/marios-mask/issues/68))
+- **Winning the Gorman Brothers' race no longer softlocks.** After beating them
+  as Mario, the conversation froze on "You saw that." It now finishes, and the
+  brothers hand over Garo's Mask (or milk, if you already have the mask) as in
+  the original game, on every day of the cycle.
+  ([#70](https://github.com/msmfai/marios-mask/issues/70))
 
 ## Get the game
 
@@ -27,4 +27,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.2.2") when reporting bugs.
+Please include the exact release name (for example "Beta 0.2.3") when reporting bugs.
