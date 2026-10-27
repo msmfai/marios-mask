@@ -92,6 +92,7 @@ def build(output: Path) -> None:
         '<meta http-equiv="Content-Security-Policy" '
         'content="default-src \'none\'; script-src \'unsafe-inline\' \'wasm-unsafe-eval\'; '
         "style-src 'unsafe-inline'; worker-src blob:; img-src data:; "
+        "connect-src https://github.com/msmfai/marios-mask/releases/download/ https://release-assets.githubusercontent.com/; "
         "object-src 'none'; base-uri 'none'; form-action 'none'\">"
     )
     html, changes = csp_pattern.subn(standalone_csp, html)

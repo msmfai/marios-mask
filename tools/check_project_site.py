@@ -41,6 +41,16 @@ def main(require_built_patcher: bool = False) -> int:
     require(re.fullmatch(r"\d+\.\d+\.\d+", stable["version"]) is not None, "invalid stable version")
     require(stable["tag"] == f"beta-v{stable['version']}", "stable version and tag disagree")
     require(stable["assets"] == EXPECTED_ASSETS, "stable asset names disagree with release workflow")
+    require(
+        "releases/download/beta-v${version}/web-patcher-download-tracker.txt" in patcher_script
+        and "countWebDownload(await stableVersion);" in patcher_script,
+        "web patcher must count each built ROM against the stable release",
+    )
+    require(
+        "web-patcher-download-tracker.txt"
+        in (ROOT / ".github/workflows/binary-release.yml").read_text(encoding="utf-8"),
+        "stable releases must publish the web patcher download tracker",
+    )
     require("<h1>Mario's Mask</h1>" in html, "missing project title")
     require(html.count('class="hero-image"') == 1, "site must contain exactly one hero image")
     require('src="hero.png"' in html and (SITE / "hero.png").is_file(), "hero image must be local")
