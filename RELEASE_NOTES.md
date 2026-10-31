@@ -1,30 +1,21 @@
-# Mario's Mask Beta 0.2.4
+# Mario's Mask Experimental 0.2.5-experimental.20261031.gc714c53
 
-## New
+Untested build. Expect rough edges.
 
-- **Mario can do the Kamaro dance.** With Kamaro's Mask on, Mario now dances
-  the real Kamaro dance instead of standing still. You may still see a little
-  limb clipping.
+## New mask looks for Mario
 
-## Fixes
-
-- **You can get the Rosa Sisters' Piece of Heart as Mario.** Dancing for the
-  sisters in West Clock Town at night now starts their scene, and they teach
-  the dance and hand over the Piece of Heart as in the original game.
-  ([#73](https://github.com/msmfai/marios-mask/issues/73))
-- **Ground pounds work on Tektites.** Before, a ground pound did nothing to a
-  Tektite, and a blue Tektite's slide would knock Mario off it on the path to
-  Mountain Village. Now a ground pound breaks a blue Tektite's armor and
-  damages unarmored ones. Ground pounds can also now hurt other enemies that
-  used to ignore them.
-
-## Get the game
-
-Use the [web patcher](https://msmfai.github.io/marios-mask/) with your own ROMs. All processing happens locally on your device. Download `MariosMaskBuilder-web.html` below for the same patcher offline.
-
-Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocarina of Time. Any NTSC revision of Ocarina of Time may be used.
+- **New cap emblems.** Every ordinary mask now puts its own emblem on Mario's
+  cap, in the style of a Japanese prefecture flag, in place of the shrunken
+  mask icon. The white badge is exactly Mario's original M badge.
+- **New outfit colours.** Every mask's cap and overalls colours were redone with
+  classic Mario's fully saturated look, paired using colour-wheel harmonies,
+  and spaced so no two masks look alike.
 
 ## Downloads
+
+The [web patcher](https://msmfai.github.io/marios-mask/) builds the latest stable beta. To try this experimental build, download `MariosMaskBuilder-web.html` below and open it, or use a desktop builder. All processing happens locally on your device.
+
+Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocarina of Time.
 
 | Platform | Asset |
 |---|---|
@@ -35,6 +26,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 | Linux | `MariosMaskBuilder-linux-x86_64.tar.gz` |
 | Android | `MariosMaskBuilder-android.apk` |
 
-## Known issues
-
-Please include the exact release name (for example "Beta 0.2.4") when reporting bugs.
+Please include the exact release name when reporting bugs.
