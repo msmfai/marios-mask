@@ -19,18 +19,77 @@ const DMADATA_START: usize = 0x1A500;
 const SM64_SHA1: &str = "9bef1128717f958171a4afac3ed78ee2bb4e86ce";
 const MM_COMPRESSED_SHA1: &str = "d6133ace5afaa0882cf214cf88daba39e266c078";
 const MM_DECOMPRESSED_SHA1: &str = "7f5630dbc4d5d61d6276213210c4d5cdd83a47d6";
-const OUTPUT_SHA1: &str = "c6162ecdb4351e03913f54722efe00674ff97399";
+const OUTPUT_SHA1: &str = "824c215cebb56bbc90159484aaa362296aed1c59";
 const PATCH: &[u8] = include_bytes!("../recipe/marios-mask.mmrecipe");
 const MARIO_COLOR_MAGIC: &[u8; 8] = b"DSCECOLR";
 const MARIO_COLOR_VERSION: u8 = 2;
 const MARIO_COLOR_GUARD: &[u8; 4] = &[0xA5, 0x1D, 0x5A, 0xE1];
 const MARIO_COLOR_V1_TRAILER: &[u8; 5] = &[1, 0xA5, 0x1D, 0x5A, 0xE1];
+// Player choices that change the game rather than its looks. The ROM owns
+// what each choice means; the builder only writes the chosen values. See
+// FORMAT.md, "Build options record".
+const BUILD_OPTIONS_MAGIC: &[u8; 8] = b"DSCEOPTS";
+const BUILD_OPTIONS_VERSION: u8 = 1;
+const BUILD_OPTIONS_SLOTS: usize = 16;
+const BUILD_OPTIONS_GUARD: &[u8; 4] = &[0xA5, 0x1D, 0x5A, 0xE1];
+const BUILD_OPTION_GAME_MODE: usize = 0;
 
 pub type MarioPalette = [[u8; 3]; 6];
+
+/// How the game plays. Standard is the default and the release the private
+/// gates verify byte-for-byte; every other mode differs only in the options
+/// record.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum GameMode {
+    #[default]
+    Standard,
+    Classic,
+}
+
+impl GameMode {
+    /// Modes a player can choose today. Challenge mode is announced in the
+    /// builders but has no record value until it ships.
+    pub const ALL: [GameMode; 2] = [GameMode::Standard, GameMode::Classic];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            GameMode::Standard => "standard",
+            GameMode::Classic => "classic",
+        }
+    }
+
+    pub fn title(self) -> &'static str {
+        match self {
+            GameMode::Standard => "Standard",
+            GameMode::Classic => "Classic",
+        }
+    }
+
+    pub fn summary(self) -> &'static str {
+        match self {
+            GameMode::Standard => "No Enhanced Mode. Firing Mario from the Bow costs 5 arrows.",
+            GameMode::Classic => "Enhanced Mode on C-Up. Firing Mario from the Bow costs 1 arrow.",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        Self::ALL
+            .into_iter()
+            .find(|mode| mode.name().eq_ignore_ascii_case(value))
+    }
+
+    fn record_value(self) -> u8 {
+        match self {
+            GameMode::Standard => 0,
+            GameMode::Classic => 1,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BuildOptions {
     pub mario_palette: MarioPalette,
+    pub game_mode: GameMode,
 }
 
 impl BuildOptions {
@@ -57,6 +116,7 @@ impl Default for BuildOptions {
     fn default() -> Self {
         Self {
             mario_palette: Self::LINK_IS_REAL,
+            game_mode: GameMode::default(),
         }
     }
 }
@@ -201,23 +261,58 @@ where
     ensure_sha1(&output, OUTPUT_SHA1, "Mario's Mask output")?;
 
     progress("Applying Mario colours…");
-    apply_mario_palette(&mut output, options.mario_palette)?;
+    let mut changed = apply_mario_palette(&mut output, options.mario_palette)?;
+    progress("Applying game options…");
+    changed |= apply_build_options(&mut output, options)?;
+    if changed {
+        update_x105_checksum(&mut output)?;
+    }
     Ok(output)
 }
 
-fn apply_mario_palette(output: &mut [u8], palette: MarioPalette) -> Result<()> {
+/// Finds the unique `magic` and returns the offset just past it.
+fn find_record(output: &[u8], magic: &[u8], name: &str) -> Result<usize> {
     let mut matches = output
-        .windows(MARIO_COLOR_MAGIC.len())
+        .windows(magic.len())
         .enumerate()
-        .filter_map(|(offset, bytes)| (bytes == MARIO_COLOR_MAGIC).then_some(offset));
-    let offset = matches
-        .next()
-        .context("This Mario's Mask recipe does not contain the patchable Mario colour record")?;
+        .filter_map(|(offset, bytes)| (bytes == magic).then_some(offset));
+    let offset = matches.next().with_context(|| {
+        format!("This Mario's Mask recipe does not contain the patchable {name} record")
+    })?;
     ensure!(
         matches.next().is_none(),
-        "Mario colour record is not unique in the built ROM"
+        "{name} record is not unique in the built ROM"
     );
-    let palette_offset = offset + MARIO_COLOR_MAGIC.len();
+    Ok(offset + magic.len())
+}
+
+/// True when `offset` lies inside the bytes the N64 header checksum covers.
+fn checksummed(offset: usize) -> bool {
+    (0x1000..0x101000).contains(&offset)
+}
+
+/// Writes the chosen option values. Returns whether a checksummed byte changed.
+fn apply_build_options(output: &mut [u8], options: BuildOptions) -> Result<bool> {
+    let header = find_record(output, BUILD_OPTIONS_MAGIC, "game options")?;
+    let values = header + 2;
+    let guard = values + BUILD_OPTIONS_SLOTS;
+    ensure!(
+        guard + BUILD_OPTIONS_GUARD.len() <= output.len()
+            && output[header] == BUILD_OPTIONS_VERSION
+            && output[header + 1] as usize == BUILD_OPTIONS_SLOTS
+            && &output[guard..guard + BUILD_OPTIONS_GUARD.len()] == BUILD_OPTIONS_GUARD,
+        "game options record has an unsupported version or damaged guard"
+    );
+    let slot = values + BUILD_OPTION_GAME_MODE;
+    let mode = options.game_mode.record_value();
+    let changed = output[slot] != mode;
+    output[slot] = mode;
+    Ok(changed && checksummed(slot))
+}
+
+/// Writes the chosen palette. Returns whether a checksummed byte changed.
+fn apply_mario_palette(output: &mut [u8], palette: MarioPalette) -> Result<bool> {
+    let palette_offset = find_record(output, MARIO_COLOR_MAGIC, "Mario colour")?;
     let palette_bytes: Vec<u8> = palette.into_iter().flatten().collect();
     let version_offset = palette_offset + palette_bytes.len();
     let guard_offset = version_offset + 1;
@@ -244,10 +339,7 @@ fn apply_mario_palette(output: &mut [u8], palette: MarioPalette) -> Result<()> {
         output[palette_offset..palette_offset + 3].copy_from_slice(&palette[1]);
         changed
     };
-    if changed && (0x1000..0x101000).contains(&palette_offset) {
-        update_x105_checksum(output)?;
-    }
-    Ok(())
+    Ok(changed && checksummed(palette_offset))
 }
 
 fn write_atomic(path: &Path, data: &[u8]) -> Result<()> {
@@ -627,6 +719,58 @@ mod tests {
         assert_eq!(&rom[0x28..0x2B], &[255, 0, 0]);
         assert_eq!(&rom[..0x28], &before[..0x28]);
         assert_eq!(&rom[0x2B..], &before[0x2B..]);
+    }
+
+    fn options_record() -> Vec<u8> {
+        let mut record = Vec::from(*BUILD_OPTIONS_MAGIC);
+        record.push(BUILD_OPTIONS_VERSION);
+        record.push(BUILD_OPTIONS_SLOTS as u8);
+        record.extend([0u8; BUILD_OPTIONS_SLOTS]);
+        record.extend_from_slice(BUILD_OPTIONS_GUARD);
+        record
+    }
+
+    #[test]
+    fn game_mode_changes_only_its_slot() {
+        let mut rom = vec![0x55u8; 0x40];
+        rom.extend(options_record());
+        rom.extend([0x66u8; 0x40]);
+        let before = rom.clone();
+        let classic = BuildOptions {
+            game_mode: GameMode::Classic,
+            ..BuildOptions::default()
+        };
+        apply_build_options(&mut rom, classic).unwrap();
+        let slot = 0x40 + 8 + 2 + BUILD_OPTION_GAME_MODE;
+        assert_eq!(rom[slot], 1);
+        assert_eq!(&rom[..slot], &before[..slot]);
+        assert_eq!(&rom[slot + 1..], &before[slot + 1..]);
+        apply_build_options(&mut rom, BuildOptions::default()).unwrap();
+        assert_eq!(rom, before);
+    }
+
+    #[test]
+    fn game_modes_round_trip_by_name() {
+        for mode in GameMode::ALL {
+            assert_eq!(GameMode::parse(mode.name()), Some(mode));
+        }
+        assert_eq!(GameMode::parse("Classic"), Some(GameMode::Classic));
+        assert_eq!(GameMode::parse("challenge"), None);
+    }
+
+    #[test]
+    fn rejects_missing_duplicate_or_unguarded_options_records() {
+        let options = BuildOptions::default();
+        assert!(apply_build_options(&mut vec![0u8; 64], options).is_err());
+        let record = options_record();
+        let mut duplicate = [record.as_slice(), record.as_slice()].concat();
+        assert!(apply_build_options(&mut duplicate, options).is_err());
+        let mut damaged = record.clone();
+        *damaged.last_mut().unwrap() = 0;
+        assert!(apply_build_options(&mut damaged, options).is_err());
+        let mut newer = record;
+        newer[8] = BUILD_OPTIONS_VERSION + 1;
+        assert!(apply_build_options(&mut newer, options).is_err());
     }
 
     #[test]

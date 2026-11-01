@@ -60,12 +60,21 @@ These controls apply while wearing the Brother's Mask:
 |---|---|
 | D-pad left / right | Rotate the camera around Mario |
 | D-pad up / down | Zoom the camera in or out |
-| C-Up | Toggle Enhanced Mode |
+| C-Up | Toggle Enhanced Mode (Classic mode only) |
 | C-Left / Down / Right | Use equipped items |
 | R | Z-target |
 
 Enhanced Mode consumes magic while active and gives Mario his more extreme
 movement and strength abilities. Press C-Up again to turn it off.
+
+### Game modes
+
+Choose a game mode when you build your ROM:
+
+- **Standard** (default): no Enhanced Mode. Firing Mario from the Bow costs 5
+  arrows.
+- **Classic**: Enhanced Mode on C-Up. Firing Mario from the Bow costs 1 arrow.
+- **Challenge**: coming soon.
 
 ## Discover a classic power-up
 
