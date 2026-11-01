@@ -1,15 +1,11 @@
-# Mario's Mask Beta 0.4.0
+# Mario's Mask Beta 0.4.1
 
-## New
+## Changes
 
-- **Choose a game mode when you build your ROM.** The patcher now offers two
-  ways to play:
-  - **Standard** (default): no Enhanced Mode. Firing Mario from the Bow costs
-    5 arrows.
-  - **Classic**: Enhanced Mode on C-Up, and firing Mario from the Bow costs
-    1 arrow, as in earlier releases.
-- **Challenge mode is coming soon.** It appears in the patcher but can't be
-  selected yet.
+- **Classic is now the default game mode.** The patcher selects Classic
+  (Enhanced Mode on C-Up, 1 arrow per Bow shot) unless you choose Standard
+  (no Enhanced Mode, 5 arrows per Bow shot). Challenge mode is still coming
+  soon.
 
 ## Get the game
 
@@ -30,4 +26,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.4.0") and your game mode when reporting bugs.
+Please include the exact release name (for example "Beta 0.4.1") and your game mode when reporting bugs.
