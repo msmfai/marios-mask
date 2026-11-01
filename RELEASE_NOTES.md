@@ -1,18 +1,15 @@
-# Mario's Mask Beta 0.3.0
+# Mario's Mask Beta 0.4.0
 
 ## New
 
-- **Every mask has its own Mario outfit.** Each ordinary mask now gives Mario
-  a new cap and overalls colour scheme. Every scheme has classic Mario's
-  bright, fully saturated look, and no two masks look alike.
-- **New cap emblems.** Instead of a shrunken mask icon, each mask puts its own
-  emblem on Mario's cap, designed in the style of Japanese prefecture flags.
-  The white badge behind it is Mario's original M badge.
-
-## Changes
-
-- **Firing Mario out of the Bow now costs 5 arrows.** With fewer than 5 arrows
-  the Bow won't draw. Fire, Ice and Light Arrows still cost one arrow each.
+- **Choose a game mode when you build your ROM.** The patcher now offers two
+  ways to play:
+  - **Standard** (default): no Enhanced Mode. Firing Mario from the Bow costs
+    5 arrows.
+  - **Classic**: Enhanced Mode on C-Up, and firing Mario from the Bow costs
+    1 arrow, as in earlier releases.
+- **Challenge mode is coming soon.** It appears in the patcher but can't be
+  selected yet.
 
 ## Get the game
 
@@ -33,4 +30,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.3.0") when reporting bugs.
+Please include the exact release name (for example "Beta 0.4.0") and your game mode when reporting bugs.

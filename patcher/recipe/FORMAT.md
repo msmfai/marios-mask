@@ -45,3 +45,26 @@ cargo run --release --features recipe-tool --bin marios-mask-recipe -- \
 The report gives the transitive MM, SM64, OoT, and literal byte totals, the number of
 bytes physically stored as literals, output-copy totals, and the SHA-256 of all
 literal payloads in command order.
+
+## Build options record
+
+The recipe always reconstructs the default build. Player choices are applied
+afterwards to two small records in the output, each located by a unique
+marker:
+
+| Record | Layout | Builder writes |
+|---|---|---|
+| `DSCECOLR` | marker, 6 x RGB, version `2`, guard `A5 1D 5A E1` | Mario's palette |
+| `DSCEOPTS` | marker, version `1`, slot count `16`, 16 value bytes, guard `A5 1D 5A E1` | value bytes |
+
+`DSCEOPTS` value slots:
+
+| Slot | Meaning | Values |
+|---|---|---|
+| 0 | Game mode | `0` Standard (default), `1` Classic |
+| 1-15 | Reserved | `0` |
+
+The builder writes choices, not rules: the ROM decides what each mode means,
+and treats unknown values as the default. The builder rejects a missing,
+duplicated, newer-version, or unguarded record. When a changed byte lies in the
+N64 boot-checksummed region, the header checksum is recomputed.

@@ -140,6 +140,16 @@ small {
   white-space: nowrap;
 }
 
+.mode-option {
+  align-items: flex-start;
+}
+
+.mode-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.game-mode,
 .mario-colour {
   border-right: 0;
   border-bottom: 0;
