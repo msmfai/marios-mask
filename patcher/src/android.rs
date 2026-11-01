@@ -19,11 +19,15 @@ fn build(
     red: jint,
     green: jint,
     blue: jint,
+    mode: &JString<'_>,
 ) -> Result<(), String> {
     let sm64 = path_from_java(env, sm64)?;
     let oot = path_from_java(env, oot)?;
     let mm = path_from_java(env, mm)?;
     let output = path_from_java(env, output)?;
+    let mode = path_from_java(env, mode)?;
+    let game_mode =
+        crate::GameMode::parse(&mode).ok_or_else(|| format!("Unknown game mode {mode:?}"))?;
     let components = [red, green, blue];
     if components.iter().any(|value| !(0..=255).contains(value)) {
         return Err("Mario colour components must be between 0 and 255.".to_owned());
@@ -35,7 +39,10 @@ fn build(
         Path::new(&oot),
         Path::new(&mm),
         Path::new(&output),
-        crate::BuildOptions { mario_palette },
+        crate::BuildOptions {
+            mario_palette,
+            game_mode,
+        },
         |_| {},
     )
     .map_err(|error| format!("{error:#}"))
@@ -54,9 +61,10 @@ pub extern "system" fn Java_ai_smf_mariosmask_MainActivity_nativeBuild(
     red: jint,
     green: jint,
     blue: jint,
+    mode: JString<'_>,
 ) -> jstring {
     let message = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        build(&mut env, &sm64, &oot, &mm, &output, red, green, blue)
+        build(&mut env, &sm64, &oot, &mm, &output, red, green, blue, &mode)
     })) {
         Ok(Ok(())) => String::new(),
         Ok(Err(error)) => error,

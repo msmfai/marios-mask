@@ -113,12 +113,21 @@ cancelPalette.addEventListener("click", () => {
 selectPalette("green");
 
 // The ROM never leaves the browser, so GitHub cannot see it being downloaded.
-// Each stable release carries a tiny tracker asset; requesting it once per
-// built ROM adds the build to that release's download count. The response is
-// opaque and ignored, and a failure never affects the patcher. GitHub counts
-// the request at its redirect, so the count holds even if the file host moves.
-function countWebDownload(version) {
-  fetch(`https://github.com/msmfai/marios-mask/releases/download/beta-v${version}/web-patcher-download-tracker.txt`, {
+// Each stable release carries tiny tracker assets; requesting one once per
+// built ROM adds the build to that release's download count. Standard builds
+// keep the original tracker so counts stay comparable across releases; every
+// other mode has its own, so the counts show which modes players choose. The
+// response is opaque and ignored, and a failure never affects the patcher.
+// GitHub counts the request at its redirect, so the count holds even if the
+// file host moves.
+function trackerName(mode) {
+  return mode === "standard"
+    ? "web-patcher-download-tracker.txt"
+    : `web-patcher-download-tracker-${mode}.txt`;
+}
+
+function countWebDownload(version, mode) {
+  fetch(`https://github.com/msmfai/marios-mask/releases/download/beta-v${version}/${trackerName(mode)}`, {
     mode: "no-cors",
     cache: "no-store",
     credentials: "omit",
@@ -130,10 +139,16 @@ function rgbFromHex(value) {
   return [1, 3, 5].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16));
 }
 
+function selectedMode() {
+  return document.querySelector('input[name="game-mode"]:checked').value;
+}
+
 function selectedPalette() {
   const preset = document.querySelector('input[name="mario-colour"]:checked').value;
   return palettes[preset] || customPalette.map((input) => rgbFromHex(input.value));
 }
+
+let builtMode = "standard";
 
 worker.addEventListener("message", async ({ data }) => {
   if (data.type === "ready") {
@@ -147,7 +162,7 @@ worker.addEventListener("message", async ({ data }) => {
     downloadRom.download = `Marios-Mask-v${await stableVersion}.z64`;
     downloadRom.hidden = false;
     downloadRom.click();
-    countWebDownload(await stableVersion);
+    countWebDownload(await stableVersion, builtMode);
     building = false;
     setStatus("Complete. Your patched ROM has been downloaded.");
     updateButton();
@@ -171,12 +186,13 @@ buildButton.addEventListener("click", async () => {
   building = true;
   updateButton();
   setStatus("Reading local ROMs…");
+  builtMode = selectedMode();
   try {
     const [sm64, oot, mm] = await Promise.all(
       Object.values(inputs).map((input) => input.files[0].arrayBuffer()),
     );
     worker.postMessage(
-      { type: "build", sm64, oot, mm, palette: selectedPalette() },
+      { type: "build", sm64, oot, mm, palette: selectedPalette(), mode: builtMode },
       [sm64, oot, mm],
     );
   } catch (error) {
