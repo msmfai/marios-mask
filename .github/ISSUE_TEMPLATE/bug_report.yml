@@ -4,40 +4,37 @@ title: "[Bug] "
 labels:
   - bug
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for helping test Mario's Mask. Keep both ROMs private when reporting bugs.
   - type: input
     id: mod_version
     attributes:
       label: Mario's Mask version
-      description: Enter the version of the ROM where this happened, not your emulator version. Check the ROM filename or the release you downloaded; write "Unknown" if you cannot find it.
-      placeholder: "e.g. Beta 0.1.0, or Experimental 0.1.1-experimental.20261024.g0123abc"
+      placeholder: "e.g. Beta 0.4.0"
     validations:
       required: true
   - type: dropdown
-    id: problem_area
+    id: game_mode
     attributes:
-      label: Where did the problem happen?
+      label: Game mode
       options:
-        - Building the game
-        - Opening the finished game
-        - Playing as Mario
-        - Playing as Link
-        - Somewhere else
+        - Standard
+        - Classic
+        - Built before Beta 0.4.0
+        - Not sure
     validations:
       required: true
   - type: dropdown
-    id: platform
+    id: emulator
     attributes:
-      label: Your computer
+      label: What are you playing on?
       options:
-        - Windows
-        - Mac with Apple Silicon
-        - Intel Mac
-        - Linux
-        - Android
+        - RetroArch (Mupen64Plus-Next core)
+        - RetroArch (ParaLLEl N64 core)
+        - ares
+        - Gopher64
+        - simple64
+        - Project64
+        - Mupen64Plus (standalone)
+        - Real N64 (EverDrive or other flashcart)
         - Other
     validations:
       required: true
@@ -45,29 +42,6 @@ body:
     id: happened
     attributes:
       label: What happened?
-      description: Include the area, action, or error message you saw.
+      description: Where you were, what you did, and what went wrong. Screenshots, video and save files help.
     validations:
       required: true
-  - type: textarea
-    id: reproduce
-    attributes:
-      label: How can we make it happen again?
-      placeholder: |
-        1. Go to...
-        2. Put on...
-        3. Press...
-    validations:
-      required: true
-  - type: textarea
-    id: expected
-    attributes:
-      label: What did you expect instead?
-    validations:
-      required: true
-  - type: checkboxes
-    id: no_roms
-    attributes:
-      label: ROM privacy
-      options:
-        - label: I have kept both ROMs private.
-          required: true
