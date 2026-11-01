@@ -54,8 +54,8 @@ public final class MainActivity extends Activity {
     private TextView colorValue;
     private final int[] marioColor = {24, 88, 22};
     private final SeekBar[] colorSliders = new SeekBar[3];
-    // Names match the native builder's GameMode::name(); standard is the default.
-    private String gameMode = "standard";
+    // Names match the native builder's GameMode::name(); classic is the default.
+    private String gameMode = "classic";
 
     @Override
     protected void onCreate(Bundle state) {
@@ -67,7 +67,7 @@ public final class MainActivity extends Activity {
             marioColor[0] = state.getInt("marioRed", 24);
             marioColor[1] = state.getInt("marioGreen", 88);
             marioColor[2] = state.getInt("marioBlue", 22);
-            gameMode = state.getString("gameMode", "standard");
+            gameMode = state.getString("gameMode", "classic");
         }
         setContentView(createContent());
         refreshSelections();
@@ -126,10 +126,10 @@ public final class MainActivity extends Activity {
         modeTitle.setTypeface(modeTitle.getTypeface(), android.graphics.Typeface.BOLD);
         content.addView(modeTitle);
         RadioGroup modes = new RadioGroup(this);
-        modes.addView(modeOption("standard", "Standard",
-            "No Enhanced Mode. Firing Mario from the Bow costs 5 arrows."));
         modes.addView(modeOption("classic", "Classic",
             "Enhanced Mode on C-Up. Firing Mario from the Bow costs 1 arrow."));
+        modes.addView(modeOption("standard", "Standard",
+            "No Enhanced Mode. Firing Mario from the Bow costs 5 arrows."));
         RadioButton challenge = modeOption("challenge", "Challenge", "Coming soon");
         challenge.setEnabled(false);
         modes.addView(challenge);

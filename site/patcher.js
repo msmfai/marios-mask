@@ -148,7 +148,7 @@ function selectedPalette() {
   return palettes[preset] || customPalette.map((input) => rgbFromHex(input.value));
 }
 
-let builtMode = "standard";
+let builtMode = "classic";
 
 worker.addEventListener("message", async ({ data }) => {
   if (data.type === "ready") {
