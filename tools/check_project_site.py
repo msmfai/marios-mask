@@ -56,9 +56,9 @@ def main(require_built_patcher: bool = False) -> int:
     )
     require(
         html.count('name="game-mode"') == 3
-        and 'value="standard" checked' in html
+        and 'value="classic" checked' in html
         and 'value="challenge" disabled' in html,
-        "patcher must offer Standard (default), Classic and a disabled Challenge mode",
+        "patcher must offer Classic (default), Standard and a disabled Challenge mode",
     )
     require("data.mode" in worker_script, "web worker must pass the chosen game mode")
     require("<h1>Mario's Mask</h1>" in html, "missing project title")

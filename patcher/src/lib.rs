@@ -19,7 +19,7 @@ const DMADATA_START: usize = 0x1A500;
 const SM64_SHA1: &str = "9bef1128717f958171a4afac3ed78ee2bb4e86ce";
 const MM_COMPRESSED_SHA1: &str = "d6133ace5afaa0882cf214cf88daba39e266c078";
 const MM_DECOMPRESSED_SHA1: &str = "7f5630dbc4d5d61d6276213210c4d5cdd83a47d6";
-const OUTPUT_SHA1: &str = "824c215cebb56bbc90159484aaa362296aed1c59";
+const OUTPUT_SHA1: &str = "134fa35fc8e7dee31ab90afb7692fad9903b42ac";
 const PATCH: &[u8] = include_bytes!("../recipe/marios-mask.mmrecipe");
 const MARIO_COLOR_MAGIC: &[u8; 8] = b"DSCECOLR";
 const MARIO_COLOR_VERSION: u8 = 2;
@@ -36,20 +36,20 @@ const BUILD_OPTION_GAME_MODE: usize = 0;
 
 pub type MarioPalette = [[u8; 3]; 6];
 
-/// How the game plays. Standard is the default and the release the private
+/// How the game plays. Classic is the default and the release the private
 /// gates verify byte-for-byte; every other mode differs only in the options
 /// record.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum GameMode {
-    #[default]
     Standard,
+    #[default]
     Classic,
 }
 
 impl GameMode {
     /// Modes a player can choose today. Challenge mode is announced in the
     /// builders but has no record value until it ships.
-    pub const ALL: [GameMode; 2] = [GameMode::Standard, GameMode::Classic];
+    pub const ALL: [GameMode; 2] = [GameMode::Classic, GameMode::Standard];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -725,7 +725,10 @@ mod tests {
         let mut record = Vec::from(*BUILD_OPTIONS_MAGIC);
         record.push(BUILD_OPTIONS_VERSION);
         record.push(BUILD_OPTIONS_SLOTS as u8);
-        record.extend([0u8; BUILD_OPTIONS_SLOTS]);
+        // As released: every slot zero except the default game mode.
+        let mut values = [0u8; BUILD_OPTIONS_SLOTS];
+        values[BUILD_OPTION_GAME_MODE] = GameMode::default().record_value();
+        record.extend(values);
         record.extend_from_slice(BUILD_OPTIONS_GUARD);
         record
     }
@@ -736,13 +739,13 @@ mod tests {
         rom.extend(options_record());
         rom.extend([0x66u8; 0x40]);
         let before = rom.clone();
-        let classic = BuildOptions {
-            game_mode: GameMode::Classic,
+        let standard = BuildOptions {
+            game_mode: GameMode::Standard,
             ..BuildOptions::default()
         };
-        apply_build_options(&mut rom, classic).unwrap();
+        apply_build_options(&mut rom, standard).unwrap();
         let slot = 0x40 + 8 + 2 + BUILD_OPTION_GAME_MODE;
-        assert_eq!(rom[slot], 1);
+        assert_eq!(rom[slot], 0);
         assert_eq!(&rom[..slot], &before[..slot]);
         assert_eq!(&rom[slot + 1..], &before[slot + 1..]);
         apply_build_options(&mut rom, BuildOptions::default()).unwrap();

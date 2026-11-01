@@ -236,6 +236,19 @@ jobs:
           cmp release-assets/MariosMaskBuilder-web.html pages/index.html
           cmp release-assets/MariosMaskBuilder-web.html pages/MariosMaskBuilder-web.html
           cp site/speedruns.html site/speedruns.js site/speedruns.json site/styles.css pages/
+      - name: Stage the SM64 prerelease tester page
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # /sm64-prerelease/ is separate from the stable patcher: it serves
+          # only the watermarked SM64 import QA build, published as the single
+          # page asset of the "sm64-prerelease" pre-release. Absent until the
+          # first one is published.
+          if gh release view sm64-prerelease --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            mkdir -p pages/sm64-prerelease
+            gh release download sm64-prerelease --repo "$GITHUB_REPOSITORY" \
+              --pattern MariosMaskBuilder-sm64-prerelease.html --output pages/sm64-prerelease/index.html
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
