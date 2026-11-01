@@ -61,7 +61,7 @@ marker:
 
 | Slot | Meaning | Values |
 |---|---|---|
-| 0 | Game mode | `0` Standard (default), `1` Classic |
+| 0 | Game mode | `0` Standard, `1` Classic (default) |
 | 1-15 | Reserved | `0` |
 
 The builder writes choices, not rules: the ROM decides what each mode means,

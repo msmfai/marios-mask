@@ -71,9 +71,9 @@ movement and strength abilities. Press C-Up again to turn it off.
 
 Choose a game mode when you build your ROM:
 
-- **Standard** (default): no Enhanced Mode. Firing Mario from the Bow costs 5
-  arrows.
-- **Classic**: Enhanced Mode on C-Up. Firing Mario from the Bow costs 1 arrow.
+- **Classic** (default): Enhanced Mode on C-Up. Firing Mario from the Bow costs
+  1 arrow.
+- **Standard**: no Enhanced Mode. Firing Mario from the Bow costs 5 arrows.
 - **Challenge**: coming soon.
 
 ## Discover a classic power-up
