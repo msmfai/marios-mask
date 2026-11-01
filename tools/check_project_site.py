@@ -42,15 +42,25 @@ def main(require_built_patcher: bool = False) -> int:
     require(stable["tag"] == f"beta-v{stable['version']}", "stable version and tag disagree")
     require(stable["assets"] == EXPECTED_ASSETS, "stable asset names disagree with release workflow")
     require(
-        "releases/download/beta-v${version}/web-patcher-download-tracker.txt" in patcher_script
-        and "countWebDownload(await stableVersion);" in patcher_script,
-        "web patcher must count each built ROM against the stable release",
+        "releases/download/beta-v${version}/${trackerName(mode)}" in patcher_script
+        and '"web-patcher-download-tracker.txt"' in patcher_script
+        and "web-patcher-download-tracker-${mode}.txt" in patcher_script
+        and "countWebDownload(await stableVersion, builtMode);" in patcher_script,
+        "web patcher must count each built ROM against the stable release and its mode",
+    )
+    workflow = (ROOT / ".github/workflows/binary-release.yml").read_text(encoding="utf-8")
+    require(
+        "web-patcher-download-tracker.txt" in workflow
+        and "web-patcher-download-tracker-classic.txt" in workflow,
+        "stable releases must publish a web patcher download tracker for every mode",
     )
     require(
-        "web-patcher-download-tracker.txt"
-        in (ROOT / ".github/workflows/binary-release.yml").read_text(encoding="utf-8"),
-        "stable releases must publish the web patcher download tracker",
+        html.count('name="game-mode"') == 3
+        and 'value="standard" checked' in html
+        and 'value="challenge" disabled' in html,
+        "patcher must offer Standard (default), Classic and a disabled Challenge mode",
     )
+    require("data.mode" in worker_script, "web worker must pass the chosen game mode")
     require("<h1>Mario's Mask</h1>" in html, "missing project title")
     require(html.count('class="hero-image"') == 1, "site must contain exactly one hero image")
     require('src="hero.png"' in html and (SITE / "hero.png").is_file(), "hero image must be local")
@@ -146,7 +156,7 @@ def main(require_built_patcher: bool = False) -> int:
     for label in ("Player 1", "Player 2", "D-pad", "Camera orbit / zoom", "Alt camera"):
         require(label in html, f"controls diagram is missing {label}")
     require(
-        '<div><dt><b>3</b>C-Up</dt><dd>Enhanced Mode</dd></div>' in html
+        '<div><dt><b>3</b>C-Up</dt><dd>Enhanced Mode (Classic)</dd></div>' in html
         and '<div><dt><b>10</b>C-Left / Down / Right</dt><dd>Items</dd></div>' in html
         and '<div><dt><b>8</b>R</dt><dd>Z-target</dd></div>' in html,
         "controls diagram must show the current C-Up enhanced-mode and R target scheme",

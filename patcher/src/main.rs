@@ -18,20 +18,32 @@ fn run_cli_or_gui() -> Result<()> {
     if arguments.len() == 1 {
         return run_gui();
     }
-    if !matches!(arguments.len(), 6 | 8)
-        || arguments[1] != "--build"
-        || (arguments.len() == 8 && arguments[6] != "--mario-color")
-    {
-        bail!(
-            "usage: {} [--build <sm64-rom> <oot-rom> <mm-rom> <output.z64> [--mario-color RRGGBB]]",
-            arguments[0]
-        );
+    let usage = || {
+        anyhow::anyhow!(
+            "usage: {} [--build <sm64-rom> <oot-rom> <mm-rom> <output.z64> \
+             [--mario-color RRGGBB] [--mode {}]]",
+            arguments[0],
+            marios_mask_builder::GameMode::ALL
+                .map(|mode| mode.name())
+                .join("|")
+        )
+    };
+    if arguments.len() < 6 || arguments[1] != "--build" {
+        return Err(usage());
     }
-    let mut mario_palette = marios_mask_builder::BuildOptions::LINK_IS_REAL;
-    if arguments.len() == 8 {
-        mario_palette[1] = parse_rgb(&arguments[7])?;
+    let mut options = marios_mask_builder::BuildOptions::default();
+    let mut flags = arguments[6..].iter();
+    while let Some(flag) = flags.next() {
+        let value = flags.next().ok_or_else(usage)?;
+        match flag.as_str() {
+            "--mario-color" => options.mario_palette[1] = parse_rgb(value)?,
+            "--mode" => {
+                options.game_mode = marios_mask_builder::GameMode::parse(value)
+                    .with_context(|| format!("unknown game mode {value:?}"))?
+            }
+            _ => return Err(usage()),
+        }
     }
-    let options = marios_mask_builder::BuildOptions { mario_palette };
     marios_mask_builder::build_from_paths_with_options(
         Path::new(&arguments[2]),
         Path::new(&arguments[3]),
@@ -82,6 +94,7 @@ struct BuilderApp {
     error: bool,
     messages: Option<Receiver<BuildMessage>>,
     mario_palette: marios_mask_builder::MarioPalette,
+    game_mode: marios_mask_builder::GameMode,
 }
 
 impl Default for BuilderApp {
@@ -95,6 +108,7 @@ impl Default for BuilderApp {
             error: false,
             messages: None,
             mario_palette: marios_mask_builder::BuildOptions::LINK_IS_REAL,
+            game_mode: marios_mask_builder::GameMode::default(),
         }
     }
 }
@@ -156,6 +170,7 @@ impl BuilderApp {
         let output = PathBuf::from(self.output.trim());
         let options = marios_mask_builder::BuildOptions {
             mario_palette: self.mario_palette,
+            game_mode: self.game_mode,
         };
         let (sender, receiver) = mpsc::channel();
         self.messages = Some(receiver);
@@ -266,6 +281,18 @@ impl eframe::App for BuilderApp {
                     self.choose_output();
                 }
             });
+
+            ui.add_space(8.0);
+            ui.label("Game mode");
+            for mode in marios_mask_builder::GameMode::ALL {
+                ui.radio_value(&mut self.game_mode, mode, mode.title())
+                    .on_hover_text(mode.summary());
+            }
+            ui.add_enabled(
+                false,
+                egui::RadioButton::new(false, "Challenge (coming soon)"),
+            );
+            ui.small(self.game_mode.summary());
 
             ui.add_space(8.0);
             ui.label("Mario colour");

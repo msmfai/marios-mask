@@ -12,6 +12,8 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -38,7 +40,7 @@ public final class MainActivity extends Activity {
 
     private static native String nativeBuild(
             String sm64, String oot, String mm, String output,
-            int red, int green, int blue);
+            int red, int green, int blue, String mode);
 
     private final ExecutorService builder = Executors.newSingleThreadExecutor();
     private Uri sm64Uri;
@@ -52,6 +54,8 @@ public final class MainActivity extends Activity {
     private TextView colorValue;
     private final int[] marioColor = {24, 88, 22};
     private final SeekBar[] colorSliders = new SeekBar[3];
+    // Names match the native builder's GameMode::name(); standard is the default.
+    private String gameMode = "standard";
 
     @Override
     protected void onCreate(Bundle state) {
@@ -63,6 +67,7 @@ public final class MainActivity extends Activity {
             marioColor[0] = state.getInt("marioRed", 24);
             marioColor[1] = state.getInt("marioGreen", 88);
             marioColor[2] = state.getInt("marioBlue", 22);
+            gameMode = state.getString("gameMode", "standard");
         }
         setContentView(createContent());
         refreshSelections();
@@ -77,6 +82,7 @@ public final class MainActivity extends Activity {
         state.putInt("marioRed", marioColor[0]);
         state.putInt("marioGreen", marioColor[1]);
         state.putInt("marioBlue", marioColor[2]);
+        state.putString("gameMode", gameMode);
     }
 
     @Override
@@ -114,6 +120,20 @@ public final class MainActivity extends Activity {
 
         mmButton = button("Choose Majora's Mask", view -> chooseRom(CHOOSE_MM));
         content.addView(mmButton);
+        content.addView(spacer());
+
+        TextView modeTitle = text("Game mode", 17, Color.DKGRAY);
+        modeTitle.setTypeface(modeTitle.getTypeface(), android.graphics.Typeface.BOLD);
+        content.addView(modeTitle);
+        RadioGroup modes = new RadioGroup(this);
+        modes.addView(modeOption("standard", "Standard",
+            "No Enhanced Mode. Firing Mario from the Bow costs 5 arrows."));
+        modes.addView(modeOption("classic", "Classic",
+            "Enhanced Mode on C-Up. Firing Mario from the Bow costs 1 arrow."));
+        RadioButton challenge = modeOption("challenge", "Challenge", "Coming soon");
+        challenge.setEnabled(false);
+        modes.addView(challenge);
+        content.addView(modes);
         content.addView(spacer());
 
         TextView colorTitle = text("Mario colour", 17, Color.DKGRAY);
@@ -192,6 +212,21 @@ public final class MainActivity extends Activity {
         View view = new View(this);
         view.setLayoutParams(new LinearLayout.LayoutParams(1, dp(10)));
         return view;
+    }
+
+    private RadioButton modeOption(String mode, String label, String summary) {
+        RadioButton option = new RadioButton(this);
+        option.setId(View.generateViewId());
+        option.setText(label + "\n" + summary);
+        option.setTextSize(15);
+        option.setPadding(0, dp(4), 0, dp(4));
+        option.setChecked(mode.equals(gameMode));
+        option.setOnCheckedChangeListener((view, checked) -> {
+            if (checked) {
+                gameMode = mode;
+            }
+        });
+        return option;
     }
 
     private View colorChannel(String label, int component) {
@@ -327,6 +362,7 @@ public final class MainActivity extends Activity {
         final int red = marioColor[0];
         final int green = marioColor[1];
         final int blue = marioColor[2];
+        final String mode = gameMode;
         setBuilding(true);
         setStatus("Reading and validating all three ROMs…", false);
         builder.execute(() -> {
@@ -347,7 +383,7 @@ public final class MainActivity extends Activity {
                 String error = nativeBuild(
                         sm64.getAbsolutePath(), oot.getAbsolutePath(), mm.getAbsolutePath(),
                         output.getAbsolutePath(),
-                        red, green, blue);
+                        red, green, blue, mode);
                 if (error == null) {
                     throw new IOException("The native builder could not return a result.");
                 }
