@@ -1,11 +1,9 @@
-# Mario's Mask Beta 0.4.1
+# Mario's Mask Beta 0.5.0
 
 ## Changes
 
-- **Classic is now the default game mode.** The patcher selects Classic
-  (Enhanced Mode on C-Up, 1 arrow per Bow shot) unless you choose Standard
-  (no Enhanced Mode, 5 arrows per Bow shot). Challenge mode is still coming
-  soon.
+- **The ready-made File 1 now starts at Peach's Castle.** On a new cartridge or a fresh emulator save, File 1 opens at the castle as intended. Before, it always started in South Clock Town.
+- **Your newest save always loads.** Saving with the Song of Time now replaces an owl save on the same file, and an owl save replaces a Song of Time save. Before, an old owl save could hide later Song of Time progress.
 
 ## Get the game
 
@@ -26,4 +24,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.4.1") and your game mode when reporting bugs.
+Please include the exact release name (for example "Beta 0.5.0") and your game mode when reporting bugs.
