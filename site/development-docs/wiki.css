@@ -1,0 +1,35 @@
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#fff;color:#111;font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;display:grid;grid-template-columns:220px minmax(0,1fr)}
+a{color:#0b57d0} a:hover{text-decoration:underline}
+.side{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:24px 16px;border-right:1px solid #ddd;background:#f7f7f7;font-size:15px}
+.side ul{list-style:none;margin:0;padding:0} .side li{margin:0 0 6px}
+.side a{text-decoration:none;color:#111} .side a[aria-current]{font-weight:700}
+.brand{font-weight:700;margin:0 0 20px} .back{margin-top:28px;font-size:14px}
+main{max-width:860px;padding:32px 40px 80px}
+h1{font-size:28px;line-height:1.25;margin:0 0 6px}
+h2{font-size:21px;margin:36px 0 10px;padding-bottom:4px;border-bottom:1px solid #ccc}
+h3{font-size:17px;margin:24px 0 8px}
+h2,h3{scroll-margin-top:16px}
+p{margin:0 0 12px} ol,ul{padding-left:24px} li{margin:0 0 4px}
+.meta{color:#555;margin-bottom:20px}
+code{font:14px Menlo,Consolas,monospace;background:#f2f2f2;padding:1px 4px;border-radius:3px}
+.tw{overflow-x:auto;margin:4px 0 16px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{border:1px solid #bbb;padding:6px 9px;text-align:left;vertical-align:top} th{background:#eee}
+.rules td:first-child{font-weight:700;white-space:nowrap}
+.tcap{font-weight:700;font-size:15px;margin:16px 0 4px}
+.note{border:1px solid #999;border-radius:4px;padding:10px 12px;background:#fafafa}
+.toc{border:1px solid #ccc;border-radius:4px;padding:12px 16px;margin:20px 0} .toc p{margin:0 0 6px} .tocl{margin:0}
+.purpose{color:#333;font-style:italic}
+.fig{margin:24px 0;width:min(1240px,calc(100vw - 300px))} figcaption{font-weight:700;margin-bottom:8px}
+.svgwrap{overflow-x:auto;border:1px solid #ddd;border-radius:4px;padding:8px;background:#fff}
+.svgwrap svg{display:block;width:100%;min-width:640px;height:auto}
+@media (max-width:760px){
+ body{display:block}
+ .side{position:static;height:auto;border-right:0;border-bottom:1px solid #ddd;padding:16px}
+ .side ul{display:flex;flex-wrap:wrap;gap:4px 16px} .brand{margin-bottom:10px} .back{margin-top:10px}
+ main{padding:20px 16px 60px}
+ .fig{width:auto}
+}
+@media print{body{display:block} .fig{width:auto} .side{display:none} main{max-width:none;padding:0} .svgwrap{border:0}}

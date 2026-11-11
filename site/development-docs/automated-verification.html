@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automated verification of Mario's Mask - Mario's Mask development docs</title>
+<link rel="stylesheet" href="wiki.css">
+</head>
+<body>
+<nav class="side">
+<p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
+<ul><li><a href="index.html">Home</a></li><li><a href="automated-verification.html" aria-current="page">Automated verification</a></li></ul>
+<p class="back"><a href="../">Mario's Mask builder</a></p>
+</nav>
+<main>
+<h1>Automated verification of Mario's Mask</h1>
+<p class="meta">Technical reference. Date: 2026-11-09.</p>
+
+<h2 class="es" id="summary">Executive summary</h2>
+<p><b>Product.</b> Mario's Mask is a mod of the Nintendo 64 game The Legend of Zelda: Majora's Mask (MM). It adds Mario as a playable form. Mario uses the movement code of Super Mario 64 (SM64). The mod also imports SM64 levels and enemies into MM.</p>
+<p><b>Problem.</b> The two games use different units, different update rates and different memory layouts. An error at one of these boundaries can make Mario move incorrectly, make a level look wrong, or stop the game. Many of these errors do not show in an emulator, or show only in one area out of many.</p>
+<p><b>Method.</b> The test system uses the original SM64 game as the reference for correct behavior. It does not use a description of SM64. The test system has six layers:</p>
+<ol>
+<li>Static gates check the source and the data on each build.</li>
+<li>Headless emulator runs play recorded inputs. Test code in the ROM writes results to memory, and the test reads them through a debugger.</li>
+<li>A comparison runs SM64 and the mod side by side and compares Mario tick by tick.</li>
+<li>An area sweep loads all 45 imported SM64 areas and records an image of each.</li>
+<li>The owner plays the game to answer specific questions only.</li>
+<li>A real N64 gives the final check before release.</li>
+</ol>
+<p><b>Tools.</b> The emulator is ares v148 at a pinned version, in three builds: stock (normal tests), 32 MiB (long logs) and capture (records each memory write).</p>
+<p><b>Rules.</b> Ten rules control all tests (section 5). The most important rules are these:</p>
+<ul>
+<li>A result is valid only if the game itself shows it.</li>
+<li>A gate is valid only if it fails on the code before the fix.</li>
+<li>A measurement is valid only after a control on a good build.</li>
+</ul>
+<p class="tcap">Table A Main recorded results (not measured again for this document)</p>
+<div class="tw"><table>
+<tr><th>Measurement</th><th>Result</th><th>Date</th></tr>
+<tr><td>Mario actions equal to SM64 to the bit</td><td>54 actions, 0 failures</td><td>2026-07-09</td></tr>
+<tr><td>SM64 areas that load in the mod</td><td>45 of 45</td><td>2026-09-06</td></tr>
+<tr><td>Faults found by the first area sweep</td><td>4 fault classes in approximately 8 minutes</td><td>2026-09-06</td></tr>
+</table></div>
+<p><b>Limits.</b> Emulator results do not replace a test on a real N64. Some faults show only on hardware or in ares, not in other emulators.</p>
+<div class="toc">
+<p><b>Contents</b></p>
+<ol class="tocl"><li><a href="#s1">Scope and use of this document</a></li><li><a href="#s2">Background</a></li><li><a href="#s3">System overview</a></li><li><a href="#s4">Terms</a></li><li><a href="#s5">Verification rules</a></li><li><a href="#s6">Emulator builds (Figure 1)</a></li><li><a href="#s7">Procedure: one test run (Figure 2)</a></li><li><a href="#s8">Procedure: movement comparison with SM64 (Figure 3)</a></li><li><a href="#s9">Procedure: level import checks (Figure 4)</a></li><li><a href="#s10">Fault diagnosis (Figures 5 and 6)</a></li><li><a href="#s11">Recorded results</a></li><li><a href="#s12">Limits</a></li></ol>
+</div>
+
+<h2 id="s1">1 Scope and use of this document</h2>
+<p>This document describes the automated test system for Mario's Mask. Mario's Mask is a Majora's Mask (MM) ROM mod. It uses the Mario movement code from Super Mario 64 (SM64).</p>
+<p>This document does not describe the public release gates.</p>
+<p>Use Table 1 to find the section for your task.</p>
+<p class="tcap">Table 1 Reader tasks</p>
+<div class="tw"><table>
+<tr><th>Task</th><th>Section</th></tr>
+<tr><td>Understand why the test system exists</td><td>2</td></tr>
+<tr><td>See all test layers</td><td>3</td></tr>
+<tr><td>Find the rules that apply to all tests</td><td>5</td></tr>
+<tr><td>Select an emulator build</td><td>6</td></tr>
+<tr><td>Write or run a headless test</td><td>7</td></tr>
+<tr><td>Change Mario movement code</td><td>8</td></tr>
+<tr><td>Change the SM64 level import</td><td>9</td></tr>
+<tr><td>Find the cause of a failed test, a freeze or a crash</td><td>10</td></tr>
+</table></div>
+<h2 id="s2">2 Background</h2>
+<h3 id="s2-1">2.1 Architecture</h3>
+<p>MM controls the game. MM owns the game loop, the scenes, the actors, the collision, the camera, the memory and the save data. The SM64 movement code runs inside the MM player as one more player form. It reads MM state through small adapters. It writes its result back to the MM player.</p>
+<p>The SM64 levels and enemies are generated from the SM64 source on each build. They use MM methods to load and draw.</p>
+<h3 id="s2-2">2.2 Risks</h3>
+<p>The test system exists to find the faults in Table 2. Each risk comes from a difference between the two games.</p>
+<p class="tcap">Table 2 Main risks</p>
+<div class="tw"><table>
+<tr><th>Risk</th><th>Cause</th><th>Example of a fault</th></tr>
+<tr><td>Units</td><td>One MM unit is 3.432 SM64 units. Only lengths must use this factor.</td><td>An enemy model with its parts 3.432 times too far apart.</td></tr>
+<tr><td>Time</td><td>SM64 updates 30 times each second. MM updates 20 times.</td><td>Mario moves through a wall after the speed conversion.</td></tr>
+<tr><td>Memory</td><td>The N64 has 8 MiB of RAM. MM uses most of it.</td><td>A level does not load because the object data is too large.</td></tr>
+<tr><td>Graphics</td><td>A bad display list stops the N64 graphics processor. Some emulators ignore it.</td><td>A freeze that occurs on hardware but not in the emulator.</td></tr>
+<tr><td>Scale</td><td>There are 45 SM64 areas. Manual play cannot examine all of them.</td><td>A fault class in 18 areas that no player saw.</td></tr>
+</table></div>
+<h3 id="s2-3">2.3 Definition of correct behavior</h3>
+<p>The mod is correct when these three conditions are true:</p>
+<ol>
+<li>Mario moves as in SM64. Only the written conversions for units and time are different.</li>
+<li>MM systems continue to operate as in MM. These include actors, damage, switches, cutscenes and saves.</li>
+<li>The game operates on a real N64 in the available memory. It does not freeze or crash.</li>
+</ol>
+<p>Sections 7 to 9 test these conditions. Section 10 finds the cause when a test fails.</p>
+
+
+<h2 id="s3">3 System overview</h2>
+<p class="purpose"><b>Purpose:</b> This section shows all test layers and when each layer runs.</p>
+<p>The test system has six layers. Each layer finds faults that the layer before it cannot find. Use the lowest layer that can answer the question.</p>
+<div class="tw"><table>
+<tr><th>Layer</th><th>What it checks</th><th>When it runs</th><th>Section</th></tr>
+<tr><td>1 Static gates</td><td>Source data, unit conversions, memory budgets, patch contracts</td><td>Each build</td><td>9</td></tr>
+<tr><td>2 Headless test runs</td><td>Values that test code writes to game RAM</td><td>When a feature changes</td><td>7</td></tr>
+<tr><td>3 Movement comparison</td><td>Mario state for each tick against SM64</td><td>When Mario movement code changes</td><td>8</td></tr>
+<tr><td>4 Area sweep</td><td>All 45 SM64 areas load. Images, position and camera against SM64.</td><td>When the level import changes</td><td>9</td></tr>
+<tr><td>5 Manual play</td><td>One specific question that automation cannot answer</td><td>Only on request</td><td>9</td></tr>
+<tr><td>6 Real N64</td><td>Behavior on the hardware</td><td>Before release</td><td>12</td></tr>
+</table></div>
+<p>When a layer finds a fault, use section 10 to find the cause.</p>
+
+<h2 id="s4">4 Terms</h2>
+<div class="tw"><table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>Control</td><td>A run of the same measurement on a known good build.</td></tr>
+<tr><td>Fixture</td><td>Test code in a test ROM. It writes results to a fixed RAM address. Release ROMs do not contain fixtures.</td></tr>
+<tr><td>Gate</td><td>An automated check that stops the build or the test if it fails.</td></tr>
+<tr><td>Headless run</td><td>An emulator run with no video output and no user input.</td></tr>
+<tr><td>Input script</td><td>A file that gives button presses by frame number.</td></tr>
+<tr><td>Oracle</td><td>The reference that gives the correct result. For Mario movement, the oracle is SM64.</td></tr>
+<tr><td>Positive control</td><td>A test that proves that an instrument can detect the event.</td></tr>
+<tr><td>RDRAM</td><td>The N64 main memory. A retail N64 with an Expansion Pak has 8 MiB.</td></tr>
+<tr><td>Tick</td><td>One update of the game state. SM64 uses 30 ticks per second. MM uses 20.</td></tr>
+<tr><td>Trace record</td><td>The block of RAM that a fixture writes.</td></tr>
+</table></div>
+
+<h2 id="s5">5 Verification rules</h2>
+<p class="purpose"><b>Purpose:</b> This section gives the rules that all procedures must obey.</p>
+<p>These rules apply to all procedures in this document. The procedures refer to them by number. Each rule comes from a known incorrect result.</p>
+<table class="rules">
+<tr><th>Rule</th><th>Requirement</th><th>Reason</th></tr>
+<tr><td>R1</td><td>Use the original game as the oracle.</td><td>A description of SM64 is not a reference. The SM64 ROM gives repeatable values.</td></tr>
+<tr><td>R2</td><td>Write down each conversion. Check the relation, not a fixed number.</td><td>The scale changed from 4.29 to 3.432. Gates with fixed numbers then failed on correct code.</td></tr>
+<tr><td>R3</td><td>Check each part of a conversion: vertices, scale, part offsets and animation root.</td><td>The penguin scale was correct, but its parts were 3.432 times too far apart. The same fault was in 26 actor overlays.</td></tr>
+<tr><td>R4</td><td>Make sure that a gate fails on the code before the fix.</td><td>A lighting gate passed the fault that it was written for. The generator split one command across two lines.</td></tr>
+<tr><td>R5</td><td>Do a control before you make a conclusion.</td><td>Several freeze measurements gave the same value on a good build.</td></tr>
+<tr><td>R6</td><td>Do not measure a ROM that is older than its source.</td><td>A capture command did not build the ROM. It reported the previous build.</td></tr>
+<tr><td>R7</td><td>When a gate rejects correct source, examine the gate.</td><td>A budget gate charged each actor for the children of one spawner. It reported 58 of 45. The correct count was 27.</td></tr>
+<tr><td>R8</td><td>Use only results that the game shows.</td><td>Input playback on the host can succeed when the game gets no input.</td></tr>
+<tr><td>R9</td><td>Look at the image.</td><td>A size ratio cannot show the difference between a small model and a model in pieces.</td></tr>
+<tr><td>R10</td><td>Ask for manual play only for one specific question. Test on a real N64 before release.</td><td>Emulator results do not replace the hardware test.</td></tr>
+</table></div>
+
+<h2 id="s6">6 Emulator builds</h2>
+<p class="purpose"><b>Purpose:</b> This section describes the three emulator builds and when to use each build.</p>
+<p>All emulator builds start from ares v148, commit <code>0aafd857</code>. The version is pinned. It does not update automatically. Figure 1 shows the three builds. Table 3 compares them.</p>
+<p class="tcap">Table 3 Emulator builds</p>
+<div class="tw"><table>
+<tr><th>Build</th><th>Change to ares</th><th>Use</th><th>Do not use for</th></tr>
+<tr><td>Stock</td><td>None. Each run uses a signed copy with an input bridge.</td><td>All normal headless tests</td><td>&mdash;</td></tr>
+<tr><td>32 MiB diagnostic</td><td>32 MiB RDRAM. The upper 16 MiB is for diagnostic data only.</td><td>Long event logs without use of game memory</td><td>Memory or release measurements</td></tr>
+<tr><td>Capture</td><td>Extra GDB commands and a hardware event recorder</td><td>Freezes and memory corruption</td><td>Memory or release measurements</td></tr>
+</table></div>
+
+<figure class="fig" id="fig1"><figcaption>Figure 1 Emulator builds</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 326" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="116.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="700">ares v148, pinned</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Stock app, unmodified</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Copy executable per run</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Add input bridge</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Ad-hoc sign the copy</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Normal headless tests</text><rect x="238" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Apply 32 MiB RAM patch</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Contract check passes</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Upper 16 MiB GDB-only</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Debug ROM logs there</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="700">Read 12 MiB log ring</text><rect x="238" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Apply capture patch</text><rect x="446" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Add qDsce GDB commands</text><rect x="654" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Record every RAM write</text><rect x="862" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Keep RSP and DMA history</text><rect x="1070" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="1156.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Stop before watchdog</text><path d="M202 153.0 H220.0 V53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M202 153.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M202 153.0 H220.0 V253.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 153.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 153.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 153.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 153.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 253.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 253.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 253.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 253.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/></svg></div></figure>
+
+<h3 id="s6-1">6.1 Stock build</h3>
+<p>The stock build is the official signed ares v148 application. A run tool starts each run. For each run, the tool does these steps:</p>
+<ol>
+<li>It makes a private run folder with its own settings, saves, screenshots and log.</li>
+<li>It copies the settings from a fixed base profile.</li>
+<li>It copies only the ares executable into the run folder.</li>
+<li>It compiles an input bridge into the copy. Stock ares on macOS ignores synthetic key events. The bridge supplies the script inputs.</li>
+<li>It signs the copy with an ad-hoc signature. The installed application does not change.</li>
+<li>It writes a run record. The record contains the ROM hash, the ares hash, the arguments, the input profile, the save source and the exit status.</li>
+</ol>
+<p class="tcap">Table 4 Headless run settings</p>
+<div class="tw"><table>
+<tr><th>Setting</th><th>Value</th><th>Reason</th></tr>
+<tr><td>Video</td><td>None</td><td>No window is necessary.</td></tr>
+<tr><td>Audio</td><td>On, muted</td><td>The audio driver sets the real-time frame clock.</td></tr>
+<tr><td>Rewind, run-ahead</td><td>Off</td><td>The emulator must not replay frames.</td></tr>
+<tr><td>Homebrew mode</td><td>On (default)</td><td>Gives debug access.</td></tr>
+<tr><td>GDB server</td><td>Port 9123</td><td>Memory reads and breakpoints.</td></tr>
+<tr><td>Save formats</td><td><code>.flash</code> (131,072 bytes), <code>.srm</code> (296,960 bytes)</td><td>The tool converts the save in the run folder only.</td></tr>
+</table></div>
+
+<h3 id="s6-2">6.2 32 MiB diagnostic build</h3>
+<p>A build script applies a source patch to the pinned ares source. The script stops if the source has other changes.</p>
+<p>The patch gives the emulator 32 MiB of RDRAM. The game sees only the low 16 MiB. Only the CPU and the debugger can read the upper 16 MiB. The RDP and VI use 24-bit addresses, so they cannot reach it.</p>
+<p>The diagnostic ROM writes a log ring at <code>0x81000000</code>. The ring holds 262,144 records of 48 bytes (12 MiB). The log uses no game memory. In this build, a game patch also moves the Zelda arena to the high region.</p>
+<p>A contract gate fails if the emulator patch, the log addresses or the arena patch change.</p>
+
+<h3 id="s6-3">6.3 Capture build</h3>
+<p>The capture build applies a second source patch. The patch adds the GDB commands in Table 5.</p>
+<p class="tcap">Table 5 Capture build GDB commands</p>
+<div class="tw"><table>
+<tr><th>Command</th><th>Result</th></tr>
+<tr><td><code>qDsce:coverage</code></td><td>Lists what the recorder captures.</td></tr>
+<tr><td><code>qDsce:start</code>, <code>qDsce:stop</code></td><td>Starts or stops the recording.</td></tr>
+<tr><td><code>qDsce:snapshot</code></td><td>Writes a full machine snapshot.</td></tr>
+<tr><td><code>qDsce:state</code></td><td>Gives the CPU program counter and timing state.</td></tr>
+<tr><td><code>qDsce:test-causal-stop</code></td><td>Tests the stop function (positive control, R5).</td></tr>
+</table></div>
+<p>The recorder keeps this data:</p>
+<ul>
+<li>Each RAM write: the address, the size, the value, the CPU PC, the RSP PC and the source device.</li>
+<li>The last 131,072 RSP instructions with their registers.</li>
+<li>The DMA history and the RDP command batches.</li>
+<li>CPU and RSP time for each code block.</li>
+</ul>
+<p>The recorder can stop the emulator before the game watchdog recovers from a hang. Thus the hang state stays available for analysis.</p>
+
+<h2 id="s7">7 Procedure: one test run</h2>
+<p class="purpose"><b>Purpose:</b> This procedure shows how a headless test gets a result from the game and how it decides pass or fail. It tests conditions 2 and 3 of section 2.3.</p>
+<p>Figure 2 shows one test run. The example is the ordinary mask test. Other ares tests use the same structure with a different trace record.</p>
+
+<figure class="fig" id="fig2"><figcaption>Figure 2 One test run (mask test example)</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 526" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Build test ROM</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Look up trace address</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Write input script</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Make private run folder</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Start ares headless</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Bridge plays inputs</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Fixture records events</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Wait observation window</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">GDB reads trace record</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Save raw trace file</text><rect x="238" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Stop ares</text><rect x="30" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Record run hashes</text><rect x="30" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="116.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Magic number right?</text><rect x="238" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="324.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Right case selected?</text><rect x="446" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Bad-state flags clear?</text><rect x="654" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="740.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">All expected events?</text><rect x="862" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="948.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Values as expected?</text><rect x="1070" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="1156.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">PASS</text><rect x="30" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Fixture never ran</text><rect x="238" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Input missed the menu</text><rect x="446" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Game hit bad state</text><rect x="654" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Name missing event bits</text><rect x="862" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Name wrong values</text><rect x="446" y="430" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="457.5" text-anchor="middle" font-size="12.5" font-weight="700">Diagnose wrong RAM</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1156.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1070 153.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M862 153.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M654 153.0 H618" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M446 153.0 H410" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M238 153.0 H202" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M116.0 176 V230" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M202 253.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="220.0" y="247.0" font-size="11" text-anchor="middle">yes</text><path d="M410 253.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="428.0" y="247.0" font-size="11" text-anchor="middle">yes</text><path d="M618 253.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="636.0" y="247.0" font-size="11" text-anchor="middle">yes</text><path d="M826 253.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="844.0" y="247.0" font-size="11" text-anchor="middle">yes</text><path d="M1034 253.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1052.0" y="247.0" font-size="11" text-anchor="middle">yes</text><path d="M116.0 276 V330" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="122.0" y="307.0" font-size="11" text-anchor="start">no</text><path d="M324.0 276 V330" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="330.0" y="307.0" font-size="11" text-anchor="start">no</text><path d="M532.0 276 V330" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="538.0" y="307.0" font-size="11" text-anchor="start">no</text><path d="M740.0 276 V330" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="746.0" y="307.0" font-size="11" text-anchor="start">no</text><path d="M948.0 276 V330" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="954.0" y="307.0" font-size="11" text-anchor="start">no</text><path d="M116.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M324.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M740.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M948.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M116.0 392 H948.0" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M532.0 392 V430" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#h)"/><text x="954.0" y="396" font-size="11" text-anchor="start"></text></svg></div></figure>
+
+<h3 id="s7-1">7.1 Run</h3>
+<ol>
+<li>Build the test ROM. The test ROM contains the fixture.</li>
+<li>Get the trace record address from the ROM symbol map.</li>
+<li>Write the input script for the test case.</li>
+<li>Start the run tool in headless mode with the input script and the GDB server.</li>
+<li>Wait for the observation time. For the mask test, this time is 175 seconds.</li>
+<li>Read the trace record through GDB. For the mask test, the record is 48 bytes (12 words).</li>
+<li>Save the raw record to a file.</li>
+<li>Stop ares. Keep the run record.</li>
+</ol>
+
+<h3 id="s7-2">7.2 Checks</h3>
+<p>Do the checks in the order of Table 6. The first failed check stops the test. A pass needs a result that the game itself shows (R8).</p>
+<p class="tcap">Table 6 Trace record checks (mask test)</p>
+<div class="tw"><table>
+<tr><th>Order</th><th>Check</th><th>Expected value</th><th>If the check fails</th></tr>
+<tr><td>1</td><td>Magic number</td><td>Word 0 = <code>0x4D534B47</code></td><td>The fixture did not run, the address is wrong, or the ROM is stale (R6).</td></tr>
+<tr><td>2</td><td>Case number</td><td>Word 1 = the requested case</td><td>The input did not select the correct menu item.</td></tr>
+<tr><td>3</td><td>Bad-state flags</td><td>Word 2, bits 30 and 31 = 0</td><td>The game entered a prohibited state.</td></tr>
+<tr><td>4</td><td>Expected events</td><td>Word 2 contains all bits of <code>0x7C7F</code></td><td>The test gives the missing bits and the input diagnostic word.</td></tr>
+<tr><td>5</td><td>Values</td><td>Words 8 to 11 (appearance data)</td><td>The test gives the wrong value and the expected value.</td></tr>
+</table></div>
+<p>If a check fails, go to section 10.2.</p>
+
+<h2 id="s8">8 Procedure: movement comparison with SM64</h2>
+<p class="purpose"><b>Purpose:</b> This procedure tests condition 1 of section 2.3. It is the main test for the Mario movement code.</p>
+<p>The Mario movement code in the mod is the SM64 source code. Thus SM64 is the oracle for movement (R1). Figure 3 shows the procedure.</p>
+
+<figure class="fig" id="fig3"><figcaption>Figure 3 Movement comparison with SM64</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 526" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Generate test course</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Build real SM64 ROM</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Run inputs headless</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Log Mario every tick</text><rect x="238" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Build Mario&#x27;s Mask ROM</text><rect x="446" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Run inputs headless</text><rect x="654" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Log Mario every tick</text><rect x="862" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Undo frame-rate change</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Align on first action</text><rect x="1070" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Actions match</text><rect x="862" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Positions match</text><rect x="654" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Floor heights match</text><rect x="446" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Sounds on same tick</text><rect x="238" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">All 39 moves seen</text><rect x="30" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="116.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="700">PASS</text><rect x="654" y="430" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2" stroke-dasharray="5 4"/><text x="740.0" y="457.5" text-anchor="middle" font-size="12.5" font-weight="400">Log finding, track it</text><path d="M202 153.0 H220.0 V53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M202 153.0 H220.0 V253.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 253.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 253.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 253.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 53.0 H948.0 V153.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 253.0 H1052.0 V153.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1156.0 176 V330" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1070 353.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M862 353.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M654 353.0 H618" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M446 353.0 H410" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M238 353.0 H202" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M324.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M532.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M740.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M948.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M1156.0 376 V392" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M324.0 392 H1156.0" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M740.0 392 V430" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#h)"/><text x="1162.0" y="396" font-size="11" text-anchor="start">any mismatch</text></svg></div></figure>
+
+<ol>
+<li>A generator makes one test course. The build compiles this course into both games.</li>
+<li>Both ROMs run the same moves in a headless emulator.</li>
+<li>Each game records the Mario state for each tick: action, position, facing angle, floor height and sounds.</li>
+<li>The comparison tool converts the mod data from 20 to 30 ticks per second. Velocity uses a factor of 1.5. Acceleration uses a factor of 2.25 (R2).</li>
+<li>The tool aligns the two records at the first change of action. It does not use clock time.</li>
+<li>The tool compares the records with the relations in Table 7.</li>
+</ol>
+<p class="tcap">Table 7 Comparison relations</p>
+<div class="tw"><table>
+<tr><th>Relation</th><th>Requirement</th></tr>
+<tr><td>R1 Action sequence</td><td>Equal</td></tr>
+<tr><td>R2 Position for each tick</td><td>Equal to the bit</td></tr>
+<tr><td>RF Floor height</td><td>Equal</td></tr>
+<tr><td>R3 Sound families</td><td>Same family on the same tick</td></tr>
+<tr><td>Coverage</td><td>All 39 core moves occur</td></tr>
+</table></div>
+<p class="note">NOTE: The relation names R1, R2, R3 and RF are the names in the comparison tool. They are not the rule numbers of section 5.</p>
+<p>Two runs of the same input give identical records. Thus each difference is a real difference. The tool records each known difference as a finding. It does not skip a difference.</p>
+<p>The comparison found these faults. Both are fixed. Both checks are now equality gates.</p>
+<ul>
+<li>Mario went to sleep after approximately 88 ticks. SM64 needs approximately 930 ticks. An animation timer advanced too fast.</li>
+<li>After the frame rate conversion, Mario moved a few units through a wall. A scale step occurred after the collision check.</li>
+</ul>
+
+<h2 id="s9">9 Procedure: level import checks</h2>
+<p class="purpose"><b>Purpose:</b> This procedure tests the SM64 levels and enemies in the mod. It covers the units, memory and scale risks of Table 2.</p>
+<p>The build makes each SM64 scene again from the pinned SM64 source. The mod changes are diff files. They are not edited copies. The castle grounds scene is the only exception. Figure 4 shows the procedure.</p>
+
+<figure class="fig" id="fig4"><figcaption>Figure 4 Level import checks</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 326" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Pinned SM64 source</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Generate scenes</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Apply mod diffs</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Unit conversion checks</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Memory budget checks</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Link the ROM</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Boot all 45 areas</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Photograph each area</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Compare with SM64</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Owner plays it</text><rect x="238" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="324.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="700">Ready for release</text><rect x="654" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Find cause in source</text><rect x="862" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Gate fails on old code</text><rect x="1070" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Fix and regenerate</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1156.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1070 153.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M862 153.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M654 153.0 H618" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="636.0" y="147.0" font-size="11" text-anchor="middle">match</text><path d="M446 153.0 H410" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="428.0" y="147.0" font-size="11" text-anchor="middle">ok</text><path d="M740.0 176 V230" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#h)"/><text x="746.0" y="207.0" font-size="11" text-anchor="start">differs</text><path d="M532.0 176 V253.0 H654" fill="none" stroke="#000" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#h)"/><text x="538.0" y="214.5" font-size="11" text-anchor="start">bug</text><path d="M826 253.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 253.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1242 253.0 H1258 V14 H324.0 V30" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/></svg></div></figure>
+
+<ol>
+<li>Generate the scenes from the pinned source.</li>
+<li>Apply the mod diffs.</li>
+<li>Run the static gates in Table 8.</li>
+<li>Link the ROM.</li>
+<li>Boot all 45 areas from one build. Keep one image of each area after it settles (R9).</li>
+<li>Compare the Mario position and the camera with SM64 values (R1).</li>
+<li>The owner plays the area to answer one specific question (R10). The owner reports faults from in the game with a bug report key.</li>
+<li>If a value is different or the owner finds a fault, find the cause in the source. Write a gate that fails on the old code (R4). Fix the generator and generate the scenes again.</li>
+</ol>
+<p class="tcap">Table 8 Static gates for the level import</p>
+<div class="tw"><table>
+<tr><th>Gate</th><th>Limit or requirement</th></tr>
+<tr><td>Unit conversion</td><td>Only lengths use the SM64-to-MM factor (1/3.432). Scales do not (R3).</td></tr>
+<tr><td>Object memory</td><td>Each level bank fits in the object space.</td></tr>
+<tr><td>Collision actors</td><td>45 or fewer dynamic collision actors in each area. The engine limit is 50.</td></tr>
+<tr><td>Sound bank</td><td>Fewer than 128 entries in each bank.</td></tr>
+<tr><td>Animation offsets</td><td>Part offsets and animation root use the same units as the vertices.</td></tr>
+</table></div>
+<p>The first area sweep (2026-09-06) took approximately eight minutes. It found these faults:</p>
+<ul>
+<li>Six areas did not load. A shared sky data pack was too large.</li>
+<li>Static objects in 18 areas had no draw function.</li>
+<li>The arrival camera was incorrect in approximately twelve areas. Two arguments of a pitch function were in the wrong order.</li>
+<li>Shifting Sand Land crashed on arrival. Seven animation functions read data with a graphics segment address that the CPU cannot use.</li>
+</ul>
+
+<h2 id="s10">10 Fault diagnosis</h2>
+<p class="purpose"><b>Purpose:</b> This section gives the procedures to find the cause of a failed test. Use it after any layer in section 3 finds a fault.</p>
+<h3 id="s10-1">10.1 Select the procedure</h3>
+<p class="tcap">Table 9 Symptoms and procedures</p>
+<div class="tw"><table>
+<tr><th>Symptom</th><th>Procedure</th><th>Emulator build</th></tr>
+<tr><td>A trace record check fails (Table 6)</td><td>10.2</td><td>Stock, then 32 MiB or capture</td></tr>
+<tr><td>The image stops. The frame counter does not change.</td><td>10.3</td><td>Capture</td></tr>
+<tr><td>Some frames are slow</td><td>10.4</td><td>Stock</td></tr>
+<tr><td>The fault screen shows</td><td>10.5</td><td>Stock</td></tr>
+</table></div>
+<p>Reproduce each fault in ares first. Do not use Mupen for this step. The Mupen graphics plugin ignores some bad display list commands. A real N64 and ares stop on these commands. For example, a freeze with the Blast Mask did not occur in Mupen after many hours of tests. It occurred in ares on the first attempt.</p>
+<p>All procedures end with the same steps:</p>
+<ol>
+<li>Write down the cause.</li>
+<li>Write a gate for the fault. Make sure that the gate fails on the code before the fix (R4).</li>
+<li>Do the fix. Run the gate again.</li>
+</ol>
+
+<h3 id="s10-2">10.2 RAM values are not as expected</h3>
+<p>Figure 5 shows this procedure. Steps 1 to 4 find faults in the test itself. Do these steps before you examine the game code.</p>
+
+<figure class="fig" id="fig5"><figcaption>Figure 5 Diagnosis: RAM values are not as expected</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 426" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">RAM not as expected</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">ROM older than source?</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Inputs reached the game?</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Same on healthy build?</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Positive control fires?</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Read 32 MiB log ring</text><rect x="238" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Rebuild, then rerun</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Fix input timing</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Fix the measurement</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Fix the instrument</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Watch the whole range</text><rect x="1070" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="1156.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Watchpoint fires?</text><rect x="862" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">CPU wrote it: read PC</text><rect x="654" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Name the cause</text><rect x="446" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Gate fails on old code</text><rect x="238" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="324.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Fix, rerun gate</text><rect x="1070" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Record every RAM write</text><rect x="862" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">RSP, RDP or DMA wrote it</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="428.0" y="47.0" font-size="11" text-anchor="middle">no</text><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="636.0" y="47.0" font-size="11" text-anchor="middle">yes</text><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="844.0" y="47.0" font-size="11" text-anchor="middle">no</text><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1052.0" y="47.0" font-size="11" text-anchor="middle">yes</text><path d="M324.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="330.0" y="107.0" font-size="11" text-anchor="start">yes</text><path d="M532.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="538.0" y="107.0" font-size="11" text-anchor="start">no</text><path d="M740.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="746.0" y="107.0" font-size="11" text-anchor="start">yes</text><path d="M948.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="954.0" y="107.0" font-size="11" text-anchor="start">no</text><path d="M1156.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1156.0 176 V230" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1070 253.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1052.0" y="247.0" font-size="11" text-anchor="middle">yes</text><path d="M1156.0 276 V330" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1162.0" y="307.0" font-size="11" text-anchor="start">no</text><path d="M1070 353.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M862 253.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M862 353.0 H844.0 V253.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M654 253.0 H618" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M446 253.0 H410" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/></svg></div></figure>
+
+<ol>
+<li>Compare the ROM time with the source time. If the ROM is older, rebuild it and run the test again (R6).</li>
+<li>Make sure that the inputs reached the game. Use a value in the game, for example the inventory or the player state (R8). Hold each press for 30 frames or more.</li>
+<li>Do the same measurement on a known good build (R5). If the result is the same, the measurement is wrong. Correct the measurement.</li>
+<li>Do a positive control. Make sure that the instrument detects a known event. If it does not, correct the instrument.</li>
+<li>Read the log ring from the 32 MiB build.</li>
+<li>Set a write watchpoint on the full RAM range of the wrong value. Do not watch only part of the range.</li>
+<li>If the watchpoint stops the CPU, read the PC. The PC identifies the code that wrote the value.</li>
+<li>If the watchpoint does not stop, the CPU did not write the value. Use the capture build to record all RAM writes. The record identifies the RSP, RDP or DMA source.</li>
+<li>Do the end steps in 10.1.</li>
+</ol>
+<p class="note">CAUTION: Do not write buttons directly into game RAM through GDB. The emulated data cache keeps the CPU copy, so the game does not see the write. Use the input bridge.</p>
+<p class="note">CAUTION: After a breakpoint stop, remove the breakpoint, step one instruction, and set the breakpoint again. If you do not, the emulator stops at the same breakpoint again.</p>
+<p class="note">CAUTION: Read all GDB replies after each stop. If you do not, the memory reads move by one block. Compare the boot code in a RAM dump with the ELF file to validate the dump.</p>
+
+<h3 id="s10-3">10.3 Freeze</h3>
+<p>Figure 6 shows procedures 10.3 to 10.5.</p>
+
+<figure class="fig" id="fig6"><figcaption>Figure 6 Diagnosis: freeze, slow frames and crash</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 426" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Bug or failed run</text><rect x="30" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Reproduce in ares</text><rect x="238" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="324.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="700">Which symptom?</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Frame counter stops</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Capture build stops it</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Walk stuck graphics task</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">First bad command</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Slow frames</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Full RAM per spike</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Compare timing history</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Find the slow code</text><rect x="446" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Fault screen</text><rect x="654" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Read fault record</text><rect x="862" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Map PC to symbol</text><rect x="1070" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Bad address names data</text><rect x="1070" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Name the cause</text><rect x="862" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="400">Gate fails on old code</text><rect x="654" y="330" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="740.0" y="357.5" text-anchor="middle" font-size="12.5" font-weight="700">Fix, rerun gate</text><path d="M116.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M202 153.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 153.0 H428.0 V53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 153.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 153.0 H428.0 V253.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 153.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 153.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 153.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 253.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 253.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 253.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1156.0 276 V330" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1070 353.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M862 353.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1242 53.0 H1258 V353.0 H1242" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1242 153.0 H1258" fill="none" stroke="#000" stroke-width="1.3"/></svg></div></figure>
+
+<ol>
+<li>Make sure that the game frame counter does not change and that the graphics thread waits on its queue.</li>
+<li>Use the capture build to stop the emulator before the watchdog.</li>
+<li>Dump the full RDRAM.</li>
+<li>Follow the current graphics task from the scheduler one command at a time. The first bad command identifies the display list and its caller.</li>
+<li>Do the end steps in 10.1.</li>
+</ol>
+
+<h3 id="s10-4">10.4 Slow frames</h3>
+<ol>
+<li>Run the frame spike capture tool with the ROM, the save and the input script.</li>
+<li>For each slow frame, the tool writes a full 8 MiB RDRAM dump, the CPU registers, the timing history, the inputs, the symbol map and a manifest.</li>
+<li>Compare the timing history to find the slow code.</li>
+<li>Do the end steps in 10.1.</li>
+</ol>
+<p>A timing number without the dump is not sufficient evidence.</p>
+
+<h3 id="s10-5">10.5 Crash</h3>
+<ol>
+<li>Read the fault record: the faulted thread, the PC and the bad address.</li>
+<li>Find the PC in the symbol map.</li>
+<li>Find the bad address in the symbol map. The address often identifies the data that the code tried to read.</li>
+<li>Do the end steps in 10.1.</li>
+</ol>
+
+<h2 id="s11">11 Recorded results</h2>
+<p class="purpose"><b>Purpose:</b> This section gives the measured state of the test system on the dates shown.</p>
+<p>These values come from the project records. They were not measured again for this document.</p>
+<div class="tw"><table>
+<tr><th>Date</th><th>Measurement</th><th>Result</th></tr>
+<tr><td>2026-07-09</td><td>Mario actions equal to the bit with SM64</td><td>54 actions, 22 checks, 0 failures</td></tr>
+<tr><td>2026-07-09</td><td>Sound scenarios equal to SM64</td><td>12 of 12</td></tr>
+<tr><td>2026-09-06</td><td>SM64 areas booted in the sweep</td><td>45 of 45</td></tr>
+<tr><td>2026-09</td><td>First areas with the arrival camera equal to SM64</td><td>21 of 25</td></tr>
+</table></div>
+
+<h2 id="s12">12 Limits</h2>
+<p class="purpose"><b>Purpose:</b> This section gives the limits of the test system.</p>
+<ul>
+<li>Emulator results do not replace a test on a real N64 (EverDrive).</li>
+<li>The 32 MiB build and the capture build are for diagnosis only. They are not release controls.</li>
+<li>Section 7 uses the mask test as its example. Other tests read different trace records and check different values.</li>
+<li>Some quick headless image captures use Mupen. Mupen results do not prove that the game does not freeze.</li>
+</ul>
+
+</main>
+</body>
+</html>

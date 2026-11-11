@@ -206,6 +206,17 @@ def main(require_built_patcher: bool = False) -> int:
         require(loader_exists, "generated WASM loader is missing")
         require(wasm_exists, "generated WASM binary is missing")
 
+    # The development docs are a static wiki; both Pages deploys must carry them,
+    # and they must stay script-free.
+    docs = SITE / "development-docs"
+    pages_workflow = (ROOT / ".github/workflows/project-pages.yml").read_text(encoding="utf-8")
+    require((docs / "index.html").is_file(), "development docs home page is missing")
+    require(pages_workflow.count("site/development-docs") == 2,
+            "both Pages deploys must publish the development docs")
+    for page in docs.glob("*.html"):
+        require("<script" not in page.read_text(encoding="utf-8").lower(),
+                f"development docs must not run scripts ({page.name})")
+
     mode = "built" if require_built_patcher else "source"
     print(f"project site: PASS (stable v{stable['version']}, minimal local patcher, {mode} check)")
     return 0
