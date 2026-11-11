@@ -52,6 +52,7 @@ jobs:
           mkdir "$RUNNER_TEMP/project-pages"
           python3 tools/build_web_release.py --output "$RUNNER_TEMP/project-pages/MariosMaskBuilder-web.html"
           cp site/speedruns.html site/speedruns.js site/speedruns.json site/styles.css "$RUNNER_TEMP/project-pages/"
+          cp -R site/development-docs "$RUNNER_TEMP/project-pages/development-docs"
       - uses: actions/upload-artifact@v4
         with:
           name: project-pages-source-html
@@ -81,6 +82,8 @@ jobs:
           cp pages/MariosMaskBuilder-web.html pages/index.html
           cmp pages/MariosMaskBuilder-web.html pages/index.html
           cp site/speedruns.html site/speedruns.js site/speedruns.json site/styles.css pages/
+          # /development-docs/ is the static development reference wiki.
+          cp -R site/development-docs pages/development-docs
       - name: Stage the SM64 prerelease tester page
         env:
           GH_TOKEN: ${{ github.token }}
