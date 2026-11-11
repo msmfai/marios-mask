@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development docs - Mario's Mask development docs</title>
+<link rel="stylesheet" href="wiki.css">
+</head>
+<body>
+<nav class="side">
+<p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
+<ul><li><a href="index.html" aria-current="page">Home</a></li><li><a href="automated-verification.html">Automated verification</a></li></ul>
+<p class="back"><a href="../">Mario's Mask builder</a></p>
+</nav>
+<main>
+<h1>Development docs</h1>
+
+<p class="meta">Reference for the development patterns used to build Mario's Mask with AI coding agents.</p>
+<h2>Purpose</h2>
+<p>Mario's Mask is a mod of the Nintendo 64 game The Legend of Zelda: Majora's Mask. It adds Mario as a playable form, with the movement code of Super Mario 64.</p>
+<p>AI coding agents wrote most of the code. These documents record the patterns that made that work: how the agents were directed, how their output was verified, and which failures occurred.</p>
+<p>The documents are written for developers who use coding agents on large, low-level projects such as ROM mods.</p>
+<h2>Documents</h2>
+<div class="tw"><table>
+<tr><th>Document</th><th>Content</th></tr>
+<tr><td><a href="automated-verification.html">Automated verification</a></td><td>The automated test system: headless emulator runs, comparison with the original SM64, level import checks, fault diagnosis and the verification rules.</td></tr>
+</table></div>
+<h2>Authorship</h2>
+<p>Marin Moran conceived and directed Mario's Mask: they set its architecture, made every design and creative decision, playtested each build on emulator and real Nintendo 64 hardware, and decided every release. Most of the code and documentation was written by AI coding agents (Anthropic's Claude Code and OpenAI's Codex) under the author's direction and review, and the author takes full responsibility for the result. The game is built on the community decompilations of Majora's Mask and Super Mario 64. It contains no Nintendo assets: players supply their own ROMs.</p>
+
+</main>
+</body>
+</html>
