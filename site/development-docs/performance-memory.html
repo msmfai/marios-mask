@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Performance and memory - Mario's Mask development docs</title>
+<link rel="stylesheet" href="wiki.css">
+</head>
+<body>
+<nav class="side">
+<p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
+<ul><li><a href="index.html">Home</a></li><li><a href="process-overview.html">1 Process overview</a></li><li><a href="directing-agents.html">2 Directing agents</a></li><li><a href="owner-decisions.html">3 What the human decides</a></li><li><a href="agent-failures.html">4 Agent failure catalog</a></li><li><a href="corrections-to-rules.html">5 Corrections into rules</a></li><li><a href="architecture.html">6 Architecture</a></li><li><a href="automated-verification.html">7 Automated verification</a></li><li><a href="playtest-loop.html">8 Owner playtest loop</a></li><li><a href="parallel-agents.html">9 Parallel agents</a></li><li><a href="sm64-import.html">10 SM64 import pipeline</a></li><li><a href="performance-memory.html" aria-current="page">11 Performance and memory</a></li><li><a href="environment-setup.html">12 Environment setup</a></li><li><a href="release.html">13 Release and distribution</a></li><li><a href="project-record.html">14 Project record</a></li></ul>
+<p class="back"><a href="../">Mario's Mask builder</a></p>
+</nav>
+<main>
+<h1>Performance and memory</h1>
+<p class="meta">Purpose: give the procedure for slow frames and out-of-memory faults, and the rule that a control comes first.</p>
+
+<h2 id="summary">Summary</h2>
+<p>The N64 has little RAM and a slow CPU. Majora's Mask already uses most of both. Mario's code, models and sounds must fit in what is left. Two faults result: the game runs out of memory in a scene, or a frame takes too long.</p>
+<p>Agents often reported a confident cause for these faults that a control later disproved. Thus every measurement in this document starts on a healthy build.</p>
+
+<h2 id="constraints">Constraints</h2>
+<ul>
+<li>The base N64 has 4 MiB of RAM. Majora's Mask needs the 8 MiB Expansion Pak. The real-hardware test uses it.</li>
+<li>Each scene's actors and objects come from one memory area, the Zelda arena. The game destroys this arena at each scene exit and makes a new one.</li>
+<li>ROM space is large and RAM is small. Data that the game does not change stays in ROM. The game loads only the data that the current scene, actor or form needs.</li>
+</ul>
+
+<h2 id="procedure">Procedure</h2>
+<figure class="fig" id="fig1"><figcaption>Figure 1 Memory or timing investigation</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 326" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Symptom reported</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Measure healthy build</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Positive control fires?</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Measure on branch</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Numbers differ?</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Not a finding</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Fix the instrument</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Walk both arenas</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Name the allocation</text><rect x="654" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Fix at lifetime boundary</text><rect x="446" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Measure both again</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="636.0" y="47.0" font-size="11" text-anchor="middle">yes</text><path d="M532.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="538.0" y="107.0" font-size="11" text-anchor="start">no</text><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1052.0" y="47.0" font-size="11" text-anchor="middle">no</text><path d="M948.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="954.0" y="107.0" font-size="11" text-anchor="start">yes</text><path d="M862 153.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M740.0 176 V230" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M654 253.0 H618" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/></svg></div></figure>
+<ol>
+<li>Build a release control: the same game without the change under test.</li>
+<li>Run the measurement on the control. Make sure that it detects a known fault (positive control). If it does not, fix the instrument first.</li>
+<li>Run the same measurement on the branch.</li>
+<li>If both numbers are the same, the change is not the cause. Report both numbers.</li>
+<li>If the numbers differ, walk the memory arenas on both builds and find the allocation that differs.</li>
+<li>Fix the fault where the data lifetime starts or ends, for example at a scene change.</li>
+<li>Measure both builds again.</li>
+</ol>
+
+<h2 id="frame-spike-capture">Frame-spike capture</h2>
+<p>A report of a slow frame needs the game state at that frame. A timing-only probe is not sufficient evidence. The capture tool runs the ROM headless in ares with recorded inputs:</p>
+<ul>
+<li>It compares each frame time with a rolling median. A spike is 20 ms over the median, or 1.5 times the median. The larger limit applies.</li>
+<li>For each spike, it saves the files in the table below.</li>
+<li>It removes its own save time from the next frame time, so that a capture does not cause a new spike.</li>
+</ul>
+<div class="tw"><table>
+<tr><th>File</th><th>Content</th></tr>
+<tr><td>RAM image</td><td>All 8 MiB of RDRAM</td></tr>
+<tr><td>CPU registers</td><td>The state of the CPU at the spike</td></tr>
+<tr><td>Manifest</td><td>Frame number, frame time, median, ROM hash, decoded game state, timing history</td></tr>
+<tr><td>Symbol map</td><td>Addresses of the ROM symbols, to read the RAM image</td></tr>
+<tr><td>Input script</td><td>The inputs that produced the spike</td></tr>
+</table></div>
+
+<h2 id="area-memory-census">Area memory census</h2>
+<p>The census loads each scene in every way that the game can enter it, and records free memory. Unmodified Majora's Mask is the reference.</p>
+<ul>
+<li>It tests all 454 entrance and spawn pairs at day 1 noon, and 102 scenes at 9 day and time states (918 cases).</li>
+<li>Each case uses a new emulator.</li>
+<li>It is a release gate. It takes a long time, so it is not run during ordinary development.</li>
+</ul>
+
+<h2 id="recorded-findings">Recorded findings</h2>
+<div class="tw"><table>
+<tr><th>Finding</th><th>Method</th><th>Result</th></tr>
+<tr><td>Termina Field ran out of memory</td><td>Census, 2026-07-31</td><td>Out of memory at every entrance and all 9 times. 4 other scenes were near the limit.</td></tr>
+<tr><td>Fault was memory, not missing content</td><td>32 MiB diagnostic build</td><td>Termina Field loaded with all 160 actors</td></tr>
+<tr><td>Mario's cap data was always loaded</td><td>Linker maps before and after</td><td>Load on demand removed 66,624 bytes in every scene</td></tr>
+<tr><td>Branch was short of memory compared with release</td><td>Arena walk on both builds</td><td>186 KB gap. Code explained 77 KB. Most of the rest was a graphics command buffer that a change had made twice as large.</td></tr>
+<tr><td>Crash after a scene change</td><td>Arena walk and byte search</td><td>A static pointer kept memory from the previous scene's arena</td></tr>
+<tr><td>Release worst case</td><td>1,330-case gate on 8 MiB</td><td>176,064 bytes free; largest free block 164,416 bytes</td></tr>
+</table></div>
+<p>The graphics buffer was found only by walking both arenas on both builds. Before that, the gap was blamed on code size.</p>
+
+<h2 id="rules">Rules</h2>
+<ul>
+<li>Run every measurement on a healthy build first. Report both numbers.</li>
+<li>A measurement tool must detect a known fault before its result counts.</li>
+<li>Use ares for hangs. Some emulators skip bad graphics commands, so a hang does not occur there. One freeze survived hours of tests in another emulator and occurred on the first try in ares.</li>
+<li>The census starts as Link, not as Mario. Thus it does not show Mario's worst case. Do not report Mario memory savings from it.</li>
+<li>Loading on demand does not lower the peak while Mario is active. It lowers memory use in scenes where Mario is not present.</li>
+</ul>
+
+</main>
+</body>
+</html>

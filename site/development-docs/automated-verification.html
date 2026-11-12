@@ -9,7 +9,7 @@
 <body>
 <nav class="side">
 <p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
-<ul><li><a href="index.html">Home</a></li><li><a href="automated-verification.html" aria-current="page">Automated verification</a></li></ul>
+<ul><li><a href="index.html">Home</a></li><li><a href="process-overview.html">1 Process overview</a></li><li><a href="directing-agents.html">2 Directing agents</a></li><li><a href="owner-decisions.html">3 What the human decides</a></li><li><a href="agent-failures.html">4 Agent failure catalog</a></li><li><a href="corrections-to-rules.html">5 Corrections into rules</a></li><li><a href="architecture.html">6 Architecture</a></li><li><a href="automated-verification.html" aria-current="page">7 Automated verification</a></li><li><a href="playtest-loop.html">8 Owner playtest loop</a></li><li><a href="parallel-agents.html">9 Parallel agents</a></li><li><a href="sm64-import.html">10 SM64 import pipeline</a></li><li><a href="performance-memory.html">11 Performance and memory</a></li><li><a href="environment-setup.html">12 Environment setup</a></li><li><a href="release.html">13 Release and distribution</a></li><li><a href="project-record.html">14 Project record</a></li></ul>
 <p class="back"><a href="../">Mario's Mask builder</a></p>
 </nav>
 <main>
@@ -121,7 +121,7 @@
 <h2 id="s5">5 Verification rules</h2>
 <p class="purpose"><b>Purpose:</b> This section gives the rules that all procedures must obey.</p>
 <p>These rules apply to all procedures in this document. The procedures refer to them by number. Each rule comes from a known incorrect result.</p>
-<table class="rules">
+<div class="tw"><table class="rules">
 <tr><th>Rule</th><th>Requirement</th><th>Reason</th></tr>
 <tr><td>R1</td><td>Use the original game as the oracle.</td><td>A description of SM64 is not a reference. The SM64 ROM gives repeatable values.</td></tr>
 <tr><td>R2</td><td>Write down each conversion. Check the relation, not a fixed number.</td><td>The scale changed from 4.29 to 3.432. Gates with fixed numbers then failed on correct code.</td></tr>

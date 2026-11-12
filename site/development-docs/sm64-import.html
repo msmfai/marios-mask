@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SM64 import pipeline - Mario's Mask development docs</title>
+<link rel="stylesheet" href="wiki.css">
+</head>
+<body>
+<nav class="side">
+<p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
+<ul><li><a href="index.html">Home</a></li><li><a href="process-overview.html">1 Process overview</a></li><li><a href="directing-agents.html">2 Directing agents</a></li><li><a href="owner-decisions.html">3 What the human decides</a></li><li><a href="agent-failures.html">4 Agent failure catalog</a></li><li><a href="corrections-to-rules.html">5 Corrections into rules</a></li><li><a href="architecture.html">6 Architecture</a></li><li><a href="automated-verification.html">7 Automated verification</a></li><li><a href="playtest-loop.html">8 Owner playtest loop</a></li><li><a href="parallel-agents.html">9 Parallel agents</a></li><li><a href="sm64-import.html" aria-current="page">10 SM64 import pipeline</a></li><li><a href="performance-memory.html">11 Performance and memory</a></li><li><a href="environment-setup.html">12 Environment setup</a></li><li><a href="release.html">13 Release and distribution</a></li><li><a href="project-record.html">14 Project record</a></li></ul>
+<p class="back"><a href="../">Mario's Mask builder</a></p>
+</nav>
+<main>
+<h1>SM64 import pipeline</h1>
+<p class="meta">Purpose: describe how imported content is made by generators, not by hand, and how it is proven correct.</p>
+
+<h2 id="summary">Summary</h2>
+<p>The SM64 levels and actors are not copied by hand. Generators make them from the player's own SM64 data on each build. Project changes are stored as a list of small, checked edits to that data. Thus an agent never edits imported content directly, and each change can be repeated and reviewed.</p>
+<p>The original SM64 game is the reference for correct behavior. Tests run it next to the mod and compare the results (see document 7).</p>
+
+<h2 id="procedure">Procedure</h2>
+<figure class="fig" id="fig1"><figcaption>Figure 1 Import, compose, generate and check</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 326" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Player&#x27;s SM64 data</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Inventory the source</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Fixed world snapshot</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Compose the world</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Generate scenes</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Stage actors</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Diff operations</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Compare with SM64</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Build ROM</text><rect x="654" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Fix as a diff</text><rect x="862" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="948.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="700">Gates and promotion</text><rect x="1070" y="230" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="257.5" text-anchor="middle" font-size="12.5" font-weight="400">Area sweep</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1156.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M740.0 130 V76" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="746.0" y="107.0" font-size="11" text-anchor="start">digest check</text><path d="M1070 153.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1052.0" y="147.0" font-size="11" text-anchor="middle">per tick</text><path d="M1156.0 176 V230" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1162.0" y="207.0" font-size="11" text-anchor="start">all 45</text><path d="M948.0 176 V230" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1070 253.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M862 253.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M740.0 230 V176" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/></svg></div></figure>
+<ol>
+<li>The build makes an inventory of the player's SM64 data and stores it as a fixed snapshot. The project never edits the snapshot.</li>
+<li>Project changes are ordered edit operations, each with a stable ID. An edit that replaces or removes a record must give the digest of the record that it expects. If the source changed, the edit fails.</li>
+<li>The build applies the edits to the snapshot. The result is the composed world.</li>
+<li>Generators make scenes and collision from the composed world.</li>
+<li>The build lists the actors and stages them into the ROM.</li>
+<li>Tests compare the mod with the original SM64, and an area sweep loads each area.</li>
+<li>A gate accepts or refuses each behavior. A fault is fixed as a new edit, not in generated output.</li>
+</ol>
+
+<h2 id="the-one-exception">The one exception</h2>
+<p>The castle grounds outside Peach's castle are written by hand. The owner wants direct control there. All other content must regenerate from the source on each build.</p>
+
+<h2 id="conversion-terms">Conversion terms</h2>
+<p>SM64 and MM use different units, rates and scales. Each term needs its own check. An error in one term does not show in a check of another term.</p>
+<div class="tw"><table>
+<tr><th>Term</th><th>SM64</th><th>Rule in the mod</th></tr>
+<tr><td>Distance</td><td>SM64 units</td><td>Divide by 3.432. The value was 4.29 before, a change of exactly 1.25. Gates check the relation, not fixed converted numbers.</td></tr>
+<tr><td>Model vertices</td><td>Raw</td><td>The stager divides them once</td></tr>
+<tr><td>Part offsets in a model</td><td>Raw</td><td>A separate check. 41 sites were wrong.</td></tr>
+<tr><td>Animation root movement</td><td>Raw</td><td>A separate check. 32 sites were wrong.</td></tr>
+<tr><td>Object and animation scale</td><td>No unit</td><td>Keep the SM64 factor</td></tr>
+<tr><td>Shadow size</td><td>Depends on how the actor sets its scale</td><td>Read the radius from the model. 17 actors had wrong shadows, up to 93 times too large.</td></tr>
+<tr><td>World clock</td><td>30 ticks per second</td><td>One tick for each MM update (20 per second). The imported world runs at 2/3 speed by design (September 2026).</td></tr>
+<tr><td>Mario's movement rates</td><td>30 ticks per second</td><td>Velocity times 1.5 and acceleration times 2.25 at each integration point</td></tr>
+</table></div>
+<p>Before the separate checks, the part offsets and the animation root were not converted. Parts of models were 3.432 times too far from the body, in 26 actors. The owner found this in play.</p>
+
+<h2 id="checks">Checks</h2>
+<ul>
+<li>The movement comparison runs the real SM64 ROM headless next to the mod and compares Mario tick by tick. Action chains and position steps match bit for bit. Sound families match in all 12 scenarios.</li>
+<li>The area sweep loads and photographs all 45 SM64 areas from one build in about 8 minutes.</li>
+<li>A behavior reaches the shipping build through a promotion chain. The chain updates the production count, the expected set, a guard for that behavior and the catalogue digests.</li>
+</ul>
+
+<h2 id="recorded-results-of-the-first-area-sweep-2026-09-06">Recorded results of the first area sweep (2026-09-06)</h2>
+<div class="tw"><table>
+<tr><th>Fault</th><th>Areas</th></tr>
+<tr><td>Failed on arrival: a shared sky pack was too large for object memory</td><td>6</td></tr>
+<tr><td>Missing static objects</td><td>18</td></tr>
+<tr><td>Arrival camera wrong</td><td>About 12</td></tr>
+</table></div>
+<p>These were fixed. After the fixes, 21 of the first 25 areas matched the SM64 camera.</p>
+
+<h2 id="rules">Rules</h2>
+<ul>
+<li>Gates are written by people and agents, and they can be wrong. When a gate refuses a change, first prove what the source does. Then correct the gate table and record the values before and after.</li>
+<li>To learn what an area ships, run the stager. Do not read its inputs. One agent read one input and reported "0 of 23 objects". The stager shipped 21 of 23.</li>
+<li>Content mixes both ways: an SM64 enemy can appear in an MM level, and an MM enemy in an SM64 level. MM scene collision stays the authority. Fast SM64 collision paths keep an MM fallback.</li>
+</ul>
+
+</main>
+</body>
+</html>

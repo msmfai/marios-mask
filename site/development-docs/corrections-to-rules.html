@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turning corrections into rules - Mario's Mask development docs</title>
+<link rel="stylesheet" href="wiki.css">
+</head>
+<body>
+<nav class="side">
+<p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
+<ul><li><a href="index.html">Home</a></li><li><a href="process-overview.html">1 Process overview</a></li><li><a href="directing-agents.html">2 Directing agents</a></li><li><a href="owner-decisions.html">3 What the human decides</a></li><li><a href="agent-failures.html">4 Agent failure catalog</a></li><li><a href="corrections-to-rules.html" aria-current="page">5 Corrections into rules</a></li><li><a href="architecture.html">6 Architecture</a></li><li><a href="automated-verification.html">7 Automated verification</a></li><li><a href="playtest-loop.html">8 Owner playtest loop</a></li><li><a href="parallel-agents.html">9 Parallel agents</a></li><li><a href="sm64-import.html">10 SM64 import pipeline</a></li><li><a href="performance-memory.html">11 Performance and memory</a></li><li><a href="environment-setup.html">12 Environment setup</a></li><li><a href="release.html">13 Release and distribution</a></li><li><a href="project-record.html">14 Project record</a></li></ul>
+<p class="back"><a href="../">Mario's Mask builder</a></p>
+</nav>
+<main>
+<h1>Turning corrections into rules</h1>
+<p class="meta">Purpose: make sure that the same correction is not needed twice.</p>
+
+<h2 id="summary">Summary</h2>
+<p>A correction in a conversation is lost when the conversation ends. The next agent makes the same mistake. Thus a correction is complete only when it exists in a form that every later session sees or that runs automatically.</p>
+<p>The rule on this project: a correction is not complete until it is a test, a reference capture, a save state with a script, a runtime assertion or a checklist.</p>
+
+<h2 id="procedure">Procedure</h2>
+<figure class="fig" id="fig1"><figcaption>Figure 1 From correction to permanent check</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 226" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Owner correction</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Reproduce the fault</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Deliberate design?</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Write the lesson</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Write gate or test</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Fails on old code?</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Ask the owner</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Record the exception</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="700">Gate joins suite</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="636.0" y="47.0" font-size="11" text-anchor="middle">no</text><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1156.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1162.0" y="107.0" font-size="11" text-anchor="start">yes</text><path d="M532.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="538.0" y="107.0" font-size="11" text-anchor="start">yes</text><path d="M618 153.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/></svg></div></figure>
+<ol>
+<li>Reproduce the fault that the owner reported. If an earlier fix failed, revert it first.</li>
+<li>Check whether the behavior is a deliberate design choice. If it is, ask the owner, and record the exception so that later audits do not change it.</li>
+<li>Write the lesson: what happened, why, and how to apply the rule.</li>
+<li>If the rule can be checked by a program, write a gate or test.</li>
+<li>Run the new gate on the code before the fix. It must fail. If it passes, the gate is wrong. Repair it and run it again.</li>
+<li>Add the gate to the suite that runs for that kind of change.</li>
+</ol>
+
+<h2 id="where-a-correction-is-recorded">Where a correction is recorded</h2>
+<div class="tw"><table>
+<tr><th>Record</th><th>Content</th><th>Example</th></tr>
+<tr><td>Instruction files</td><td>Standing rules for each session</td><td>The hardware gate; how to start the emulator; controller layout</td></tr>
+<tr><td>Agent memory</td><td>One lesson for each file: the incident, why, how to apply. An index loads into each session.</td><td>The hard-revert rule</td></tr>
+<tr><td>Executable gate</td><td>A check that stops the build or the test run</td><td>Sound bank capacity; collision actor limit</td></tr>
+<tr><td>Invariant audit</td><td>Safety checks on the linked ROM</td><td>One run made 16,023 checks</td></tr>
+<tr><td>Review data</td><td>Reviewed exceptions, kept in data files and not in code</td><td>86 marks on outdated patch comments</td></tr>
+<tr><td>ROM baseline</td><td>A fixed hash for changes that must not change the ROM</td><td>Comment-only cleanup must build the same ROM</td></tr>
+<tr><td>Quarantine list</td><td>Tests that are not valid now, kept but not run</td><td>Tests built on an old timing model</td></tr>
+</table></div>
+
+<h2 id="proving-a-new-gate">Proving a new gate</h2>
+<ul>
+<li>A gate that never failed proves nothing. Run it on a baseline built from the code before the fix.</li>
+<li>One gate passed the exact output that it was written to reject. The generator split commands across lines, and the gate read one line at a time.</li>
+<li>One gate fix was proven by a deliberate fault in one actor. The gate gave the expected error.</li>
+<li>If a fix is reverted because it was a theory, revert the checks that were based on that theory too.</li>
+<li>A gate can also be wrong. Then fix the gate table and record the values before and after, so that the change does not look like a weaker gate.</li>
+</ul>
+
+<h2 id="examples">Examples</h2>
+<div class="tw"><table>
+<tr><th>Correction</th><th>Rule or test</th><th>Check</th></tr>
+<tr><td>A crash when the player leaves a lab</td><td>A test of the full sequence: deposit, real door, next scene</td><td>The test needs 9 events. It is in the bottle suite.</td></tr>
+<tr><td>"Stream it from ROM"</td><td>Imported data is not linked permanently. Data lifetime follows its user.</td><td>Arena walks against a release build</td></tr>
+<tr><td>"Old comments are not to be trusted"</td><td>An audit of the patch stack, with reviewed marks</td><td>The check fails on a new unmarked finding</td></tr>
+<tr><td>A model in pieces</td><td>Every conversion term is checked</td><td>A part-position check</td></tr>
+<tr><td>"Hard revert it"</td><td>Revert a failed fix before the next attempt</td><td>Revert commits state what was proven and what was not</td></tr>
+<tr><td>A stable release failed on a late gate</td><td>Run the suites with the Player audits before a stable release</td><td>Release instructions</td></tr>
+</table></div>
+
+</main>
+</body>
+</html>
