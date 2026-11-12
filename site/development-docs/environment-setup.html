@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Environment setup - Mario's Mask development docs</title>
+<link rel="stylesheet" href="wiki.css">
+</head>
+<body>
+<nav class="side">
+<p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
+<ul><li><a href="index.html">Home</a></li><li><a href="process-overview.html">1 Process overview</a></li><li><a href="directing-agents.html">2 Directing agents</a></li><li><a href="owner-decisions.html">3 What the human decides</a></li><li><a href="agent-failures.html">4 Agent failure catalog</a></li><li><a href="corrections-to-rules.html">5 Corrections into rules</a></li><li><a href="architecture.html">6 Architecture</a></li><li><a href="automated-verification.html">7 Automated verification</a></li><li><a href="playtest-loop.html">8 Owner playtest loop</a></li><li><a href="parallel-agents.html">9 Parallel agents</a></li><li><a href="sm64-import.html">10 SM64 import pipeline</a></li><li><a href="performance-memory.html">11 Performance and memory</a></li><li><a href="environment-setup.html" aria-current="page">12 Environment setup</a></li><li><a href="release.html">13 Release and distribution</a></li><li><a href="project-record.html">14 Project record</a></li></ul>
+<p class="back"><a href="../">Mario's Mask builder</a></p>
+</nav>
+<main>
+<h1>Environment setup</h1>
+<p class="meta">Purpose: list the tools, inputs and setup steps for a development machine.</p>
+
+<h2 id="summary">Summary</h2>
+<p>The development build runs on macOS or on a Debian-like Linux. It needs common build tools, the three original ROMs and the public decompilation projects at fixed commits. A task runner sets up each worktree and runs the builds.</p>
+
+<h2 id="requirements">Requirements</h2>
+<div class="tw"><table>
+<tr><th>Item</th><th>Requirement</th></tr>
+<tr><td>Operating system</td><td>macOS or Debian-like Linux. On Apple Silicon macOS, Homebrew supplies libpng.</td></tr>
+<tr><td>Host tools</td><td>Bash, Git, Python 3 with venv and pip, curl, rsync, ffmpeg, tar, GNU Make, a C and C++17 compiler</td></tr>
+<tr><td>Libraries</td><td>libpng, libxml2 and zlib development headers</td></tr>
+<tr><td>MIPS tools</td><td>GNU binutils 2.42 and GNU libiconv 1.18. The build compiles them if the host does not have them.</td></tr>
+<tr><td>ROMs</td><td>NTSC-US Super Mario 64, Ocarina of Time 1.1 and Majora's Mask. The build checks the hash of each.</td></tr>
+<tr><td>Decompilations</td><td>The public SM64, OoT and MM decompilation projects, at pinned commits. The build refuses other commits.</td></tr>
+<tr><td>Task runner</td><td>just. Its recipes leave two CPU cores free.</td></tr>
+<tr><td>Emulator</td><td>ares v148, pinned, with automatic updates off</td></tr>
+</table></div>
+
+<h2 id="procedure">Procedure</h2>
+<figure class="fig" id="fig1"><figcaption>Figure 1 From a clean machine to a debug ROM</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 226" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Install host tools</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Supply three ROMs</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Check ROM hashes</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Set up build root</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Clone pinned decomps</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Extract assets locally</text><rect x="1070" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="1156.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Apply patch series</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Build debug ROM</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Restore MM copy</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="700">Test in ares</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="636.0" y="47.0" font-size="11" text-anchor="middle">match</text><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1156.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M1070 153.0 H1034" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M862 153.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M654 153.0 H618" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/></svg></div></figure>
+<ol>
+<li>Install the host tools and the task runner.</li>
+<li>Supply the three ROMs. The build checks their hashes before it continues.</li>
+<li>Set up the build root for the worktree. Each worktree has its own root for the MM copy, the SM64 copy, the toolchain and the output. The setup can copy a prepared root from another worktree.</li>
+<li>The build clones the decompilations at their pinned commits.</li>
+<li>The build extracts assets on the local machine. From SM64 it takes only what the mod needs (for example Mario and Peach textures). From OoT it takes only a few objects and one music sequence.</li>
+<li>The build applies the patch series, links the debug ROM and restores the MM copy (see document 6).</li>
+<li>Test the debug ROM in ares.</li>
+</ol>
+<p>A developer build is a debug build by default. Its title shows "DEBUG". A separate guarded command makes the release ROM.</p>
+
+<h2 id="recovery">Recovery</h2>
+<ul>
+<li>The MM copy is disposable. If a build stops before the restore step, run the restore command of the task runner. Do not reset the whole repository.</li>
+<li>After you stop a build or a search, check the process list. No compiler, converter, emulator or search process may remain.</li>
+</ul>
+
+<h2 id="emulator-setup">Emulator setup</h2>
+<ul>
+<li>One pinned ares installation serves all worktrees.</li>
+<li>A read-only base profile turns on the debug server (GDB), the Expansion Pak and the real boot sequence.</li>
+<li>Test runs copy this profile into a private folder for each run (see document 7).</li>
+<li>Controller rule: Xbox A is N64 A, and Xbox X is N64 B.</li>
+</ul>
+
+<h2 id="agent-safety-on-the-host">Agent safety on the host</h2>
+<ul>
+<li>Agents do not search the whole home folder or other large folders. Outside the repository they first find candidate files by name and size, and then search only those files, with a time limit.</li>
+<li>Agents stop only the processes that they started.</li>
+</ul>
+
+<h2 id="limits">Limits</h2>
+<ul>
+<li>The ares installation and its base profile are part of the machine configuration, not of the repository.</li>
+<li>The development repository is private. The public repository contains the builder and its recipe, not the mod source.</li>
+</ul>
+
+</main>
+</body>
+</html>
