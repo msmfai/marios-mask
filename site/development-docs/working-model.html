@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Working model - Mario's Mask development docs</title>
+<link rel="stylesheet" href="wiki.css">
+</head>
+<body>
+<nav class="side">
+<p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
+<ul><li><a href="index.html">Home</a></li><li><a href="working-model.html" aria-current="page">1 Working model</a></li><li><a href="verification.html">2 Verification loop and evals</a></li><li><a href="corrections.html">3 Corrections become tests</a></li></ul>
+<p class="back"><a href="../">Mario's Mask builder</a></p>
+</nav>
+<main>
+<h1>Working model</h1>
+<p class="meta">Purpose: give the division of work between one person and the agents.</p>
+
+<h2 id="summary">Summary</h2>
+<p>One person directed the project. AI coding agents wrote most of the code. The person did not review every line. Instead, the person decided what to build, and the verification loop decided whether it worked.</p>
+
+<h2 id="who-decides">Who decides</h2>
+<div class="tw"><table>
+<tr><th>The owner decides</th><th>Agents do</th></tr>
+<tr><td>What to build, and what not to build</td><td>Research, code, tests and documents</td></tr>
+<tr><td>Every design and creative call: feel, dialogue, presentation, content cuts</td><td>Diagnosis, with evidence</td></tr>
+<tr><td>Whether a fix is verified in play</td><td>Fixes, inside the agreed scope</td></tr>
+<tr><td>Every release</td><td>Release tooling, only on request</td></tr>
+</table></div>
+<p>The rule: agents ask, never assume. A behavior that looks like a fault can be a deliberate decision. Before an agent changes it, it asks the owner.</p>
+
+<h2 id="one-task">One task</h2>
+<figure class="fig" id="fig1"><figcaption>Figure 1 One task</figcaption><div class="svgwrap"><svg viewBox="0 0 1088 226" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Owner writes task</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Agent does slice</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Verification loop</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Agent writes checkpoint</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Owner decides</text><rect x="238" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Revert, keep evidence</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">New session</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M324.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="330.0" y="107.0" font-size="11" text-anchor="start">stop rule</text><path d="M948.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="954.0" y="107.0" font-size="11" text-anchor="start">accept</text></svg></div></figure>
+<p>A task states:</p>
+<ul>
+<li>one outcome that a person can see or a test can measure;</li>
+<li>the evidence that will prove it;</li>
+<li>what the agent must not do;</li>
+<li>what the agent may change;</li>
+<li>when to stop and report.</li>
+</ul>
+<p>Large work is cut into slices. Each slice makes one behavior that can be tested alone and leaves the project usable if later slices are cancelled. One 4-day migration without slices was declared a failure at the end.</p>
+
+<h2 id="stop-rules">Stop rules</h2>
+<p>The agent stops and reports when:</p>
+<ul>
+<li>it cannot state the acceptance test;</li>
+<li>the owner corrects the same requirement twice;</li>
+<li>status checks continue with no new validated result;</li>
+<li>a fix did not work. Revert it before the next attempt. Never put a second fix on a failed one.</li>
+</ul>
+
+<h2 id="state-lives-outside-the-conversation">State lives outside the conversation</h2>
+<p>Long conversations lose accuracy. One session ran 12 days and held 44% of a month's prompts. Project state now lives in commits, work items and documents. Each accepted result ends with a handoff, and the next task starts in a new session.</p>
+
+<h2 id="one-agent-by-default">One agent by default</h2>
+<p>Several agents ran at once only on work that split into independent parts, each with its own branch, worktree and tests. One manager agent merged the results. Agents that shared an emulator, a branch or build output interfered with each other. Integration also found faults that each branch's tests had missed, for example two branches that used the same dialogue message ID. Merging is work, not a formality.</p>
+
+<h2 id="structure-that-makes-agent-work-testable">Structure that makes agent work testable</h2>
+<p>The host game owns everything: game loop, actors, collision, memory, saves. Imported Mario code reads host state through narrow adapters and writes its result back. All changes are patches applied to a clean copy of the decompiled game. This keeps each change small, reversible, and testable in one place.</p>
+
+</main>
+</body>
+</html>
