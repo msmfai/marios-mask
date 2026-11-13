@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verification loop and evals - Mario's Mask development docs</title>
+<link rel="stylesheet" href="wiki.css">
+</head>
+<body>
+<nav class="side">
+<p class="brand"><a href="index.html">Mario's Mask<br>development docs</a></p>
+<ul><li><a href="index.html">Home</a></li><li><a href="working-model.html">1 Working model</a></li><li><a href="verification.html" aria-current="page">2 Verification loop and evals</a></li><li><a href="corrections.html">3 Corrections become tests</a></li></ul>
+<p class="back"><a href="../">Mario's Mask builder</a></p>
+</nav>
+<main>
+<h1>Verification loop and evals</h1>
+<p class="meta">Purpose: describe how agent output was checked, so that a result is accepted for evidence and not for the agent's report.</p>
+
+<h2 id="summary">Summary</h2>
+<p>An agent reports success with the same confidence whether it is right or wrong. Thus no agent report counts as evidence. A change is accepted only when the game itself shows the correct result, measured against a reference that the agent did not write.</p>
+<p>For Mario's Mask, the reference is the original Super Mario 64 game. Mario's movement code in the mod is the SM64 source. Thus the correct answer for each movement is the value that SM64 itself produces with the same input.</p>
+
+<h2 id="the-loop">The loop</h2>
+<figure class="fig" id="fig1"><figcaption>Figure 1 The verification loop</figcaption><div class="svgwrap"><svg viewBox="0 0 1296 226" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif"><defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><rect x="30" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Agent changes code</text><rect x="238" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="324.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Static gates</text><rect x="446" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Emulator evals</text><rect x="654" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="740.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">All pass?</text><rect x="862" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="400">Owner plays build</text><rect x="1070" y="30" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="1156.0" y="57.5" text-anchor="middle" font-size="12.5" font-weight="700">Real N64 test</text><rect x="862" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="948.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Owner files report</text><rect x="654" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="740.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Find the cause</text><rect x="446" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="532.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Write a gate</text><rect x="238" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="2.2"/><text x="324.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="700">Fails on old code?</text><rect x="30" y="130" width="172" height="46" rx="6" fill="#fff" stroke="#000" stroke-width="1.2"/><text x="116.0" y="157.5" text-anchor="middle" font-size="12.5" font-weight="400">Fix the cause</text><path d="M202 53.0 H238" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M410 53.0 H446" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M618 53.0 H654" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M826 53.0 H862" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="844.0" y="47.0" font-size="11" text-anchor="middle">yes</text><path d="M1034 53.0 H1070" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="1052.0" y="47.0" font-size="11" text-anchor="middle">ok</text><path d="M740.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="746.0" y="107.0" font-size="11" text-anchor="start">no</text><path d="M948.0 76 V130" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="954.0" y="107.0" font-size="11" text-anchor="start">fault</text><path d="M862 153.0 H826" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M654 153.0 H618" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M446 153.0 H410" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><path d="M238 153.0 H202" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/><text x="220.0" y="147.0" font-size="11" text-anchor="middle">yes</text><path d="M116.0 130 V76" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#h)"/></svg></div></figure>
+<ol>
+<li>The agent changes the code.</li>
+<li>Static gates check the source and data on each build: unit conversions, memory budgets, engine limits.</li>
+<li>Emulator evals run the ROM headless with recorded inputs and read the results from game memory.</li>
+<li>If an eval fails, the agent finds the cause. It writes a gate for that fault and proves that the gate fails on the old code. Then it fixes the cause and runs the loop again.</li>
+<li>If all evals pass, the owner plays the build. Each fault that the owner reports enters the same loop.</li>
+<li>Before a release, the build runs on a real Nintendo 64.</li>
+</ol>
+<p>Each fault leaves a gate behind. Thus the eval suite grows from real faults, not from a plan written in advance.</p>
+
+<h2 id="eval-types">Eval types</h2>
+<p>Each layer finds faults that the layer before it cannot find. Use the lowest layer that can answer the question.</p>
+<div class="tw"><table>
+<tr><th>Eval</th><th>What it checks</th><th>When</th></tr>
+<tr><td>Static gates</td><td>Conversions, budgets and limits in source and data</td><td>Each build</td></tr>
+<tr><td>In-game fixtures</td><td>Test code in a test ROM writes a record to RAM. The test reads it through a debugger.</td><td>When a feature changes</td></tr>
+<tr><td>Oracle comparison</td><td>Mario's state on each tick against the original SM64</td><td>When movement code changes</td></tr>
+<tr><td>Area sweep</td><td>All 45 imported areas load. An image, position and camera for each.</td><td>When the level import changes</td></tr>
+<tr><td>Owner play</td><td>Feel, presentation, and places that no test visits</td><td>Each build the owner tests</td></tr>
+<tr><td>Real hardware</td><td>Behavior on a real N64</td><td>Before release</td></tr>
+</table></div>
+
+<h3>Oracle comparison</h3>
+<p>One test course is compiled into both games. Both ROMs run the same inputs. Each records Mario's action, position, facing, floor height and sounds on each tick. A tool converts the mod's 20 updates per second to SM64's 30, aligns the two records at the first change of action, and compares them.</p>
+<ul>
+<li>The requirement is equality: the same action sequence and the same position to the bit.</li>
+<li>Two runs of the same input give identical records. Thus each difference is a real difference. Known differences are recorded as findings, not skipped.</li>
+<li>Result: 54 actions equal to the bit, 0 failures. The comparison found faults that play did not, for example Mario fell asleep after 88 ticks instead of about 930.</li>
+</ul>
+
+<h3>In-game fixtures</h3>
+<p>The test reads a fixed record that test code in the ROM writes. The checks run in order, and the first failure stops the test:</p>
+<ol>
+<li>A magic number. If it is wrong, the fixture did not run or the ROM is stale.</li>
+<li>The case number. If it is wrong, the input did not reach the game.</li>
+<li>Flags for prohibited states.</li>
+<li>Flags for the expected events.</li>
+<li>The measured values.</li>
+</ol>
+<p>The first two checks test the test. Many apparent faults were in the test setup, not in the game.</p>
+
+<h3>Area sweep</h3>
+<p>One build loads every imported area and keeps one image of each. The first sweep took about 8 minutes and found 4 fault classes that manual play had not found, one of them in 18 areas.</p>
+
+<h3>Owner reports as eval cases</h3>
+<p>The owner plays with a capture button. Each report holds a screenshot, a save state, the build identity and the game context decoded from RAM. A freeze is filed automatically with a full RAM dump. The agent loads the state and sees the fault itself. An agent can mark a report fixed, but only the owner marks it verified.</p>
+
+<h2 id="rules-for-honest-evals">Rules for honest evals</h2>
+<p>Each rule comes from a wrong result on this project.</p>
+<div class="tw"><table>
+<tr><th>Rule</th><th>Wrong result that produced it</th></tr>
+<tr><td>Use the original game as the oracle, not a description of it.</td><td>Descriptions gave values that the game does not produce.</td></tr>
+<tr><td>Accept only results that the game shows.</td><td>Input playback succeeded on the host while the game received nothing.</td></tr>
+<tr><td>A new gate must fail on the code before the fix.</td><td>A gate passed the exact fault it was written for, because the generator split one command over two lines.</td></tr>
+<tr><td>Run every measurement on a healthy build first, and prove the instrument detects a known fault.</td><td>Several freeze "causes" gave the same value on a good build.</td></tr>
+<tr><td>Never measure a ROM older than its source.</td><td>A capture reported the previous build.</td></tr>
+<tr><td>Check relations, not fixed numbers. Check every term of a conversion.</td><td>A model had the correct scale, but its parts were 3.4 times too far apart. The same fault was in 26 actors.</td></tr>
+<tr><td>Look at the image.</td><td>A size ratio cannot tell a small model from a model in pieces.</td></tr>
+<tr><td>When a gate rejects correct code, examine the gate.</td><td>A budget gate counted one spawner's children for each actor and reported 58 of 45. The real count was 27.</td></tr>
+<tr><td>Reproduce in the emulator that shows the fault.</td><td>One freeze never occurred in one emulator after hours of tests. It occurred on the first try in another, and on hardware.</td></tr>
+</table></div>
+
+<h2 id="cost-control">Cost control</h2>
+<ul>
+<li>During development, run only the focused suites for the changed path.</li>
+<li>Exhaustive checks, such as loading every scene from every entrance, run only before a release.</li>
+<li>Long runs go to a background process. The agent continues other work while they run.</li>
+<li>Emulator results never replace the real N64 test.</li>
+</ul>
+
+</main>
+</body>
+</html>
