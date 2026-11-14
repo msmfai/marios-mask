@@ -1,9 +1,9 @@
-# Mario's Mask Beta 0.5.0
+# Mario's Mask Beta 0.5.1
 
 ## Changes
 
-- **The ready-made File 1 now starts at Peach's Castle.** On a new cartridge or a fresh emulator save, File 1 opens at the castle as intended. Before, it always started in South Clock Town.
-- **Your newest save always loads.** Saving with the Song of Time now replaces an owl save on the same file, and an owl save replaces a Song of Time save. Before, an old owl save could hide later Song of Time progress.
+- **Backflipping at the Metal Cap grate no longer freezes the game.** In the Clock Tower basement, a backflip or high jump right in front of either large grate could stop the game on console and in accurate emulators, or cause a severe slowdown in others ([#80](https://github.com/msmfai/marios-mask/issues/80)). Walking or swimming through the grate still takes Mario to the Metal Cap course.
+- **Quieter music arrangements.** A few instruments that sounded wrong are now silent in Get Heart, Inverted Stone Tower Temple, and some Super Mario 64 course themes.
 
 ## Get the game
 
@@ -24,4 +24,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.5.0") and your game mode when reporting bugs.
+Please include the exact release name (for example "Beta 0.5.1") and your game mode when reporting bugs.
