@@ -1,9 +1,8 @@
-# Mario's Mask Beta 0.5.1
+# Mario's Mask Beta 0.5.2
 
 ## Changes
 
-- **Backflipping at the Metal Cap grate no longer freezes the game.** In the Clock Tower basement, a backflip or high jump right in front of either large grate could stop the game on console and in accurate emulators, or cause a severe slowdown in others ([#80](https://github.com/msmfai/marios-mask/issues/80)). Walking or swimming through the grate still takes Mario to the Metal Cap course.
-- **Quieter music arrangements.** A few instruments that sounded wrong are now silent in Get Heart, Inverted Stone Tower Temple, and some Super Mario 64 course themes.
+- **Mario no longer walks too far after entering an area.** After some area transitions, Mario kept walking well past where Link stops, for example up the Clock Tower slope when entering South Clock Town from North Clock Town ([#83](https://github.com/msmfai/marios-mask/issues/83)). He now stops where Link does, and the walk-in after an exit matches how fast he was moving.
 
 ## Get the game
 
@@ -24,4 +23,4 @@ Bring your own NTSC Nintendo 64 ROMs for Super Mario 64, Majora's Mask, and Ocar
 
 ## Known issues
 
-Please include the exact release name (for example "Beta 0.5.1") and your game mode when reporting bugs.
+Please include the exact release name (for example "Beta 0.5.2") and your game mode when reporting bugs.
